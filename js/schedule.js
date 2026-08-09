@@ -17,34 +17,22 @@ import {
 ========================= */
 
 const scheduleHeader =
-    document.getElementById(
-        "scheduleHeader"
-    );
+    document.getElementById("scheduleHeader");
 
 const scheduleList =
-    document.getElementById(
-        "scheduleList"
-    );
+    document.getElementById("scheduleList");
 
 const tournamentLink =
-    document.getElementById(
-        "tournamentLink"
-    );
+    document.getElementById("tournamentLink");
 
 const resultsLink =
-    document.getElementById(
-        "resultsLink"
-    );
+    document.getElementById("resultsLink");
 
 const pointsLink =
-    document.getElementById(
-        "pointsLink"
-    );
+    document.getElementById("pointsLink");
 
 const liveScoreLink =
-    document.getElementById(
-        "liveScoreLink"
-    );
+    document.getElementById("liveScoreLink");
 
 
 /* =========================
@@ -55,7 +43,6 @@ const params =
     new URLSearchParams(
         window.location.search
     );
-
 
 let tournamentId =
     params.get("id");
@@ -155,11 +142,13 @@ tournamentLink.href =
         tournamentId
     );
 
+
 resultsLink.href =
     "results.html?id=" +
     encodeURIComponent(
         tournamentId
     );
+
 
 pointsLink.href =
     "points.html?id=" +
@@ -167,8 +156,14 @@ pointsLink.href =
         tournamentId
     );
 
+
+/*
+   IMPORTANT:
+   Live Score page is live.html
+*/
+
 liveScoreLink.href =
-    "live-score.html?id=" +
+    "live.html?id=" +
     encodeURIComponent(
         tournamentId
     );
@@ -554,7 +549,7 @@ async function loadMatches() {
 
                         <a
                             class="btn"
-                            href="live-score.html?id=${encodeURIComponent(tournamentId)}&matchId=${encodeURIComponent(match.id)}"
+                            href="live.html?id=${encodeURIComponent(tournamentId)}&matchId=${encodeURIComponent(match.id)}"
                         >
 
                             🔴 Live Score

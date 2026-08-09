@@ -116,6 +116,41 @@
 
 
 <!-- =========================
+     INSTALL APP
+========================= -->
+
+<div
+    id="installContainer"
+    style="
+        text-align:center;
+        margin:20px 15px;
+    "
+>
+
+    <button
+        id="installBtn"
+        type="button"
+        style="
+            display:none;
+            padding:13px 24px;
+            border:none;
+            border-radius:12px;
+            background:#1d4ed8;
+            color:white;
+            font-size:16px;
+            font-weight:bold;
+            cursor:pointer;
+            box-shadow:0 4px 10px rgba(0,0,0,0.15);
+        "
+    >
+        📲 Install APL App
+    </button>
+
+</div>
+
+
+
+<!-- =========================
      MAIN
 ========================= -->
 
@@ -363,6 +398,107 @@ if ("serviceWorker" in navigator) {
     );
 
 }
+
+</script>
+
+
+
+<!-- =========================
+     PWA INSTALL
+========================= -->
+
+<script>
+
+let deferredPrompt = null;
+
+const installBtn =
+    document.getElementById("installBtn");
+
+
+/*
+ * Chrome/Android sends this event
+ * when the website is installable.
+ */
+
+window.addEventListener(
+    "beforeinstallprompt",
+    (event) => {
+
+        console.log(
+            "✅ PWA install prompt available"
+        );
+
+        event.preventDefault();
+
+        deferredPrompt = event;
+
+        installBtn.style.display =
+            "inline-block";
+
+    }
+);
+
+
+
+/*
+ * Install button click
+ */
+
+installBtn.addEventListener(
+    "click",
+    async () => {
+
+        if (!deferredPrompt) {
+
+            alert(
+                "Install option is not available right now. Please use Chrome menu → Add to Home screen."
+            );
+
+            return;
+
+        }
+
+
+        deferredPrompt.prompt();
+
+
+        const result =
+            await deferredPrompt.userChoice;
+
+
+        console.log(
+            "Install result:",
+            result.outcome
+        );
+
+
+        deferredPrompt = null;
+
+        installBtn.style.display =
+            "none";
+
+    }
+);
+
+
+
+/*
+ * When app is installed
+ */
+
+window.addEventListener(
+    "appinstalled",
+    () => {
+
+        console.log(
+            "✅ APL Tournament Platform installed"
+        );
+
+        installBtn.style.display =
+            "none";
+
+    }
+);
 
 </script>
 
