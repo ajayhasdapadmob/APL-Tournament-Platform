@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Team Registration</title>
+
+<link
+    rel="stylesheet"
+    href="css/style.css"
+>
+
+<style>
+
+.registration-card {
+
+    max-width: 650px;
+
+    margin: auto;
+
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0,0,0,0.08);
+}
+
+
+.registration-card h2 {
+
+    margin-bottom: 20px;
+
+}
+
+
+.form-group {
+
+    margin-bottom: 16px;
+
+}
+
+
+.form-group label {
+
+    display: block;
+
+    font-weight: bold;
+
+    margin-bottom: 7px;
+
+}
+
+
+.form-group input,
+.form-group textarea {
+
+    width: 100%;
+
+    padding: 13px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 8px;
+
+    font-size: 15px;
+
+    box-sizing: border-box;
+}
+
+
+.form-group textarea {
+
+    min-height: 120px;
+
+    resize: vertical;
+
+}
+
+
+#message {
+
+    margin-top: 18px;
+
+    font-weight: bold;
+
+    text-align: center;
+
+}
+
+
+.buttons {
+
+    display: flex;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    margin-top: 20px;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header class="top-header">
+
+    <div class="logo">
+        🏏
+    </div>
+
+    <div>
+
+        <h1>
+            Team Registration
+        </h1>
+
+        <p>
+            APL Tournament Platform
+        </p>
+
+    </div>
+
+</header>
+
+
+
+<main class="home-container">
+
+
+<div class="registration-card">
+
+
+<h2>
+👥 Register Your Team
+</h2>
+
+
+
+<form id="registrationForm">
+
+
+<!-- TOURNAMENT -->
+
+<div class="form-group">
+
+<label>
+🏆 Tournament Name
+</label>
+
+<input
+    type="text"
+    id="tournamentName"
+    placeholder="Tournament Name"
+    required
+>
+
+</div>
+
+
+
+<!-- VENUE -->
+
+<div class="form-group">
+
+<label>
+📍 Venue
+</label>
+
+<input
+    type="text"
+    id="venue"
+    placeholder="Venue"
+    required
+>
+
+</div>
+
+
+
+<!-- TEAM -->
+
+<div class="form-group">
+
+<label>
+🏏 Team Name
+</label>
+
+<input
+    type="text"
+    id="teamName"
+    placeholder="Enter Team Name"
+    required
+>
+
+</div>
+
+
+
+<!-- CAPTAIN -->
+
+<div class="form-group">
+
+<label>
+👤 Captain Name
+</label>
+
+<input
+    type="text"
+    id="captainName"
+    placeholder="Captain Name"
+    required
+>
+
+</div>
+
+
+
+<!-- MOBILE -->
+
+<div class="form-group">
+
+<label>
+📞 Mobile Number
+</label>
+
+<input
+    type="tel"
+    id="mobile"
+    placeholder="Mobile Number"
+    required
+>
+
+</div>
+
+
+
+<!-- EMAIL -->
+
+<div class="form-group">
+
+<label>
+📧 Email
+</label>
+
+<input
+    type="email"
+    id="email"
+    placeholder="Email Address"
+>
+
+</div>
+
+
+
+<!-- CITY -->
+
+<div class="form-group">
+
+<label>
+🏙️ City
+</label>
+
+<input
+    type="text"
+    id="city"
+    placeholder="City"
+    required
+>
+
+</div>
+
+
+
+<!-- PLAYERS -->
+
+<div class="form-group">
+
+<label>
+👥 Player Names
+</label>
+
+<textarea
+    id="players"
+    placeholder="Enter player names separated by comma"
+    required
+></textarea>
+
+</div>
+
+
+
+<div class="buttons">
+
+
+<button
+    type="submit"
+    class="btn primary-btn"
+>
+    🏏 Register Team
+</button>
+
+
+<a
+    href="javascript:history.back()"
+    class="btn"
+>
+    ⬅ Back
+</a>
+
+
+</div>
+
+
+</form>
+
+
+
+<p id="message"></p>
+
+
+</div>
+
+
+</main>
+
+
+
+<footer>
+
+<p>
+🏏 APL Tournament Platform
+</p>
+
+</footer>
+
+
+
+<script
+    type="module"
+    src="js/registration.js"
+></script>
+
+
+</body>
+
+</html>

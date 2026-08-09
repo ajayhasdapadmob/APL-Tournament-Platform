@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Team Details</title>
+
+<link
+    rel="stylesheet"
+    href="css/style.css"
+>
+
+<style>
+
+.team-container {
+
+    max-width: 900px;
+
+    margin: auto;
+
+}
+
+
+.team-header {
+
+    background: white;
+
+    padding: 22px;
+
+    border-radius: 16px;
+
+    margin-bottom: 20px;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0,0,0,0.08);
+
+}
+
+
+.team-header h2 {
+
+    color: #1e3a8a;
+
+}
+
+
+.tournament-id {
+
+    background: #eff6ff;
+
+    padding: 12px;
+
+    border-radius: 8px;
+
+    margin-top: 12px;
+
+    word-break: break-all;
+
+}
+
+
+.team-card {
+
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0,0,0,0.08);
+
+}
+
+
+.team-name {
+
+    font-size: 26px;
+
+    font-weight: bold;
+
+    color: #1e3a8a;
+
+    margin-bottom: 20px;
+
+}
+
+
+.info-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(220px, 1fr)
+        );
+
+    gap: 12px;
+
+}
+
+
+.info-item {
+
+    background: #f8fafc;
+
+    padding: 14px;
+
+    border-radius: 9px;
+
+}
+
+
+.info-item b {
+
+    display: block;
+
+    margin-bottom: 5px;
+
+}
+
+
+.players {
+
+    margin-top: 22px;
+
+}
+
+
+.player {
+
+    background: #f8fafc;
+
+    padding: 12px;
+
+    border-radius: 8px;
+
+    margin-bottom: 8px;
+
+}
+
+
+.status {
+
+    display: inline-block;
+
+    padding: 6px 10px;
+
+    border-radius: 7px;
+
+    font-weight: bold;
+
+}
+
+
+.navigation {
+
+    display: flex;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-top: 20px;
+
+}
+
+
+.error-box {
+
+    background: white;
+
+    padding: 30px;
+
+    border-radius: 15px;
+
+    text-align: center;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header class="top-header">
+
+    <div class="logo">
+        🏏
+    </div>
+
+    <div>
+
+        <h1>
+            Team Details
+        </h1>
+
+        <p>
+            APL Tournament Platform
+        </p>
+
+    </div>
+
+</header>
+
+
+<main class="home-container">
+
+
+<div class="team-container">
+
+
+    <div
+        id="tournamentInfo"
+        class="team-header"
+    >
+
+        ⏳ Loading Tournament...
+
+    </div>
+
+
+
+    <div
+        id="teamDetails"
+        class="team-card"
+    >
+
+        ⏳ Loading Team...
+
+    </div>
+
+
+
+    <div class="navigation">
+
+
+        <a
+            id="tournamentLink"
+            href="#"
+            class="btn"
+        >
+
+            🏆 Tournament
+
+        </a>
+
+
+        <a
+            id="adminLink"
+            href="#"
+            class="btn"
+        >
+
+            ⚙️ Manage Teams
+
+        </a>
+
+
+        <a
+            id="scheduleLink"
+            href="#"
+            class="btn"
+        >
+
+            📅 Schedule
+
+        </a>
+
+
+        <a
+            id="resultsLink"
+            href="#"
+            class="btn"
+        >
+
+            🏆 Results
+
+        </a>
+
+
+        <a
+            id="pointsLink"
+            href="#"
+            class="btn"
+        >
+
+            📈 Points Table
+
+        </a>
+
+
+    </div>
+
+
+</div>
+
+
+</main>
+
+
+<footer>
+
+    <p>
+        🏏 APL Tournament Platform
+    </p>
+
+</footer>
+
+
+<script
+    type="module"
+    src="js/team.js"
+></script>
+
+
+</body>
+
+</html>

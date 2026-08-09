@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Match Results</title>
+
+<link
+    rel="stylesheet"
+    href="css/style.css"
+>
+
+<style>
+
+.results-container {
+    max-width: 1000px;
+    margin: auto;
+}
+
+.result-header {
+    background: white;
+    padding: 22px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.08);
+}
+
+.result-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.match-title {
+    font-weight: bold;
+    color: #1d4ed8;
+    margin-bottom: 12px;
+}
+
+.teams {
+    font-size: 19px;
+    font-weight: bold;
+    margin: 12px 0;
+}
+
+.info {
+    margin: 7px 0;
+    color: #4b5563;
+}
+
+.result-form {
+    margin-top: 18px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+}
+
+.result-form select,
+.result-form input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px;
+    margin: 6px 0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.save-result {
+    margin-top: 10px;
+}
+
+.delete-result {
+    background: #991b1b;
+    color: white;
+    border: none;
+    padding: 9px 13px;
+    border-radius: 7px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.empty {
+    background: white;
+    padding: 30px;
+    text-align: center;
+    border-radius: 15px;
+}
+
+.result-success {
+    background: #dcfce7;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header class="top-header">
+
+    <div class="logo">
+        🏏
+    </div>
+
+    <div>
+
+        <h1>
+            Match Results
+        </h1>
+
+        <p>
+            APL Tournament Platform
+        </p>
+
+    </div>
+
+</header>
+
+
+
+<main class="home-container">
+
+
+<div class="results-container">
+
+
+<div
+    id="tournamentInfo"
+    class="result-header"
+>
+
+    ⏳ Loading Tournament...
+
+</div>
+
+
+
+<h2>
+    🏆 Match Results
+</h2>
+
+
+<div id="resultsList">
+
+    <div class="empty">
+        ⏳ Loading Matches...
+    </div>
+
+</div>
+
+
+
+<br>
+
+
+<div style="text-align:center;">
+
+    <a
+        id="backTournament"
+        href="my-tournaments.html"
+        class="btn"
+    >
+        ⬅ Back
+    </a>
+
+</div>
+
+
+</div>
+
+</main>
+
+
+
+<footer>
+
+<p>
+🏏 APL Tournament Platform
+</p>
+
+</footer>
+
+
+
+<script
+    type="module"
+    src="js/results.js"
+></script>
+
+
+</body>
+
+</html>

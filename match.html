@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Match Details</title>
+
+<link
+    rel="stylesheet"
+    href="css/style.css"
+>
+
+<style>
+
+.match-container {
+
+    max-width: 850px;
+
+    margin: auto;
+
+}
+
+
+.match-card {
+
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0,0,0,0.08);
+
+}
+
+
+.match-header {
+
+    background: #eff6ff;
+
+    padding: 15px;
+
+    border-radius: 10px;
+
+    margin-bottom: 20px;
+
+}
+
+
+.id-box {
+
+    background: #f8fafc;
+
+    padding: 10px;
+
+    border-radius: 8px;
+
+    margin-top: 10px;
+
+    word-break: break-all;
+
+}
+
+
+.teams {
+
+    text-align: center;
+
+    font-size: 25px;
+
+    font-weight: bold;
+
+    margin: 25px 0;
+
+}
+
+
+.info {
+
+    background: #f8fafc;
+
+    padding: 14px;
+
+    border-radius: 9px;
+
+    margin: 10px 0;
+
+}
+
+
+.result-box {
+
+    background: #dcfce7;
+
+    padding: 15px;
+
+    border-radius: 10px;
+
+    margin-top: 20px;
+
+}
+
+
+.empty {
+
+    background: white;
+
+    padding: 30px;
+
+    border-radius: 15px;
+
+    text-align: center;
+
+}
+
+
+.navigation {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    justify-content: center;
+
+    gap: 10px;
+
+    margin-top: 20px;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header class="top-header">
+
+    <div class="logo">
+        🏏
+    </div>
+
+    <div>
+
+        <h1>
+            Match Details
+        </h1>
+
+        <p>
+            APL Tournament Platform
+        </p>
+
+    </div>
+
+</header>
+
+
+
+<main class="home-container">
+
+
+<div class="match-container">
+
+
+    <div
+        id="matchContainer"
+        class="match-card"
+    >
+
+        <div class="empty">
+
+            ⏳ Loading Match...
+
+        </div>
+
+    </div>
+
+
+    <div class="navigation">
+
+
+        <a
+            id="tournamentLink"
+            href="#"
+            class="btn"
+        >
+            🏆 Tournament
+        </a>
+
+
+        <a
+            id="scheduleLink"
+            href="#"
+            class="btn"
+        >
+            📅 Schedule
+        </a>
+
+
+        <a
+            id="resultsLink"
+            href="#"
+            class="btn"
+        >
+            🏆 Results
+        </a>
+
+
+        <a
+            id="liveScoreLink"
+            href="#"
+            class="btn"
+        >
+            🔴 Live Score
+        </a>
+
+
+        <a
+            id="pointsLink"
+            href="#"
+            class="btn"
+        >
+            📈 Points Table
+        </a>
+
+
+    </div>
+
+
+</div>
+
+
+</main>
+
+
+
+<footer>
+
+    <p>
+        🏏 APL Tournament Platform
+    </p>
+
+</footer>
+
+
+
+<script
+    type="module"
+    src="js/match.js"
+></script>
+
+
+</body>
+
+</html>

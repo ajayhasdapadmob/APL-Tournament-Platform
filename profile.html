@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>My Profile - APL Tournament Platform</title>
+
+<link
+    rel="stylesheet"
+    href="css/profile.css"
+>
+
+</head>
+
+
+<body>
+
+
+<header class="profile-header">
+
+    <div class="profile-logo">
+        🏏
+    </div>
+
+    <div>
+
+        <h1>
+            My Profile
+        </h1>
+
+        <p>
+            APL Tournament Platform
+        </p>
+
+    </div>
+
+</header>
+
+
+
+<main class="profile-container">
+
+
+<!-- PROFILE CARD -->
+
+<section class="profile-card">
+
+
+    <div class="avatar">
+        👤
+    </div>
+
+
+    <h2 id="profileName">
+        Organizer
+    </h2>
+
+
+    <p id="profileEmail">
+        Loading email...
+    </p>
+
+
+</section>
+
+
+
+<!-- PROFILE INFORMATION -->
+
+<section class="info-card">
+
+    <h2>
+        👤 Personal Information
+    </h2>
+
+
+    <label>
+        Full Name
+    </label>
+
+    <input
+        type="text"
+        id="name"
+        placeholder="Enter your name"
+    >
+
+
+    <label>
+        Email
+    </label>
+
+    <input
+        type="email"
+        id="email"
+        placeholder="Email"
+        readonly
+    >
+
+
+    <label>
+        Mobile Number
+    </label>
+
+    <input
+        type="tel"
+        id="mobile"
+        placeholder="Enter mobile number"
+    >
+
+
+    <label>
+        City
+    </label>
+
+    <input
+        type="text"
+        id="city"
+        placeholder="Enter city"
+    >
+
+
+    <label>
+        Organization / Club
+    </label>
+
+    <input
+        type="text"
+        id="organization"
+        placeholder="Enter organization or club"
+    >
+
+
+    <button
+        id="saveProfileBtn"
+        class="save-btn"
+    >
+        💾 Save Profile
+    </button>
+
+
+    <p id="message"></p>
+
+</section>
+
+
+
+<!-- ACCOUNT INFORMATION -->
+
+<section class="info-card">
+
+    <h2>
+        🔐 Account
+    </h2>
+
+
+    <p>
+        <b>Account Status:</b>
+        <span id="accountStatus">
+            Active
+        </span>
+    </p>
+
+
+    <p>
+        <b>User ID:</b>
+        <span id="userId">
+            Loading...
+        </span>
+    </p>
+
+
+</section>
+
+
+
+<!-- ACTION BUTTONS -->
+
+<section class="actions">
+
+    <a
+        href="dashboard.html"
+        class="back-btn"
+    >
+        ⬅ Dashboard
+    </a>
+
+
+    <button
+        id="logoutBtn"
+        class="logout-btn"
+    >
+        🚪 Logout
+    </button>
+
+</section>
+
+
+</main>
+
+
+
+<footer>
+
+<p>
+🏏 APL Tournament Platform
+</p>
+
+</footer>
+
+
+
+<script
+    type="module"
+    src="js/profile.js"
+></script>
+
+
+</body>
+
+</html>

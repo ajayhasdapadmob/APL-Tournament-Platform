@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Player Statistics - APL Tournament</title>
+
+<link
+    rel="stylesheet"
+    href="css/style.css"
+>
+
+<style>
+
+.stats-container {
+    max-width: 1100px;
+    margin: auto;
+}
+
+.page-header {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.08);
+}
+
+.stats-icon {
+    font-size: 50px;
+}
+
+.player-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.player-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.player-avatar {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+}
+
+.player-header h3 {
+    margin: 0;
+}
+
+.player-header p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(110px, 1fr)
+    );
+    gap: 10px;
+}
+
+.stat-box {
+    background: #f8fafc;
+    padding: 13px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.stat-box strong {
+    display: block;
+    font-size: 20px;
+}
+
+.stat-box span {
+    font-size: 13px;
+    color: #666;
+}
+
+.empty {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header class="top-header">
+
+    <div class="logo">
+        🏏
+    </div>
+
+    <div>
+
+        <h1>
+            Player Statistics
+        </h1>
+
+        <p>
+            APL Tournament Platform
+        </p>
+
+    </div>
+
+</header>
+
+
+
+<main class="home-container">
+
+
+<div class="stats-container">
+
+
+<div class="page-header">
+
+    <div class="stats-icon">
+        📊
+    </div>
+
+    <h2>
+        Player Statistics
+    </h2>
+
+    <p>
+        Tournament Player Performance
+    </p>
+
+</div>
+
+
+
+<div
+    id="tournamentInfo"
+    class="page-header"
+>
+
+    ⏳ Loading Tournament...
+
+</div>
+
+
+
+<div id="playersList">
+
+    <div class="empty">
+
+        ⏳ Loading Player Statistics...
+
+    </div>
+
+</div>
+
+
+
+<br>
+
+
+<div style="text-align:center;">
+
+    <a
+        id="backBtn"
+        href="my-tournaments.html"
+        class="btn"
+    >
+        ⬅ Back
+    </a>
+
+</div>
+
+
+</div>
+
+</main>
+
+
+
+<footer>
+
+<p>
+🏏 APL Tournament Platform
+</p>
+
+</footer>
+
+
+
+<script
+    type="module"
+    src="js/playerstats.js"
+></script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Tournament Details</title>
+
+<link
+    rel="stylesheet"
+    href="css/style.css"
+>
+
+<style>
+
+.tournament-details {
+
+    max-width: 850px;
+
+    margin: auto;
+
+}
+
+
+.tournament-info {
+
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0,0,0,0.08);
+
+}
+
+
+.tournament-info h2 {
+
+    margin-bottom: 20px;
+
+    color: #1e3a8a;
+
+}
+
+
+.info-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(220px, 1fr)
+        );
+
+    gap: 12px;
+
+}
+
+
+.info-item {
+
+    background: #f8fafc;
+
+    padding: 14px;
+
+    border-radius: 9px;
+
+}
+
+
+.info-item b {
+
+    display: block;
+
+    margin-bottom: 5px;
+
+}
+
+
+.description {
+
+    margin-top: 18px;
+
+    padding: 15px;
+
+    background: #f8fafc;
+
+    border-radius: 9px;
+
+}
+
+
+.tournament-buttons {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-top: 22px;
+
+}
+
+
+.error-box {
+
+    background: white;
+
+    padding: 30px;
+
+    border-radius: 15px;
+
+    text-align: center;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header class="top-header">
+
+    <div class="logo">
+        🏏
+    </div>
+
+    <div>
+
+        <h1>
+            Tournament Details
+        </h1>
+
+        <p>
+            APL Tournament Platform
+        </p>
+
+    </div>
+
+</header>
+
+
+
+<main class="home-container">
+
+
+<div
+    id="tournamentDetails"
+    class="tournament-details"
+>
+
+    <div class="error-box">
+
+        ⏳ Loading Tournament...
+
+    </div>
+
+</div>
+
+
+<br>
+
+
+<div style="text-align:center;">
+
+    <a
+        href="my-tournaments.html"
+        class="btn"
+    >
+        ⬅ My Tournaments
+    </a>
+
+</div>
+
+
+</main>
+
+
+
+<footer>
+
+    <p>
+        🏏 APL Tournament Platform
+    </p>
+
+</footer>
+
+
+
+<script
+    type="module"
+    src="js/tournament.js"
+></script>
+
+
+</body>
+
+</html>

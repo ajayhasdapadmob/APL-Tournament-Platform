@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Orange Cap - APL Tournament</title>
+
+<link
+    rel="stylesheet"
+    href="css/style.css"
+>
+
+<style>
+
+.orange-container {
+    max-width: 1000px;
+    margin: auto;
+}
+
+.page-header {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.08);
+}
+
+.orange-icon {
+    font-size: 55px;
+}
+
+.player-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.rank {
+    font-size: 25px;
+    font-weight: bold;
+    min-width: 45px;
+}
+
+.player-info {
+    flex: 1;
+}
+
+.player-info h3 {
+    margin: 0 0 7px 0;
+}
+
+.player-info p {
+    margin: 5px 0;
+}
+
+.runs {
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.empty {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header class="top-header">
+
+    <div class="logo">
+        🏏
+    </div>
+
+    <div>
+
+        <h1>
+            Orange Cap
+        </h1>
+
+        <p>
+            APL Tournament Platform
+        </p>
+
+    </div>
+
+</header>
+
+
+
+<main class="home-container">
+
+
+<div class="orange-container">
+
+
+<div class="page-header">
+
+    <div class="orange-icon">
+        🟠
+    </div>
+
+    <h2>
+        Orange Cap
+    </h2>
+
+    <p>
+        Top Run Scorers
+    </p>
+
+</div>
+
+
+
+<div
+    id="tournamentInfo"
+    class="page-header"
+>
+
+    ⏳ Loading Tournament...
+
+</div>
+
+
+
+<div id="playersList">
+
+    <div class="empty">
+
+        ⏳ Loading Player Statistics...
+
+    </div>
+
+</div>
+
+
+
+<br>
+
+
+<div style="text-align:center;">
+
+    <a
+        id="backBtn"
+        href="my-tournaments.html"
+        class="btn"
+    >
+        ⬅ Back
+    </a>
+
+</div>
+
+
+</div>
+
+</main>
+
+
+
+<footer>
+
+<p>
+🏏 APL Tournament Platform
+</p>
+
+</footer>
+
+
+
+<script
+    type="module"
+    src="js/orange.js"
+></script>
+
+
+</body>
+
+</html>

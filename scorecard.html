@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Match Score</title>
+
+<link
+    rel="stylesheet"
+    href="css/style.css"
+>
+
+<style>
+
+.score-container {
+
+    max-width: 900px;
+
+    margin: auto;
+
+}
+
+
+.score-header {
+
+    background: white;
+
+    padding: 22px;
+
+    border-radius: 16px;
+
+    margin-bottom: 20px;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0,0,0,0.08);
+
+}
+
+
+.score-header h2 {
+
+    color: #1e3a8a;
+
+}
+
+
+.id-box {
+
+    background: #eff6ff;
+
+    padding: 12px;
+
+    border-radius: 8px;
+
+    margin-top: 12px;
+
+    word-break: break-all;
+
+}
+
+
+.match-card {
+
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0,0,0,0.08);
+
+}
+
+
+.teams {
+
+    text-align: center;
+
+    font-size: 25px;
+
+    font-weight: bold;
+
+    margin: 20px 0;
+
+}
+
+
+.score-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(220px, 1fr)
+        );
+
+    gap: 15px;
+
+}
+
+
+.score-box {
+
+    background: #f8fafc;
+
+    padding: 20px;
+
+    border-radius: 12px;
+
+    text-align: center;
+
+}
+
+
+.score-box h3 {
+
+    margin-bottom: 12px;
+
+}
+
+
+.score-box input {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 13px;
+
+    font-size: 20px;
+
+    text-align: center;
+
+    border: 1px solid #ccc;
+
+    border-radius: 8px;
+
+}
+
+
+.result-box {
+
+    margin-top: 20px;
+
+}
+
+
+.result-box input,
+.result-box select {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 12px;
+
+    border: 1px solid #ccc;
+
+    border-radius: 8px;
+
+}
+
+
+.save-btn {
+
+    width: 100%;
+
+    margin-top: 20px;
+
+    padding: 14px;
+
+    border: none;
+
+    border-radius: 9px;
+
+    cursor: pointer;
+
+    font-size: 17px;
+
+}
+
+
+.message {
+
+    margin-top: 15px;
+
+    padding: 12px;
+
+    border-radius: 8px;
+
+    display: none;
+
+}
+
+
+.success {
+
+    background: #dcfce7;
+
+    color: #166534;
+
+}
+
+
+.error {
+
+    background: #fee2e2;
+
+    color: #991b1b;
+
+}
+
+
+.navigation {
+
+    display: flex;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-top: 20px;
+
+}
+
+
+.error-box {
+
+    background: white;
+
+    padding: 30px;
+
+    border-radius: 15px;
+
+    text-align: center;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header class="top-header">
+
+    <div class="logo">
+
+        🏏
+
+    </div>
+
+
+    <div>
+
+        <h1>
+            Match Score
+        </h1>
+
+        <p>
+            APL Tournament Platform
+        </p>
+
+    </div>
+
+</header>
+
+
+
+<main class="home-container">
+
+
+<div class="score-container">
+
+
+    <div
+        id="tournamentInfo"
+        class="score-header"
+    >
+
+        ⏳ Loading Tournament...
+
+    </div>
+
+
+
+    <div
+        id="matchCard"
+        class="match-card"
+    >
+
+        ⏳ Loading Match...
+
+    </div>
+
+
+
+    <div
+        id="message"
+        class="message"
+    ></div>
+
+
+
+    <div class="navigation">
+
+
+        <a
+            id="tournamentLink"
+            href="#"
+            class="btn"
+        >
+
+            🏆 Tournament
+
+        </a>
+
+
+        <a
+            id="scheduleLink"
+            href="#"
+            class="btn"
+        >
+
+            📅 Schedule
+
+        </a>
+
+
+        <a
+            id="resultsLink"
+            href="#"
+            class="btn"
+        >
+
+            🏆 Results
+
+        </a>
+
+
+        <a
+            id="pointsLink"
+            href="#"
+            class="btn"
+        >
+
+            📈 Points Table
+
+        </a>
+
+
+    </div>
+
+
+</div>
+
+
+</main>
+
+
+
+<footer>
+
+    <p>
+        🏏 APL Tournament Platform
+    </p>
+
+</footer>
+
+
+
+<script
+    type="module"
+    src="js/score.js"
+></script>
+
+
+</body>
+
+</html>

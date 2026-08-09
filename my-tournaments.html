@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>My Tournaments</title>
+
+<link
+    rel="stylesheet"
+    href="css/style.css"
+>
+
+<style>
+
+.tournament-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(280px, 1fr)
+        );
+
+    gap: 20px;
+
+}
+
+
+.tournament-card {
+
+    background: white;
+
+    padding: 22px;
+
+    border-radius: 15px;
+
+    box-shadow:
+        0 5px 18px
+        rgba(0,0,0,0.08);
+
+}
+
+
+.tournament-card h2 {
+
+    margin-bottom: 12px;
+
+}
+
+
+.tournament-card p {
+
+    margin: 8px 0;
+
+    color: #4b5563;
+
+}
+
+
+.card-buttons {
+
+    display: flex;
+
+    gap: 8px;
+
+    flex-wrap: wrap;
+
+    margin-top: 18px;
+
+}
+
+
+.empty-message {
+
+    text-align: center;
+
+    background: white;
+
+    padding: 35px;
+
+    border-radius: 15px;
+
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header class="top-header">
+
+    <div class="logo">
+        🏏
+    </div>
+
+    <div>
+
+        <h1>
+            My Tournaments
+        </h1>
+
+        <p>
+            APL Tournament Platform
+        </p>
+
+    </div>
+
+</header>
+
+
+
+<main class="home-container">
+
+
+<div style="margin-bottom:20px;">
+
+    <a
+        href="dashboard.html"
+        class="btn"
+    >
+        ⬅ Dashboard
+    </a>
+
+
+    <a
+        href="create-tournament.html"
+        class="btn primary-btn"
+    >
+        ➕ Create Tournament
+    </a>
+
+</div>
+
+
+
+<div
+    id="tournamentList"
+    class="tournament-grid"
+>
+
+    <div class="empty-message">
+
+        ⏳ Loading Tournaments...
+
+    </div>
+
+</div>
+
+
+</main>
+
+
+
+<footer>
+
+    <p>
+        🏏 APL Tournament Platform
+    </p>
+
+</footer>
+
+
+
+<script
+    type="module"
+    src="js/my-tournaments.js"
+></script>
+
+
+</body>
+
+</html>

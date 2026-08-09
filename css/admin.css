@@ -1,0 +1,400 @@
+/* =========================
+   ADMIN PANEL
+========================= */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f1f5f9;
+    color: #1f2937;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.admin-header {
+    background: linear-gradient(
+        135deg,
+        #111827,
+        #374151
+    );
+
+    color: white;
+    padding: 25px 18px;
+    text-align: center;
+}
+
+.admin-header h1 {
+    margin: 0;
+    font-size: 27px;
+}
+
+.admin-header p {
+    margin: 8px 0 0;
+    opacity: 0.85;
+}
+
+
+/* =========================
+   CONTAINER
+========================= */
+
+.admin-container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 25px 15px;
+}
+
+
+/* =========================
+   TOURNAMENT SELECT
+========================= */
+
+.select-box {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+
+    box-shadow:
+        0 5px 18px
+        rgba(0,0,0,0.08);
+}
+
+.select-box label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+#tournamentSelect {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: white;
+    font-size: 15px;
+}
+
+
+/* =========================
+   STATISTICS
+========================= */
+
+.admin-stats {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(160px, 1fr)
+        );
+
+    gap: 15px;
+
+    margin-bottom: 25px;
+}
+
+.admin-stat {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+
+    box-shadow:
+        0 5px 18px
+        rgba(0,0,0,0.08);
+}
+
+.admin-stat-icon {
+    font-size: 30px;
+}
+
+.admin-stat h2 {
+    margin: 8px 0 5px;
+    font-size: 28px;
+}
+
+.admin-stat p {
+    margin: 0;
+    color: #64748b;
+    font-weight: bold;
+}
+
+
+/* =========================
+   TEAM LIST
+========================= */
+
+#teamList {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(300px, 1fr)
+        );
+
+    gap: 18px;
+}
+
+
+/* =========================
+   TEAM CARD
+========================= */
+
+.team-card {
+    background: white;
+
+    padding: 20px;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 5px 18px
+        rgba(0,0,0,0.08);
+}
+
+.team-card h3 {
+    margin-top: 0;
+
+    color: #1d4ed8;
+}
+
+.team-card p {
+    margin: 9px 0;
+
+    color: #475569;
+
+    word-break: break-word;
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+.status {
+    padding: 10px;
+
+    border-radius: 8px;
+
+    background: #f8fafc;
+
+    margin-top: 15px !important;
+
+    font-weight: bold;
+}
+
+
+/* =========================
+   ALL ACTION BUTTONS
+========================= */
+
+.team-card button {
+    border: none;
+
+    padding: 10px 13px;
+
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    color: white;
+
+    font-weight: bold;
+
+    margin: 4px;
+
+    transition: 0.2s;
+}
+
+.team-card button:hover {
+    transform: translateY(-2px);
+
+    opacity: 0.9;
+}
+
+
+/* =========================
+   APPROVE
+========================= */
+
+.approve-btn {
+    background: #059669;
+}
+
+
+/* =========================
+   REJECT
+========================= */
+
+.reject-btn {
+    background: #dc2626;
+}
+
+
+/* =========================
+   PENDING
+========================= */
+
+.pending-btn {
+    background: #d97706;
+}
+
+
+/* =========================
+   PAYMENT PAID
+========================= */
+
+.paid-btn {
+    background: #059669;
+}
+
+
+/* =========================
+   ON HOLD
+========================= */
+
+.hold-btn {
+    background: #7c3aed;
+}
+
+
+/* =========================
+   CANCEL
+========================= */
+
+.cancel-btn {
+    background: #4b5563;
+}
+
+
+/* =========================
+   REMARK
+========================= */
+
+.remark-btn {
+    background: #2563eb;
+}
+
+
+/* =========================
+   DELETE
+========================= */
+
+.delete-btn {
+    background: #991b1b;
+}
+
+
+/* =========================
+   RESTORE
+========================= */
+
+.restore-btn {
+    background: #0891b2;
+}
+
+
+/* =========================
+   EMPTY MESSAGE
+========================= */
+
+.empty-message {
+    background: white;
+
+    padding: 35px;
+
+    border-radius: 15px;
+
+    text-align: center;
+
+    color: #64748b;
+
+    box-shadow:
+        0 5px 18px
+        rgba(0,0,0,0.06);
+}
+
+
+/* =========================
+   SEARCH
+========================= */
+
+.admin-search {
+    width: 100%;
+
+    padding: 13px;
+
+    border: 1px solid #cbd5e1;
+
+    border-radius: 9px;
+
+    margin-bottom: 20px;
+
+    font-size: 15px;
+}
+
+
+/* =========================
+   BACK BUTTON
+========================= */
+
+.back-btn {
+    display: inline-block;
+
+    margin-top: 25px;
+
+    padding: 11px 18px;
+
+    background: #475569;
+
+    color: white;
+
+    text-decoration: none;
+
+    border-radius: 9px;
+
+    font-weight: bold;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+
+    .admin-header h1 {
+        font-size: 23px;
+    }
+
+    .admin-container {
+        padding: 18px 12px;
+    }
+
+    #teamList {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-stats {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .team-card {
+        padding: 16px;
+    }
+
+    .team-card button {
+        width: calc(50% - 10px);
+    }
+
+}

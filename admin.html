@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Admin Panel</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+
+.admin-container {
+    max-width: 1100px;
+    margin: auto;
+}
+
+.admin-header {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+#tournamentSelect {
+    width: 100%;
+    padding: 13px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+}
+
+.stat-card h2 {
+    margin: 5px 0;
+}
+
+.team-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.team-card h3 {
+    margin-top: 0;
+}
+
+.team-card p {
+    margin: 7px 0;
+}
+
+.status {
+    font-weight: bold;
+    padding: 8px;
+    border-radius: 7px;
+    background: #f3f4f6;
+}
+
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 15px;
+}
+
+.action-buttons button {
+    padding: 9px 12px;
+    border: none;
+    border-radius: 7px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.pending-btn {
+    background: #d97706;
+}
+
+.approved-btn {
+    background: #059669;
+}
+
+.rejected-btn {
+    background: #dc2626;
+}
+
+.paid-btn {
+    background: #047857;
+}
+
+.hold-btn {
+    background: #7c3aed;
+}
+
+.cancel-btn {
+    background: #4b5563;
+}
+
+.delete-btn {
+    background: #991b1b;
+}
+
+.empty {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header class="top-header">
+
+    <div class="logo">
+        🏏
+    </div>
+
+    <div>
+
+        <h1>
+            Admin Panel
+        </h1>
+
+        <p>
+            APL Tournament Platform
+        </p>
+
+    </div>
+
+</header>
+
+
+
+<main class="home-container">
+
+
+<div class="admin-container">
+
+
+<div class="admin-header">
+
+    <h2>
+        ⚙️ Tournament Management
+    </h2>
+
+    <select id="tournamentSelect">
+
+        <option value="">
+            -- Select Tournament --
+        </option>
+
+    </select>
+
+</div>
+
+
+
+<div class="stats">
+
+
+    <div class="stat-card">
+
+        <div>👥 Total Teams</div>
+
+        <h2 id="totalTeams">0</h2>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div>⏳ Pending</div>
+
+        <h2 id="pendingTeams">0</h2>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div>✅ Approved</div>
+
+        <h2 id="approvedTeams">0</h2>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div>❌ Rejected</div>
+
+        <h2 id="rejectedTeams">0</h2>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div>💰 Paid</div>
+
+        <h2 id="paidTeams">0</h2>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div>⏸️ On Hold</div>
+
+        <h2 id="holdTeams">0</h2>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div>🚫 Cancelled</div>
+
+        <h2 id="cancelledTeams">0</h2>
+
+    </div>
+
+
+</div>
+
+
+
+<div id="teamList">
+
+    <div class="empty">
+
+        Select a tournament to view teams.
+
+    </div>
+
+</div>
+
+
+<br>
+
+
+<div style="text-align:center;">
+
+    <a
+        href="dashboard.html"
+        class="btn"
+    >
+        ⬅ Dashboard
+    </a>
+
+</div>
+
+
+</div>
+
+</main>
+
+
+
+<footer>
+
+<p>
+🏏 APL Tournament Platform
+</p>
+
+</footer>
+
+
+
+<script
+    type="module"
+    src="js/admin.js"
+></script>
+
+
+</body>
+
+</html>
