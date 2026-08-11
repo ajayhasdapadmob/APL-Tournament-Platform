@@ -10,122 +10,12 @@
     content="width=device-width, initial-scale=1.0"
 >
 
-<title>Tournament Details</title>
+<title>Tournament - APL Tournament Platform</title>
 
 <link
     rel="stylesheet"
-    href="css/style.css"
+    href="css/tournament.css"
 >
-
-<style>
-
-.tournament-details {
-
-    max-width: 850px;
-
-    margin: auto;
-
-}
-
-
-.tournament-info {
-
-    background: white;
-
-    padding: 25px;
-
-    border-radius: 16px;
-
-    box-shadow:
-        0 5px 20px
-        rgba(0,0,0,0.08);
-
-}
-
-
-.tournament-info h2 {
-
-    margin-bottom: 20px;
-
-    color: #1e3a8a;
-
-}
-
-
-.info-grid {
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(220px, 1fr)
-        );
-
-    gap: 12px;
-
-}
-
-
-.info-item {
-
-    background: #f8fafc;
-
-    padding: 14px;
-
-    border-radius: 9px;
-
-}
-
-
-.info-item b {
-
-    display: block;
-
-    margin-bottom: 5px;
-
-}
-
-
-.description {
-
-    margin-top: 18px;
-
-    padding: 15px;
-
-    background: #f8fafc;
-
-    border-radius: 9px;
-
-}
-
-
-.tournament-buttons {
-
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 10px;
-
-    margin-top: 22px;
-
-}
-
-
-.error-box {
-
-    background: white;
-
-    padding: 30px;
-
-    border-radius: 15px;
-
-    text-align: center;
-
-}
-
-</style>
 
 </head>
 
@@ -133,73 +23,436 @@
 <body>
 
 
-<header class="top-header">
+<!-- HEADER -->
 
-    <div class="logo">
-        🏏
-    </div>
+<header class="tournament-header">
 
-    <div>
+    <button
+        class="back-btn"
+        onclick="history.back()">
 
-        <h1>
-            Tournament Details
+        ←
+
+    </button>
+
+
+    <div class="header-info">
+
+        <h1 id="tournamentName">
+            Loading...
         </h1>
 
-        <p>
-            APL Tournament Platform
+        <p id="tournamentVenue">
+            Loading tournament...
         </p>
 
     </div>
+
+
+    <button
+        class="more-btn"
+        onclick="toggleMenu()">
+
+        ⋮
+
+    </button>
 
 </header>
 
 
 
-<main class="home-container">
-
+<!-- MENU -->
 
 <div
-    id="tournamentDetails"
-    class="tournament-details"
->
+    id="menu"
+    class="menu">
 
-    <div class="error-box">
+    <a href="profile.html">
+        👤 Profile
+    </a>
 
-        ⏳ Loading Tournament...
-
-    </div>
-
-</div>
-
-
-<br>
-
-
-<div style="text-align:center;">
-
-    <a
-        href="my-tournaments.html"
-        class="btn"
-    >
-        ⬅ My Tournaments
+    <a href="my-tournaments.html">
+        🏆 My Tournaments
     </a>
 
 </div>
+
+
+
+<!-- MAIN -->
+
+<main class="tournament-container">
+
+
+    <!-- TOURNAMENT HERO -->
+
+    <section class="tournament-card">
+
+        <div class="tournament-icon">
+            🏏
+        </div>
+
+
+        <div class="tournament-details">
+
+            <h2 id="heroTournamentName">
+                Tournament
+            </h2>
+
+            <p id="heroVenue">
+                Venue
+            </p>
+
+            <p id="heroStatus">
+                🟢 Active
+            </p>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- QUICK STATS -->
+
+    <section class="stats-grid">
+
+
+        <div class="stat-card">
+
+            <span>👥</span>
+
+            <strong id="teamCount">
+                0
+            </strong>
+
+            <small>
+                Teams
+            </small>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>📅</span>
+
+            <strong id="matchCount">
+                0
+            </strong>
+
+            <small>
+                Matches
+            </small>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>🏏</span>
+
+            <strong id="playerCount">
+                0
+            </strong>
+
+            <small>
+                Players
+            </small>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>🔴</span>
+
+            <strong id="liveCount">
+                0
+            </strong>
+
+            <small>
+                Live
+            </small>
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- TOURNAMENT MENU -->
+
+    <section class="section">
+
+        <h2>
+            Tournament
+        </h2>
+
+
+        <div class="menu-grid">
+
+
+            <a
+                class="menu-card"
+                id="teamsLink"
+                href="#">
+
+                <div class="menu-icon">
+                    👥
+                </div>
+
+                <strong>
+                    Teams
+                </strong>
+
+                <small>
+                    View registered teams
+                </small>
+
+            </a>
+
+
+
+            <a
+                class="menu-card"
+                id="scheduleLink"
+                href="#">
+
+                <div class="menu-icon">
+                    📅
+                </div>
+
+                <strong>
+                    Schedule
+                </strong>
+
+                <small>
+                    Upcoming matches
+                </small>
+
+            </a>
+
+
+
+            <a
+                class="menu-card live-card"
+                id="liveLink"
+                href="#">
+
+                <div class="menu-icon">
+                    🔴
+                </div>
+
+                <strong>
+                    Live Score
+                </strong>
+
+                <small>
+                    Follow live matches
+                </small>
+
+            </a>
+
+
+
+            <a
+                class="menu-card"
+                id="resultsLink"
+                href="#">
+
+                <div class="menu-icon">
+                    🏆
+                </div>
+
+                <strong>
+                    Results
+                </strong>
+
+                <small>
+                    Completed matches
+                </small>
+
+            </a>
+
+
+
+            <a
+                class="menu-card"
+                id="pointsLink"
+                href="#">
+
+                <div class="menu-icon">
+                    📊
+                </div>
+
+                <strong>
+                    Points Table
+                </strong>
+
+                <small>
+                    Points and NRR
+                </small>
+
+            </a>
+
+
+
+            <a
+                class="menu-card"
+                id="statsLink"
+                href="#">
+
+                <div class="menu-icon">
+                    📈
+                </div>
+
+                <strong>
+                    Player Stats
+                </strong>
+
+                <small>
+                    Runs and wickets
+                </small>
+
+            </a>
+
+
+
+            <a
+                class="menu-card"
+                id="orangeLink"
+                href="#">
+
+                <div class="menu-icon">
+                    🟠
+                </div>
+
+                <strong>
+                    Orange Cap
+                </strong>
+
+                <small>
+                    Top run scorer
+                </small>
+
+            </a>
+
+
+
+            <a
+                class="menu-card"
+                id="purpleLink"
+                href="#">
+
+                <div class="menu-icon">
+                    🟣
+                </div>
+
+                <strong>
+                    Purple Cap
+                </strong>
+
+                <small>
+                    Top wicket taker
+                </small>
+
+            </a>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- REGISTER TEAM -->
+
+    <section class="register-card">
+
+        <div>
+
+            <h2>
+                👥 Register Your Team
+            </h2>
+
+            <p>
+                Join this tournament and
+                register your cricket team.
+            </p>
+
+        </div>
+
+
+        <a
+            id="registerTeamLink"
+            href="#"
+            class="register-btn">
+
+            Register Team
+
+        </a>
+
+    </section>
 
 
 </main>
 
 
 
-<footer>
+<!-- BOTTOM NAV -->
 
-    <p>
-        🏏 APL Tournament Platform
-    </p>
-
-</footer>
+<nav class="bottom-nav">
 
 
+    <a href="index.html">
+        🏠
+        <small>Home</small>
+    </a>
+
+
+    <a
+        href="my-tournaments.html"
+        class="active">
+
+        🏆
+        <small>Tournament</small>
+
+    </a>
+
+
+    <a id="bottomLiveLink"
+       href="#">
+
+        🔴
+        <small>Live</small>
+
+    </a>
+
+
+    <a id="bottomPointsLink"
+       href="#">
+
+        📊
+        <small>Points</small>
+
+    </a>
+
+
+    <a href="profile.html">
+
+        👤
+        <small>Profile</small>
+
+    </a>
+
+
+</nav>
+
+
+
+<!-- JAVASCRIPT -->
 
 <script
     type="module"
