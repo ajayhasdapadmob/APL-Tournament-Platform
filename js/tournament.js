@@ -1,5 +1,3 @@
-console.log("🔥 TOURNAMENT JS LOADED");
-
 import { db } from "../firebase.js";
 
 import {
@@ -10,9 +8,16 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 
-/* =========================
+/* =====================================================
+   TOURNAMENT JS START
+===================================================== */
+
+console.log("🔥 TOURNAMENT JS LOADED");
+
+
+/* =====================================================
    GET TOURNAMENT ID
-========================= */
+===================================================== */
 
 const params = new URLSearchParams(
     window.location.search
@@ -20,26 +25,36 @@ const params = new URLSearchParams(
 
 const tournamentId = params.get("id");
 
-console.log("Tournament ID:", tournamentId);
+console.log(
+    "🔥 CURRENT URL:",
+    window.location.href
+);
+
+console.log(
+    "🔥 TOURNAMENT ID:",
+    tournamentId
+);
 
 
-/* =========================
+/* =====================================================
    CHECK TOURNAMENT ID
-========================= */
+===================================================== */
 
 if (!tournamentId) {
 
     document.body.innerHTML = `
         <div style="
-            padding:40px;
+            padding:40px 20px;
             text-align:center;
-            font-family:Arial;
+            font-family:Arial,sans-serif;
         ">
 
-            <h2>❌ Tournament ID Missing</h2>
+            <h2>
+                ❌ Tournament ID Missing
+            </h2>
 
             <p>
-                Please open this tournament
+                Please open the tournament
                 from My Tournaments.
             </p>
 
@@ -49,9 +64,9 @@ if (!tournamentId) {
                 href="my-tournaments.html"
                 style="
                     display:inline-block;
-                    padding:12px 18px;
+                    padding:12px 20px;
                     background:#1d4ed8;
-                    color:white;
+                    color:#fff;
                     text-decoration:none;
                     border-radius:10px;
                 "
@@ -62,211 +77,306 @@ if (!tournamentId) {
         </div>
     `;
 
-    throw new Error("Tournament ID Missing");
+    throw new Error(
+        "Tournament ID Missing"
+    );
 }
 
 
-/* =========================
-   ELEMENTS
-========================= */
+/* =====================================================
+   GET HTML ELEMENTS
+===================================================== */
 
 const tournamentName =
-    document.getElementById("tournamentName");
+    document.getElementById(
+        "tournamentName"
+    );
 
 const tournamentVenue =
-    document.getElementById("tournamentVenue");
+    document.getElementById(
+        "tournamentVenue"
+    );
 
 const heroTournamentName =
-    document.getElementById("heroTournamentName");
+    document.getElementById(
+        "heroTournamentName"
+    );
 
 const heroVenue =
-    document.getElementById("heroVenue");
+    document.getElementById(
+        "heroVenue"
+    );
 
 const heroStatus =
-    document.getElementById("heroStatus");
+    document.getElementById(
+        "heroStatus"
+    );
 
 const teamCount =
-    document.getElementById("teamCount");
+    document.getElementById(
+        "teamCount"
+    );
 
 const matchCount =
-    document.getElementById("matchCount");
+    document.getElementById(
+        "matchCount"
+    );
 
 const playerCount =
-    document.getElementById("playerCount");
+    document.getElementById(
+        "playerCount"
+    );
 
 const liveCount =
-    document.getElementById("liveCount");
+    document.getElementById(
+        "liveCount"
+    );
 
 
-/* =========================
+/* =====================================================
+   HELPER - SHOW ERROR
+===================================================== */
+
+function showPageError(message) {
+
+    console.error(
+        "❌ TOURNAMENT PAGE ERROR:",
+        message
+    );
+
+    const errorBox =
+        document.createElement("div");
+
+    errorBox.style.cssText = `
+        margin:20px;
+        padding:20px;
+        background:#fee2e2;
+        color:#991b1b;
+        border-radius:12px;
+        font-family:Arial,sans-serif;
+        border:1px solid #fecaca;
+    `;
+
+    errorBox.innerHTML = `
+        <strong>❌ Tournament Error</strong>
+        <br><br>
+        ${message}
+    `;
+
+    document.body.prepend(
+        errorBox
+    );
+}
+
+
+/* =====================================================
    LOAD TOURNAMENT
-========================= */
+===================================================== */
 
 async function loadTournament() {
 
+    console.log(
+        "🔥 STARTING TOURNAMENT LOAD"
+    );
+
     try {
 
+        /* ---------------------------------------------
+           FIRESTORE DOCUMENT
+        --------------------------------------------- */
+
+        const tournamentRef =
+            doc(
+                db,
+                "tournaments",
+                tournamentId
+            );
+
+
         console.log(
-            "Loading tournament:",
-            tournamentId
+            "🔥 FIRESTORE PATH:",
+            tournamentRef.path
         );
 
-        const tournamentRef = doc(
-            db,
-            "tournaments",
-            tournamentId
+
+        /* ---------------------------------------------
+           GET DOCUMENT
+        --------------------------------------------- */
+
+        console.log(
+            "⏳ Getting tournament document..."
         );
+
 
         const tournamentSnap =
-            await getDoc(tournamentRef);
+            await getDoc(
+                tournamentRef
+            );
 
 
         console.log(
-            "Tournament exists:",
+            "🔥 DOCUMENT EXISTS:",
             tournamentSnap.exists()
         );
 
 
+        /* ---------------------------------------------
+           DOCUMENT NOT FOUND
+        --------------------------------------------- */
+
         if (!tournamentSnap.exists()) {
 
-            document.body.innerHTML = `
-                <div style="
-                    padding:40px;
-                    text-align:center;
-                    font-family:Arial;
-                ">
+            showPageError(
+                "Tournament document was not found in Firebase."
+            );
 
-                    <h2>❌ Tournament Not Found</h2>
+            if (tournamentName) {
+                tournamentName.textContent =
+                    "Tournament Not Found";
+            }
 
-                    <p>
-                        Tournament ID:
-                        <br>
-                        <b>${tournamentId}</b>
-                    </p>
-
-                    <br>
-
-                    <a
-                        href="my-tournaments.html"
-                        style="
-                            display:inline-block;
-                            padding:12px 18px;
-                            background:#1d4ed8;
-                            color:white;
-                            text-decoration:none;
-                            border-radius:10px;
-                        "
-                    >
-                        🏆 My Tournaments
-                    </a>
-
-                </div>
-            `;
+            if (tournamentVenue) {
+                tournamentVenue.textContent =
+                    "ID: " + tournamentId;
+            }
 
             return;
         }
 
 
+        /* ---------------------------------------------
+           TOURNAMENT DATA
+        --------------------------------------------- */
+
         const tournament =
             tournamentSnap.data();
 
+
         console.log(
-            "Tournament data:",
+            "🔥 TOURNAMENT DATA:",
             tournament
         );
 
 
-        /* =========================
-           TOURNAMENT NAME
-        ========================= */
+        /* ---------------------------------------------
+           NAME
+        --------------------------------------------- */
 
         const name =
             tournament.tournamentName ||
             tournament.name ||
+            tournament.title ||
             "APL Tournament";
 
 
-        /* =========================
+        /* ---------------------------------------------
            VENUE
-        ========================= */
+        --------------------------------------------- */
 
         const venue =
             tournament.venue ||
             tournament.location ||
+            tournament.ground ||
             "Venue not available";
 
 
-        /* =========================
+        console.log(
+            "🏆 NAME:",
+            name
+        );
+
+        console.log(
+            "📍 VENUE:",
+            venue
+        );
+
+
+        /* ---------------------------------------------
            HEADER
-        ========================= */
+        --------------------------------------------- */
 
         if (tournamentName) {
+
             tournamentName.textContent =
                 name;
+
         }
 
 
         if (tournamentVenue) {
+
             tournamentVenue.textContent =
                 venue;
+
         }
 
 
-        /* =========================
+        /* ---------------------------------------------
            HERO
-        ========================= */
+        --------------------------------------------- */
 
         if (heroTournamentName) {
+
             heroTournamentName.textContent =
                 name;
+
         }
 
 
         if (heroVenue) {
+
             heroVenue.textContent =
                 venue;
+
         }
 
 
         if (heroStatus) {
+
             heroStatus.textContent =
                 "🟢 Active";
+
         }
 
 
-        /* =========================
+        /* ---------------------------------------------
            PAGE TITLE
-        ========================= */
+        --------------------------------------------- */
 
         document.title =
             name +
             " - APL Tournament Platform";
 
 
-        /* =========================
-           COUNTS
-        ========================= */
+        /* ---------------------------------------------
+           LOAD COUNTS
+        --------------------------------------------- */
 
         await loadTournamentCounts();
 
 
-        /* =========================
-           LINKS
-        ========================= */
+        /* ---------------------------------------------
+           SET LINKS
+        --------------------------------------------- */
 
         setTournamentLinks();
 
 
         console.log(
-            "Tournament loaded successfully"
+            "✅ TOURNAMENT LOADED SUCCESSFULLY"
         );
 
 
     } catch (error) {
 
         console.error(
-            "Tournament Error:",
+            "❌ TOURNAMENT LOAD ERROR:",
             error
+        );
+
+        showPageError(
+            error.message ||
+            "Unable to load tournament."
         );
 
     }
@@ -274,135 +384,279 @@ async function loadTournament() {
 }
 
 
-/* =========================
-   LOAD COUNTS
-========================= */
+/* =====================================================
+   LOAD TOURNAMENT COUNTS
+===================================================== */
 
 async function loadTournamentCounts() {
 
+    console.log(
+        "🔥 LOADING TOURNAMENT COUNTS"
+    );
+
+
     try {
 
-        /* =========================
+        /* =================================================
            TEAMS
-        ========================= */
+        ================================================= */
 
-        const teamsSnapshot =
-            await getDocs(
-                collection(
-                    db,
-                    "tournaments",
-                    tournamentId,
-                    "teams"
-                )
+        let teamsSnapshot = null;
+
+
+        try {
+
+            teamsSnapshot =
+                await getDocs(
+                    collection(
+                        db,
+                        "tournaments",
+                        tournamentId,
+                        "teams"
+                    )
+                );
+
+
+            console.log(
+                "👥 TEAMS:",
+                teamsSnapshot.size
             );
+
+
+        } catch (error) {
+
+            console.error(
+                "❌ TEAMS ERROR:",
+                error
+            );
+
+        }
 
 
         if (teamCount) {
+
             teamCount.textContent =
-                teamsSnapshot.size;
+                teamsSnapshot
+                    ? teamsSnapshot.size
+                    : 0;
+
         }
 
 
-        /* =========================
+        /* =================================================
            MATCHES
-        ========================= */
+        ================================================= */
 
-        const matchesSnapshot =
-            await getDocs(
-                collection(
-                    db,
-                    "tournaments",
-                    tournamentId,
-                    "matches"
-                )
+        let matchesSnapshot = null;
+
+
+        try {
+
+            matchesSnapshot =
+                await getDocs(
+                    collection(
+                        db,
+                        "tournaments",
+                        tournamentId,
+                        "matches"
+                    )
+                );
+
+
+            console.log(
+                "📅 MATCHES:",
+                matchesSnapshot.size
             );
 
 
-        if (matchCount) {
-            matchCount.textContent =
-                matchesSnapshot.size;
+        } catch (error) {
+
+            console.error(
+                "❌ MATCHES ERROR:",
+                error
+            );
+
         }
 
 
-        /* =========================
+        if (matchCount) {
+
+            matchCount.textContent =
+                matchesSnapshot
+                    ? matchesSnapshot.size
+                    : 0;
+
+        }
+
+
+        /* =================================================
            PLAYERS
-        ========================= */
+        ================================================= */
 
         let players = 0;
 
 
-        teamsSnapshot.forEach(
-            teamDoc => {
+        if (teamsSnapshot) {
 
-                const team =
-                    teamDoc.data();
+            teamsSnapshot.forEach(
+                teamDoc => {
+
+                    const team =
+                        teamDoc.data();
 
 
-                if (
-                    Array.isArray(team.players)
-                ) {
+                    /* -------------------------------------
+                       ARRAY PLAYERS
+                    ------------------------------------- */
 
-                    players +=
-                        team.players.length;
+                    if (
+                        Array.isArray(
+                            team.players
+                        )
+                    ) {
+
+                        players +=
+                            team.players.length;
+
+                    }
+
+
+                    /* -------------------------------------
+                       ALTERNATIVE PLAYER FIELDS
+                    ------------------------------------- */
+
+                    else {
+
+                        const possiblePlayers = [
+
+                            "player1",
+                            "player2",
+                            "player3",
+                            "player4",
+                            "player5",
+                            "player6",
+                            "player7",
+                            "player8",
+                            "player9",
+                            "player10",
+                            "player11",
+                            "player12",
+                            "player13",
+                            "player14",
+                            "player15"
+
+                        ];
+
+
+                        possiblePlayers.forEach(
+                            field => {
+
+                                if (
+                                    team[field]
+                                ) {
+
+                                    players++;
+
+                                }
+
+                            }
+                        );
+
+                    }
 
                 }
+            );
 
-            }
-        );
-
-
-        if (playerCount) {
-            playerCount.textContent =
-                players;
         }
 
 
-        /* =========================
-           LIVE MATCHES
-        ========================= */
+        if (playerCount) {
 
-        let live = 0;
+            playerCount.textContent =
+                players;
 
-
-        matchesSnapshot.forEach(
-            matchDoc => {
-
-                const match =
-                    matchDoc.data();
-
-
-                const status =
-                    String(
-                        match.status || ""
-                    ).toLowerCase();
-
-
-                if (
-                    status === "live" ||
-                    status === "in progress"
-                ) {
-
-                    live++;
-
-                }
-
-            }
-        );
-
-
-        if (liveCount) {
-            liveCount.textContent =
-                live;
         }
 
 
         console.log(
-            "Counts:",
+            "🏏 PLAYERS:",
+            players
+        );
+
+
+        /* =================================================
+           LIVE MATCHES
+        ================================================= */
+
+        let live = 0;
+
+
+        if (matchesSnapshot) {
+
+            matchesSnapshot.forEach(
+                matchDoc => {
+
+                    const match =
+                        matchDoc.data();
+
+
+                    const status =
+                        String(
+                            match.status ||
+                            match.matchStatus ||
+                            ""
+                        ).toLowerCase();
+
+
+                    if (
+                        status === "live" ||
+                        status === "in progress" ||
+                        status === "in_progress" ||
+                        status === "ongoing"
+                    ) {
+
+                        live++;
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        if (liveCount) {
+
+            liveCount.textContent =
+                live;
+
+        }
+
+
+        console.log(
+            "🔴 LIVE MATCHES:",
+            live
+        );
+
+
+        console.log(
+            "📊 FINAL COUNTS:",
             {
-                teams: teamsSnapshot.size,
-                matches: matchesSnapshot.size,
-                players: players,
-                live: live
+                teams:
+                    teamsSnapshot
+                        ? teamsSnapshot.size
+                        : 0,
+
+                matches:
+                    matchesSnapshot
+                        ? matchesSnapshot.size
+                        : 0,
+
+                players:
+                    players,
+
+                live:
+                    live
             }
         );
 
@@ -410,7 +664,7 @@ async function loadTournamentCounts() {
     } catch (error) {
 
         console.error(
-            "Count Error:",
+            "❌ COUNT ERROR:",
             error
         );
 
@@ -419,9 +673,9 @@ async function loadTournamentCounts() {
 }
 
 
-/* =========================
-   TOURNAMENT LINKS
-========================= */
+/* =====================================================
+   SET TOURNAMENT LINKS
+===================================================== */
 
 function setTournamentLinks() {
 
@@ -429,6 +683,12 @@ function setTournamentLinks() {
         encodeURIComponent(
             tournamentId
         );
+
+
+    console.log(
+        "🔗 SETTING LINKS FOR:",
+        tournamentId
+    );
 
 
     const links = {
@@ -483,6 +743,13 @@ function setTournamentLinks() {
                 element.href =
                     links[elementId];
 
+
+                console.log(
+                    "🔗 LINK:",
+                    elementId,
+                    element.href
+                );
+
             }
 
         }
@@ -491,38 +758,50 @@ function setTournamentLinks() {
 }
 
 
-/* =========================
-   MENU
-========================= */
+/* =====================================================
+   TOGGLE MENU
+===================================================== */
 
-window.toggleMenu = function () {
+window.toggleMenu =
+function () {
 
     const menu =
-        document.getElementById("menu");
+        document.getElementById(
+            "menu"
+        );
 
 
     if (!menu) {
+
+        console.log(
+            "⚠️ Menu element not found"
+        );
+
         return;
+
     }
 
 
     if (
-        menu.style.display === "block"
+        menu.style.display ===
+        "block"
     ) {
 
-        menu.style.display = "none";
+        menu.style.display =
+            "none";
 
     } else {
 
-        menu.style.display = "block";
+        menu.style.display =
+            "block";
 
     }
 
 };
 
 
-/* =========================
+/* =====================================================
    START
-========================= */
+===================================================== */
 
 loadTournament();
