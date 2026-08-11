@@ -1,4 +1,4 @@
-import { auth, db } from "./firebase.js";
+import { auth, db } from "../firebase.js";
 
 import {
     onAuthStateChanged
@@ -12,14 +12,28 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 
+console.log("🔥 MY-TOURNAMENT JS LOADED");
+
+
 /* =========================
    ELEMENT
 ========================= */
 
 const tournamentList =
-    document.getElementById(
-        "tournamentList"
+    document.getElementById("tournamentList");
+
+
+/* =========================
+   CHECK ELEMENT
+========================= */
+
+if (!tournamentList) {
+
+    console.error(
+        "❌ tournamentList element not found"
     );
+
+}
 
 
 /* =========================
@@ -29,6 +43,12 @@ const tournamentList =
 async function loadTournaments(user) {
 
     try {
+
+        console.log(
+            "🔥 Loading tournaments for:",
+            user.uid
+        );
+
 
         tournamentList.innerHTML = `
 
@@ -42,7 +62,7 @@ async function loadTournaments(user) {
 
 
         /* =========================
-           USER TOURNAMENTS
+           TOURNAMENT COLLECTION
         ========================= */
 
         const tournamentsRef =
@@ -52,9 +72,9 @@ async function loadTournaments(user) {
             );
 
 
-        /*
-         * First try ownerId
-         */
+        /* =========================
+           SEARCH OWNER ID
+        ========================= */
 
         let snapshot =
             await getDocs(
@@ -69,11 +89,15 @@ async function loadTournaments(user) {
             );
 
 
-        /*
-         * If ownerId is not used in
-         * your old tournament documents,
-         * try createdBy.
-         */
+        console.log(
+            "🔥 ownerId results:",
+            snapshot.size
+        );
+
+
+        /* =========================
+           SEARCH CREATED BY
+        ========================= */
 
         if (snapshot.empty) {
 
@@ -89,11 +113,25 @@ async function loadTournaments(user) {
                     )
                 );
 
+
+            console.log(
+                "🔥 createdBy results:",
+                snapshot.size
+            );
+
         }
 
 
+        /* =========================
+           CLEAR LIST
+        ========================= */
+
         tournamentList.innerHTML = "";
 
+
+        /* =========================
+           NO TOURNAMENT
+        ========================= */
 
         if (snapshot.empty) {
 
@@ -112,7 +150,7 @@ async function loadTournaments(user) {
                     <br>
 
                     <a
-                        href="create-tournament.html"
+                        href="Creat-tournament.html"
                         class="btn primary-btn"
                     >
                         ➕ Create Tournament
@@ -128,7 +166,7 @@ async function loadTournaments(user) {
 
 
         /* =========================
-           DISPLAY TOURNAMENTS
+           CREATE CARDS
         ========================= */
 
         snapshot.forEach(
@@ -137,13 +175,12 @@ async function loadTournaments(user) {
                 const tournamentId =
                     tournamentDoc.id;
 
-
                 const tournament =
                     tournamentDoc.data();
 
 
                 console.log(
-                    "Tournament:",
+                    "🔥 Tournament found:",
                     tournamentId,
                     tournament
                 );
@@ -161,7 +198,7 @@ async function loadTournaments(user) {
     } catch (error) {
 
         console.error(
-            "Tournament Load Error:",
+            "❌ Tournament Load Error:",
             error
         );
 
@@ -188,7 +225,7 @@ async function loadTournaments(user) {
 
 
 /* =========================
-   CREATE CARD
+   CREATE TOURNAMENT CARD
 ========================= */
 
 function createTournamentCard(
@@ -197,9 +234,7 @@ function createTournamentCard(
 ) {
 
     const card =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
 
     card.className =
@@ -213,6 +248,7 @@ function createTournamentCard(
             🏆
             ${
                 tournament.tournamentName ||
+                tournament.name ||
                 "Tournament"
             }
 
@@ -236,6 +272,7 @@ function createTournamentCard(
 
             ${
                 tournament.venue ||
+                tournament.location ||
                 "-"
             }
 
@@ -284,57 +321,224 @@ function createTournamentCard(
         <div class="card-buttons">
 
 
-            <a
-                class="btn primary-btn"
-                href="tournament.html?id=${encodeURIComponent(tournamentId)}"
+            <!-- OPEN TOURNAMENT -->
+
+            <button
+                class="btn primary-btn open-tournament-btn"
+                type="button"
             >
 
                 🏆 Open Tournament
 
-            </a>
+            </button>
 
 
-            <a
-                class="btn"
-                href="schedule.html?id=${encodeURIComponent(tournamentId)}"
+            <!-- SCHEDULE -->
+
+            <button
+                class="btn schedule-btn"
+                type="button"
             >
 
                 📅 Schedule
 
-            </a>
+            </button>
 
 
-           <a
-    class="btn"
-    href="results.html?id=${tournamentId}"
-    onclick="console.log('RESULT TOURNAMENT ID:', '${tournamentId}')"
->
-    🏆 Results
-</a>
+            <!-- RESULTS -->
+
+            <button
+                class="btn results-btn"
+                type="button"
+            >
+
+                🏆 Results
+
+            </button>
 
 
-           <a
-    class="btn"
-    href="live-score.html?id=${tournamentId}"
-    onclick="console.log('LIVE TOURNAMENT ID:', '${tournamentId}')"
->
-    🔴 Live Score
-</a>
+            <!-- LIVE SCORE -->
+
+            <button
+                class="btn live-btn"
+                type="button"
+            >
+
+                🔴 Live Score
+
+            </button>
 
 
-            <a
-    class="btn"
-    href="points.html?id=${tournamentId}"
-    onclick="console.log('POINTS TOURNAMENT ID:', '${tournamentId}')"
->
-    📈 Points
-</a>
+            <!-- POINTS -->
+
+            <button
+                class="btn points-btn"
+                type="button"
+            >
+
+                📈 Points
+
+            </button>
 
 
         </div>
 
     `;
 
+
+    /* =========================
+       OPEN TOURNAMENT
+    ========================= */
+
+    const openButton =
+        card.querySelector(
+            ".open-tournament-btn"
+        );
+
+
+    openButton.addEventListener(
+        "click",
+        function() {
+
+            console.log(
+                "🔥 OPEN TOURNAMENT ID:",
+                tournamentId
+            );
+
+
+            const url =
+                "Tournament.html?id=" +
+                encodeURIComponent(
+                    tournamentId
+                );
+
+
+            console.log(
+                "🔥 OPEN URL:",
+                url
+            );
+
+
+            /*
+             * Save ID also
+             */
+
+            localStorage.setItem(
+                "tournamentId",
+                tournamentId
+            );
+
+
+            /*
+             * Open tournament
+             */
+
+            window.location.href =
+                url;
+
+        }
+    );
+
+
+    /* =========================
+       SCHEDULE
+    ========================= */
+
+    const scheduleButton =
+        card.querySelector(
+            ".schedule-btn"
+        );
+
+
+    scheduleButton.addEventListener(
+        "click",
+        function() {
+
+            window.location.href =
+                "schedule.html?id=" +
+                encodeURIComponent(
+                    tournamentId
+                );
+
+        }
+    );
+
+
+    /* =========================
+       RESULTS
+    ========================= */
+
+    const resultsButton =
+        card.querySelector(
+            ".results-btn"
+        );
+
+
+    resultsButton.addEventListener(
+        "click",
+        function() {
+
+            window.location.href =
+                "results.html?id=" +
+                encodeURIComponent(
+                    tournamentId
+                );
+
+        }
+    );
+
+
+    /* =========================
+       LIVE SCORE
+    ========================= */
+
+    const liveButton =
+        card.querySelector(
+            ".live-btn"
+        );
+
+
+    liveButton.addEventListener(
+        "click",
+        function() {
+
+            window.location.href =
+                "live-score.html?id=" +
+                encodeURIComponent(
+                    tournamentId
+                );
+
+        }
+    );
+
+
+    /* =========================
+       POINTS
+    ========================= */
+
+    const pointsButton =
+        card.querySelector(
+            ".points-btn"
+        );
+
+
+    pointsButton.addEventListener(
+        "click",
+        function() {
+
+            window.location.href =
+                "points.html?id=" +
+                encodeURIComponent(
+                    tournamentId
+                );
+
+        }
+    );
+
+
+    /* =========================
+       ADD CARD
+    ========================= */
 
     tournamentList.appendChild(
         card
@@ -344,14 +548,25 @@ function createTournamentCard(
 
 
 /* =========================
-   LOGIN
+   AUTH
 ========================= */
 
 onAuthStateChanged(
     auth,
     user => {
 
+        console.log(
+            "🔥 Auth User:",
+            user
+        );
+
+
         if (!user) {
+
+            console.log(
+                "❌ User not logged in"
+            );
+
 
             window.location.href =
                 "login.html";
