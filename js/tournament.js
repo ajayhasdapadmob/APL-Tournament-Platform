@@ -1,3 +1,5 @@
+console.log("🔥 TOURNAMENT JS LOADED");
+
 import { db } from "../firebase.js";
 
 import {
