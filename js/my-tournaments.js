@@ -322,7 +322,7 @@ function createTournamentCard(
 </a>
 
 
-            <<a
+            <a
     class="btn"
     href="points.html?id=${tournamentId}"
     onclick="console.log('POINTS TOURNAMENT ID:', '${tournamentId}')"
