@@ -5,83 +5,22 @@
 
 <meta charset="UTF-8">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
 <title>APL Tournament Platform</title>
 
+<link rel="manifest" href="./manifest.json">
 
-<!-- =========================
-     PWA MANIFEST
-========================= -->
+<link rel="icon"
+      type="image/png"
+      href="./images/icon-192.png">
 
-<link
-    rel="manifest"
-    href="./manifest.json"
->
+<meta name="theme-color"
+      content="#0f172a">
 
-
-<!-- =========================
-     APP ICON
-========================= -->
-
-<link
-    rel="icon"
-    type="image/png"
-    href="./images/icon-192.png"
->
-
-<link
-    rel="apple-touch-icon"
-    href="./images/icon-192.png"
->
-
-
-<!-- =========================
-     THEME
-========================= -->
-
-<meta
-    name="theme-color"
-    content="#1d4ed8"
->
-
-<meta
-    name="mobile-web-app-capable"
-    content="yes"
->
-
-<meta
-    name="apple-mobile-web-app-capable"
-    content="yes"
->
-
-<meta
-    name="apple-mobile-web-app-status-bar-style"
-    content="default"
->
-
-
-<!-- =========================
-     DESCRIPTION
-========================= -->
-
-<meta
-    name="description"
-    content="APL Tournament Platform - Cricket Tournament Management App"
->
-
-
-<!-- =========================
-     CSS
-========================= -->
-
-<link
-    rel="stylesheet"
-    href="./css/style.css"
->
+<link rel="stylesheet"
+      href="./css/style.css">
 
 </head>
 
@@ -89,110 +28,60 @@
 <body>
 
 
-<!-- =========================
-     HEADER
-========================= -->
+<!-- TOP BAR -->
 
-<header class="top-header">
+<header class="app-header">
 
-    <div class="logo">
-        🏏 APL
+    <div class="app-logo">
+        🏏
     </div>
 
-    <div>
+    <div class="app-title">
 
-        <h1>
-            APL Tournament Platform
-        </h1>
+        <h1>APL</h1>
 
-        <p>
-            Cricket Tournament Management
-        </p>
+        <span>
+            Tournament Platform
+        </span>
 
     </div>
+
+    <button
+        class="profile-button"
+        onclick="location.href='profile.html'">
+
+        👤
+
+    </button>
 
 </header>
 
 
 
-<!-- =========================
-     INSTALL APP
-========================= -->
+<!-- MAIN -->
 
-<div
-    id="installContainer"
-    style="
-        text-align:center;
-        margin:20px 15px;
-    "
->
-
-    <button
-        id="installBtn"
-        type="button"
-        style="
-            display:none;
-            padding:13px 24px;
-            border:none;
-            border-radius:12px;
-            background:#1d4ed8;
-            color:white;
-            font-size:16px;
-            font-weight:bold;
-            cursor:pointer;
-            box-shadow:0 4px 10px rgba(0,0,0,0.15);
-        "
-    >
-        📲 Install APL App
-    </button>
-
-</div>
+<main class="app-container">
 
 
+    <!-- WELCOME -->
 
-<!-- =========================
-     MAIN
-========================= -->
+    <section class="welcome-card">
 
-<main class="home-container">
+        <div>
 
-
-    <!-- HERO -->
-
-    <section class="hero">
-
-        <div class="hero-content">
+            <p class="small-text">
+                Welcome Organizer
+            </p>
 
             <h2>
-                🏆 Manage Your Cricket Tournament
+                Manage Your Cricket
+                Tournament 🏆
             </h2>
 
             <p>
-                Create tournaments, register teams,
-                manage matches and track live scores.
+                Teams, matches, live scores
+                and points table in one place.
             </p>
-
-
-            <div class="hero-buttons">
-
-
-                <a
-                    href="./create-tournament.html"
-                    class="btn primary-btn"
-                >
-                    🏆 Create Tournament
-                </a>
-
-
-                <a
-                    href="./my-tournaments.html"
-                    class="btn"
-                >
-                    📂 My Tournaments
-                </a>
-
-
-            </div>
 
         </div>
 
@@ -200,137 +89,290 @@
 
 
 
-    <!-- =========================
-         FEATURES
-    ========================= -->
+    <!-- QUICK ACTIONS -->
 
-    <section class="features">
+    <section class="section">
+
+        <h2 class="section-title">
+            Quick Actions
+        </h2>
 
 
-        <!-- TOURNAMENT -->
+        <div class="quick-grid">
 
-        <div class="feature-card">
 
-            <div class="feature-icon">
-                🏆
-            </div>
+            <a
+                href="create-tournament.html"
+                class="quick-card">
+
+                <span>🏆</span>
+
+                <strong>
+                    Create
+                </strong>
+
+                <small>
+                    Tournament
+                </small>
+
+            </a>
+
+
+            <a
+                href="my-tournaments.html"
+                class="quick-card">
+
+                <span>📂</span>
+
+                <strong>
+                    My
+                </strong>
+
+                <small>
+                    Tournaments
+                </small>
+
+            </a>
+
+
+            <a
+                href="my-tournaments.html"
+                class="quick-card">
+
+                <span>👥</span>
+
+                <strong>
+                    Teams
+                </strong>
+
+                <small>
+                    Registration
+                </small>
+
+            </a>
+
+
+            <a
+                href="my-tournaments.html"
+                class="quick-card">
+
+                <span>🔴</span>
+
+                <strong>
+                    Live
+                </strong>
+
+                <small>
+                    Score
+                </small>
+
+            </a>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- FEATURES -->
+
+    <section class="section">
+
+        <h2 class="section-title">
+            Tournament Features
+        </h2>
+
+
+        <div class="feature-list">
+
+
+            <a
+                href="schedule.html"
+                class="feature-item">
+
+                <div class="feature-icon">
+                    📅
+                </div>
+
+                <div>
+
+                    <strong>
+                        Match Schedule
+                    </strong>
+
+                    <p>
+                        View upcoming matches
+                    </p>
+
+                </div>
+
+                <span>›</span>
+
+            </a>
+
+
+
+            <a
+                href="results.html"
+                class="feature-item">
+
+                <div class="feature-icon">
+                    🏆
+                </div>
+
+                <div>
+
+                    <strong>
+                        Results
+                    </strong>
+
+                    <p>
+                        View completed matches
+                    </p>
+
+                </div>
+
+                <span>›</span>
+
+            </a>
+
+
+
+            <a
+                href="points.html"
+                class="feature-item">
+
+                <div class="feature-icon">
+                    📊
+                </div>
+
+                <div>
+
+                    <strong>
+                        Points Table
+                    </strong>
+
+                    <p>
+                        Points and NRR
+                    </p>
+
+                </div>
+
+                <span>›</span>
+
+            </a>
+
+
+
+            <a
+                href="playerstats.html"
+                class="feature-item">
+
+                <div class="feature-icon">
+                    📈
+                </div>
+
+                <div>
+
+                    <strong>
+                        Player Stats
+                    </strong>
+
+                    <p>
+                        Runs, wickets and records
+                    </p>
+
+                </div>
+
+                <span>›</span>
+
+            </a>
+
+
+
+            <a
+                href="orange.html"
+                class="feature-item">
+
+                <div class="feature-icon">
+                    🟠
+                </div>
+
+                <div>
+
+                    <strong>
+                        Orange Cap
+                    </strong>
+
+                    <p>
+                        Top run scorer
+                    </p>
+
+                </div>
+
+                <span>›</span>
+
+            </a>
+
+
+
+            <a
+                href="purple.html"
+                class="feature-item">
+
+                <div class="feature-icon">
+                    🟣
+                </div>
+
+                <div>
+
+                    <strong>
+                        Purple Cap
+                    </strong>
+
+                    <p>
+                        Top wicket taker
+                    </p>
+
+                </div>
+
+                <span>›</span>
+
+            </a>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ADMIN -->
+
+    <section class="admin-card">
+
+        <div>
 
             <h3>
-                Tournament
+                ⚙️ Organizer Control
             </h3>
 
             <p>
-                Create and manage your
-                cricket tournaments.
+                Manage teams, registrations
+                and tournament settings.
             </p>
 
         </div>
 
 
+        <a
+            href="admin.html"
+            class="admin-button">
 
-        <!-- TEAMS -->
+            Admin Panel
 
-        <div class="feature-card">
-
-            <div class="feature-icon">
-                👥
-            </div>
-
-            <h3>
-                Teams
-            </h3>
-
-            <p>
-                Register teams and
-                manage players.
-            </p>
-
-        </div>
-
-
-
-        <!-- SCHEDULE -->
-
-        <div class="feature-card">
-
-            <div class="feature-icon">
-                📅
-            </div>
-
-            <h3>
-                Schedule
-            </h3>
-
-            <p>
-                Create matches and
-                tournament schedules.
-            </p>
-
-        </div>
-
-
-
-        <!-- LIVE SCORE -->
-
-        <div class="feature-card">
-
-            <div class="feature-icon">
-                🔴
-            </div>
-
-            <h3>
-                Live Score
-            </h3>
-
-            <p>
-                Record live cricket
-                scores and results.
-            </p>
-
-        </div>
-
-
-
-        <!-- POINTS -->
-
-        <div class="feature-card">
-
-            <div class="feature-icon">
-                📊
-            </div>
-
-            <h3>
-                Points Table
-            </h3>
-
-            <p>
-                Automatic points table
-                and NRR.
-            </p>
-
-        </div>
-
-
-
-        <!-- PLAYER STATS -->
-
-        <div class="feature-card">
-
-            <div class="feature-icon">
-                🏅
-            </div>
-
-            <h3>
-                Player Stats
-            </h3>
-
-            <p>
-                Orange Cap, Purple Cap
-                and player statistics.
-            </p>
-
-        </div>
-
+        </a>
 
     </section>
 
@@ -339,31 +381,66 @@
 
 
 
-<!-- =========================
-     FOOTER
-========================= -->
+<!-- BOTTOM NAVIGATION -->
 
-<footer>
-
-    <p>
-        🏏 APL Tournament Platform
-    </p>
-
-    <p>
-        Cricket Tournament Management System
-    </p>
-
-    <p>
-        Created by AJAY
-    </p>
-
-</footer>
+<nav class="bottom-nav">
 
 
+    <a
+        href="index.html"
+        class="nav-item active">
 
-<!-- =========================
-     SERVICE WORKER
-========================= -->
+        <span>🏠</span>
+        <small>Home</small>
+
+    </a>
+
+
+    <a
+        href="my-tournaments.html"
+        class="nav-item">
+
+        <span>🏆</span>
+        <small>Tournaments</small>
+
+    </a>
+
+
+    <a
+        href="schedule.html"
+        class="nav-item">
+
+        <span>📅</span>
+        <small>Matches</small>
+
+    </a>
+
+
+    <a
+        href="playerstats.html"
+        class="nav-item">
+
+        <span>📊</span>
+        <small>Stats</small>
+
+    </a>
+
+
+    <a
+        href="profile.html"
+        class="nav-item">
+
+        <span>👤</span>
+        <small>Profile</small>
+
+    </a>
+
+
+</nav>
+
+
+
+<!-- SERVICE WORKER -->
 
 <script>
 
@@ -371,134 +448,30 @@ if ("serviceWorker" in navigator) {
 
     window.addEventListener(
         "load",
-        async () => {
+        () => {
 
-            try {
+            navigator.serviceWorker
+                .register("./service-worker.js")
+                .then(() => {
 
-                const registration =
-                    await navigator.serviceWorker.register(
-                        "./service-worker.js"
+                    console.log(
+                        "✅ APL App Ready"
                     );
 
-                console.log(
-                    "✅ APL Service Worker registered:",
-                    registration.scope
-                );
+                })
+                .catch(error => {
 
-            } catch (error) {
+                    console.error(
+                        "Service Worker Error:",
+                        error
+                    );
 
-                console.error(
-                    "❌ Service Worker registration failed:",
-                    error
-                );
-
-            }
+                });
 
         }
     );
 
 }
-
-</script>
-
-
-
-<!-- =========================
-     PWA INSTALL
-========================= -->
-
-<script>
-
-let deferredPrompt = null;
-
-const installBtn =
-    document.getElementById("installBtn");
-
-
-/*
- * Chrome/Android sends this event
- * when the website is installable.
- */
-
-window.addEventListener(
-    "beforeinstallprompt",
-    (event) => {
-
-        console.log(
-            "✅ PWA install prompt available"
-        );
-
-        event.preventDefault();
-
-        deferredPrompt = event;
-
-        installBtn.style.display =
-            "inline-block";
-
-    }
-);
-
-
-
-/*
- * Install button click
- */
-
-installBtn.addEventListener(
-    "click",
-    async () => {
-
-        if (!deferredPrompt) {
-
-            alert(
-                "Install option is not available right now. Please use Chrome menu → Add to Home screen."
-            );
-
-            return;
-
-        }
-
-
-        deferredPrompt.prompt();
-
-
-        const result =
-            await deferredPrompt.userChoice;
-
-
-        console.log(
-            "Install result:",
-            result.outcome
-        );
-
-
-        deferredPrompt = null;
-
-        installBtn.style.display =
-            "none";
-
-    }
-);
-
-
-
-/*
- * When app is installed
- */
-
-window.addEventListener(
-    "appinstalled",
-    () => {
-
-        console.log(
-            "✅ APL Tournament Platform installed"
-        );
-
-        installBtn.style.display =
-            "none";
-
-    }
-);
 
 </script>
 
