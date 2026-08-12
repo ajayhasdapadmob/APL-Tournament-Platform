@@ -1,3 +1,5 @@
+console.log("🔥 CREATE TOURNAMENT JS LOADED");
+
 import { auth, db } from "./firebase.js";
 
 import {
@@ -16,9 +18,19 @@ import {
 ========================= */
 
 const form =
-    document.getElementById(
-        "tournamentForm"
+    document.getElementById("tournamentForm");
+
+
+if (!form) {
+
+    console.error(
+        "❌ tournamentForm not found"
     );
+
+    throw new Error(
+        "tournamentForm not found"
+    );
+}
 
 
 /* =========================
@@ -27,12 +39,26 @@ const form =
 
 let currentUser = null;
 
+let authReady = false;
+
 
 onAuthStateChanged(
     auth,
-    user => {
+    (user) => {
+
+        authReady = true;
+
+        console.log(
+            "🔥 AUTH USER:",
+            user
+                ? user.uid
+                : "NOT LOGGED IN"
+        );
+
 
         if (!user) {
+
+            currentUser = null;
 
             window.location.href =
                 "login.html";
@@ -41,6 +67,7 @@ onAuthStateChanged(
 
         }
 
+
         currentUser = user;
 
     }
@@ -48,317 +75,409 @@ onAuthStateChanged(
 
 
 /* =========================
-   FORM SUBMIT
+   SUBMIT
 ========================= */
 
-if (form) {
+form.addEventListener(
+    "submit",
+    async (event) => {
 
-    form.addEventListener(
-        "submit",
-        async event => {
-
-            event.preventDefault();
+        event.preventDefault();
 
 
-            if (!currentUser) {
+        console.log(
+            "🏆 CREATE TOURNAMENT BUTTON CLICKED"
+        );
 
-                alert(
-                    "❌ Please login first."
+
+        /* =========================
+           CHECK LOGIN
+        ========================= */
+
+        if (!authReady) {
+
+            alert(
+                "⏳ Please wait. Checking login..."
+            );
+
+            return;
+
+        }
+
+
+        if (!currentUser) {
+
+            alert(
+                "❌ Please login first."
+            );
+
+            window.location.href =
+                "login.html";
+
+            return;
+
+        }
+
+
+        /* =========================
+           BUTTON
+        ========================= */
+
+        const button =
+            form.querySelector(
+                'button[type="submit"]'
+            );
+
+
+        if (button) {
+
+            button.disabled = true;
+
+            button.textContent =
+                "⏳ Creating Tournament...";
+
+        }
+
+
+        try {
+
+            /* =========================
+               GET VALUES
+            ========================= */
+
+            const tournamentName =
+                document
+                    .getElementById(
+                        "tournamentName"
+                    )
+                    .value
+                    .trim();
+
+
+            const venue =
+                document
+                    .getElementById(
+                        "venue"
+                    )
+                    .value
+                    .trim();
+
+
+            const startDate =
+                document
+                    .getElementById(
+                        "startDate"
+                    )
+                    .value;
+
+
+            const endDate =
+                document
+                    .getElementById(
+                        "endDate"
+                    )
+                    .value;
+
+
+            const totalTeams =
+                document
+                    .getElementById(
+                        "totalTeams"
+                    )
+                    .value;
+
+
+            const entryFee =
+                document
+                    .getElementById(
+                        "entryFee"
+                    )
+                    .value;
+
+
+            const winnerPrize =
+                document
+                    .getElementById(
+                        "winnerPrize"
+                    )
+                    .value;
+
+
+            const runnerPrize =
+                document
+                    .getElementById(
+                        "runnerPrize"
+                    )
+                    .value;
+
+
+            const format =
+                document
+                    .getElementById(
+                        "format"
+                    )
+                    .value;
+
+
+            const contact =
+                document
+                    .getElementById(
+                        "contact"
+                    )
+                    .value
+                    .trim();
+
+
+            const email =
+                document
+                    .getElementById(
+                        "email"
+                    )
+                    .value
+                    .trim();
+
+
+            const description =
+                document
+                    .getElementById(
+                        "description"
+                    )
+                    .value
+                    .trim();
+
+
+            /* =========================
+               VALIDATION
+            ========================= */
+
+            if (!tournamentName) {
+
+                throw new Error(
+                    "Please enter Tournament Name."
                 );
-
-                return;
 
             }
 
 
-            try {
+            if (!venue) {
 
+                throw new Error(
+                    "Please enter Venue."
+                );
 
-                /* =========================
-                   GET FORM VALUES
-                ========================= */
+            }
 
-                const tournamentName =
-                    document.getElementById(
-                        "tournamentName"
-                    )?.value.trim();
 
+            if (!startDate) {
 
-                const venue =
-                    document.getElementById(
-                        "venue"
-                    )?.value.trim();
+                throw new Error(
+                    "Please select Start Date."
+                );
 
+            }
 
-                const startDate =
-                    document.getElementById(
-                        "startDate"
-                    )?.value;
 
+            if (!endDate) {
 
-                const endDate =
-                    document.getElementById(
-                        "endDate"
-                    )?.value;
+                throw new Error(
+                    "Please select End Date."
+                );
 
+            }
 
-                const totalTeams =
-                    document.getElementById(
-                        "totalTeams"
-                    )?.value;
 
+            if (
+                new Date(endDate) <
+                new Date(startDate)
+            ) {
 
-                const entryFee =
-                    document.getElementById(
-                        "entryFee"
-                    )?.value;
+                throw new Error(
+                    "End Date cannot be before Start Date."
+                );
 
+            }
 
-                const winnerPrize =
-                    document.getElementById(
-                        "winnerPrize"
-                    )?.value;
 
+            /* =========================
+               TOURNAMENT DATA
+            ========================= */
 
-                const runnerPrize =
-                    document.getElementById(
-                        "runnerPrize"
-                    )?.value;
+            const tournamentData = {
 
+                tournamentName:
+                    tournamentName,
 
-                const format =
-                    document.getElementById(
-                        "format"
-                    )?.value;
+                name:
+                    tournamentName,
 
+                venue:
+                    venue,
 
-                const contact =
-                    document.getElementById(
-                        "contact"
-                    )?.value.trim();
+                location:
+                    venue,
 
+                startDate:
+                    startDate,
 
-                const email =
-                    document.getElementById(
-                        "email"
-                    )?.value.trim();
+                endDate:
+                    endDate,
 
+                totalTeams:
+                    Number(
+                        totalTeams || 0
+                    ),
 
-                const description =
-                    document.getElementById(
-                        "description"
-                    )?.value.trim();
+                entryFee:
+                    Number(
+                        entryFee || 0
+                    ),
 
+                winnerPrize:
+                    Number(
+                        winnerPrize || 0
+                    ),
 
-                /* =========================
-                   VALIDATION
-                ========================= */
+                runnerPrize:
+                    Number(
+                        runnerPrize || 0
+                    ),
 
-                if (!tournamentName) {
+                format:
+                    format || "League",
 
-                    alert(
-                        "⚠️ Please enter tournament name."
-                    );
+                contact:
+                    contact,
 
-                    return;
+                email:
+                    email,
 
-                }
+                description:
+                    description,
 
+                ownerId:
+                    currentUser.uid,
 
-                if (!venue) {
+                createdBy:
+                    currentUser.uid,
 
-                    alert(
-                        "⚠️ Please enter venue."
-                    );
+                status:
+                    "Active",
 
-                    return;
+                createdAt:
+                    serverTimestamp(),
 
-                }
+                updatedAt:
+                    serverTimestamp()
 
+            };
 
-                if (!startDate) {
 
-                    alert(
-                        "⚠️ Please select start date."
-                    );
+            console.log(
+                "📦 Tournament Data:",
+                tournamentData
+            );
 
-                    return;
 
-                }
+            /* =========================
+               FIRESTORE
+            ========================= */
 
+            console.log(
+                "📁 Saving to Firestore..."
+            );
 
-                if (!endDate) {
 
-                    alert(
-                        "⚠️ Please select end date."
-                    );
+            const tournamentRef =
+                await addDoc(
 
-                    return;
+                    collection(
+                        db,
+                        "tournaments"
+                    ),
 
-                }
+                    tournamentData
 
+                );
 
-                /* =========================
-                   TOURNAMENT DATA
-                ========================= */
 
-                const tournamentData = {
+            /* =========================
+               REAL ID
+            ========================= */
 
-                    tournamentName:
-                        tournamentName,
+            const tournamentId =
+                tournamentRef.id;
 
-                    venue:
-                        venue,
 
-                    startDate:
-                        startDate,
+            console.log(
+                "✅ TOURNAMENT CREATED"
+            );
 
-                    endDate:
-                        endDate,
+            console.log(
+                "🏆 TOURNAMENT ID:",
+                tournamentId
+            );
 
-                    totalTeams:
-                        Number(
-                            totalTeams || 0
-                        ),
 
-                    entryFee:
-                        Number(
-                            entryFee || 0
-                        ),
+            /* =========================
+               LOCAL STORAGE
+            ========================= */
 
-                    winnerPrize:
-                        Number(
-                            winnerPrize || 0
-                        ),
+            localStorage.setItem(
+                "tournamentId",
+                tournamentId
+            );
 
-                    runnerPrize:
-                        Number(
-                            runnerPrize || 0
-                        ),
+            localStorage.setItem(
+                "selectedTournamentId",
+                tournamentId
+            );
 
-                    format:
-                        format || "League",
 
-                    contact:
-                        contact || "",
+            /* =========================
+               SUCCESS
+            ========================= */
 
-                    email:
-                        email || "",
+            alert(
+                "✅ Tournament Created Successfully!\n\nTournament ID:\n" +
+                tournamentId
+            );
 
-                    description:
-                        description || "",
 
+            /* =========================
+               OPEN TOURNAMENT
+            ========================= */
 
-                    /* =========================
-                       OWNER
-                    ========================= */
-
-                    ownerId:
-                        currentUser.uid,
-
-                    createdBy:
-                        currentUser.uid,
-
-
-                    /* =========================
-                       STATUS
-                    ========================= */
-
-                    status:
-                        "Active",
-
-
-                    createdAt:
-                        serverTimestamp(),
-
-                    updatedAt:
-                        serverTimestamp()
-
-                };
-
-
-                /* =========================
-                   CREATE TOURNAMENT
-                ========================= */
-
-                const tournamentRef =
-                    await addDoc(
-
-                        collection(
-                            db,
-                            "tournaments"
-                        ),
-
-                        tournamentData
-
-                    );
-
-
-                /* =========================
-                   REAL FIREBASE ID
-                ========================= */
-
-                const tournamentId =
-                    tournamentRef.id;
-
-
-                console.log(
-                    "Tournament Created:",
+            window.location.href =
+                "tournament.html?id=" +
+                encodeURIComponent(
                     tournamentId
                 );
 
 
-                /* =========================
-                   SAVE LOCALLY
-                ========================= */
+        } catch (error) {
 
-                localStorage.setItem(
-                    "tournamentId",
-                    tournamentId
-                );
-
-                localStorage.setItem(
-                    "selectedTournamentId",
-                    tournamentId
-                );
+            console.error(
+                "❌ CREATE TOURNAMENT ERROR:",
+                error
+            );
 
 
-                /* =========================
-                   SUCCESS
-                ========================= */
-
-                alert(
-                    "✅ Tournament Created Successfully!"
-                );
+            alert(
+                "❌ Tournament Create Failed\n\n" +
+                error.message
+            );
 
 
-                /* =========================
-                   OPEN TOURNAMENT
-                ========================= */
+            if (button) {
 
-                window.location.href =
-                    "tournament.html?id=" +
-                    encodeURIComponent(
-                        tournamentId
-                    );
+                button.disabled = false;
 
-
-            } catch (error) {
-
-                console.error(
-                    "Create Tournament Error:",
-                    error
-                );
-
-
-                alert(
-                    "❌ " +
-                    error.message
-                );
+                button.textContent =
+                    "🏆 Create Tournament";
 
             }
 
         }
-    );
 
-}
+    }
+);

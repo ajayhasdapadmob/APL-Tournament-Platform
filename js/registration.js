@@ -1,6 +1,10 @@
 console.log("🔥 REGISTRATION JS LOADED");
 
-import { db } from "./firebase.js";
+import { auth, db } from "./firebase.js";
+
+import {
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
 import {
     collection,
@@ -15,11 +19,18 @@ import {
    ELEMENTS
 ========================= */
 
-const form =
-    document.getElementById("registrationForm");
+const form = document.getElementById("registrationForm");
+const message = document.getElementById("message");
+const submitButton = document.getElementById("submitButton");
 
-const message =
-    document.getElementById("message");
+const tournamentDisplay =
+    document.getElementById("tournamentDisplay");
+
+const venueDisplay =
+    document.getElementById("venueDisplay");
+
+const tournamentIdDisplay =
+    document.getElementById("tournamentIdDisplay");
 
 const tournamentNameInput =
     document.getElementById("tournamentName");
@@ -45,14 +56,25 @@ const cityInput =
 const playersInput =
     document.getElementById("players");
 
-const tournamentDisplay =
-    document.getElementById("tournamentDisplay");
 
-const venueDisplay =
-    document.getElementById("venueDisplay");
+/* =========================
+   MESSAGE
+========================= */
 
-const tournamentIdDisplay =
-    document.getElementById("tournamentIdDisplay");
+function showMessage(text, type = "") {
+
+    if (!message) return;
+
+    message.innerHTML = text;
+
+    message.className = "";
+
+    if (type) {
+        message.classList.add(
+            type + "-message"
+        );
+    }
+}
 
 
 /* =========================
@@ -71,15 +93,6 @@ if (!form) {
 }
 
 
-if (!message) {
-
-    console.error(
-        "❌ message element not found"
-    );
-
-}
-
-
 /* =========================
    GET TOURNAMENT ID
 ========================= */
@@ -89,35 +102,30 @@ const params =
         window.location.search
     );
 
-
 const tournamentId =
     params.get("id");
 
-
 console.log(
-    "🏆 Tournament ID:",
+    "🏆 TOURNAMENT ID:",
     tournamentId
 );
 
 
 /* =========================
-   CHECK TOURNAMENT ID
+   TOURNAMENT ID CHECK
 ========================= */
 
 if (!tournamentId) {
 
-    if (message) {
-
-        message.innerHTML = `
-            ❌ Tournament ID Missing
-            <br><br>
-            Please open registration
-            from the Tournament page.
-        `;
-
-        message.style.color = "red";
-
-    }
+    showMessage(
+        `
+        ❌ Tournament ID Missing
+        <br><br>
+        Please open Team Registration
+        from the Tournament page.
+        `,
+        "error"
+    );
 
     form.style.display = "none";
 
@@ -126,10 +134,6 @@ if (!tournamentId) {
     );
 }
 
-
-/* =========================
-   SHOW TOURNAMENT ID
-========================= */
 
 if (tournamentIdDisplay) {
 
@@ -140,29 +144,24 @@ if (tournamentIdDisplay) {
 
 
 /* =========================
+   CURRENT USER
+========================= */
+
+let currentUser = null;
+
+
+/* =========================
    LOAD TOURNAMENT
 ========================= */
 
 async function loadTournament() {
 
+    showMessage(
+        "⏳ Loading Tournament...",
+        "loading"
+    );
+
     try {
-
-        console.log(
-            "🔍 Loading tournament:",
-            tournamentId
-        );
-
-
-        if (message) {
-
-            message.innerHTML =
-                "⏳ Loading tournament...";
-
-            message.style.color =
-                "#d97706";
-
-        }
-
 
         const tournamentRef =
             doc(
@@ -170,7 +169,6 @@ async function loadTournament() {
                 "tournaments",
                 tournamentId
             );
-
 
         const tournamentSnap =
             await getDoc(
@@ -184,53 +182,32 @@ async function loadTournament() {
         );
 
 
-        /* =========================
-           TOURNAMENT NOT FOUND
-        ========================= */
-
         if (!tournamentSnap.exists()) {
 
-            if (message) {
+            showMessage(
+                `
+                ❌ Tournament Not Found
+                <br><br>
+                ID:
+                <b>${tournamentId}</b>
+                `,
+                "error"
+            );
 
-                message.innerHTML = `
-                    ❌ Tournament Not Found
-                    <br><br>
-                    Tournament ID:
-                    <br>
-                    <b>${tournamentId}</b>
-                `;
-
-                message.style.color =
-                    "red";
-
-            }
-
-            form.style.display =
-                "none";
+            form.style.display = "none";
 
             return;
-
         }
 
-
-        /* =========================
-           TOURNAMENT DATA
-        ========================= */
 
         const tournament =
             tournamentSnap.data();
 
 
-        console.log(
-            "🏆 Tournament Data:",
-            tournament
-        );
-
-
         const tournamentName =
             tournament.tournamentName ||
             tournament.name ||
-            "APL Tournament";
+            "Tournament";
 
 
         const venue =
@@ -238,10 +215,6 @@ async function loadTournament() {
             tournament.location ||
             "Venue not available";
 
-
-        /* =========================
-           DISPLAY INFO
-        ========================= */
 
         if (tournamentDisplay) {
 
@@ -259,18 +232,6 @@ async function loadTournament() {
         }
 
 
-        if (tournamentIdDisplay) {
-
-            tournamentIdDisplay.textContent =
-                tournamentId;
-
-        }
-
-
-        /* =========================
-           FORM VALUES
-        ========================= */
-
         if (tournamentNameInput) {
 
             tournamentNameInput.value =
@@ -287,19 +248,10 @@ async function loadTournament() {
         }
 
 
-        /* =========================
-           SUCCESS LOAD
-        ========================= */
-
-        if (message) {
-
-            message.innerHTML = "";
-
-        }
-
+        showMessage("", "");
 
         console.log(
-            "✅ Tournament loaded successfully"
+            "✅ Tournament loaded"
         );
 
 
@@ -310,35 +262,68 @@ async function loadTournament() {
             error
         );
 
-
-        if (message) {
-
-            message.innerHTML = `
-                ❌ Tournament Load Failed
-                <br><br>
-                <b>Error:</b>
-                ${error.message}
-            `;
-
-            message.style.color =
-                "red";
-
-        }
+        showMessage(
+            `
+            ❌ Tournament Load Failed
+            <br><br>
+            ${error.message}
+            `,
+            "error"
+        );
 
     }
-
 }
 
 
 /* =========================
-   START TOURNAMENT LOAD
+   AUTH
 ========================= */
 
-loadTournament();
+onAuthStateChanged(
+    auth,
+    async (user) => {
+
+        if (!user) {
+
+            console.log(
+                "❌ User not logged in"
+            );
+
+            showMessage(
+                `
+                ❌ Please login first.
+                <br><br>
+                Team registration requires login.
+                `,
+                "error"
+            );
+
+            form.style.display = "none";
+
+            return;
+        }
+
+
+        currentUser = user;
+
+
+        console.log(
+            "✅ Logged in:",
+            user.uid
+        );
+
+
+        form.style.display = "";
+
+
+        await loadTournament();
+
+    }
+);
 
 
 /* =========================
-   TEAM REGISTRATION
+   SUBMIT
 ========================= */
 
 form.addEventListener(
@@ -349,184 +334,162 @@ form.addEventListener(
 
 
         console.log(
-            "🏏 REGISTER BUTTON CLICKED"
+            "🏏 REGISTER TEAM CLICKED"
         );
 
 
         /* =========================
-           SUBMIT BUTTON
+           LOGIN CHECK
         ========================= */
 
-        const submitButton =
-            form.querySelector(
-                'button[type="submit"]'
+        if (!currentUser) {
+
+            showMessage(
+                "❌ Please login first.",
+                "error"
             );
 
-
-        if (submitButton) {
-
-            submitButton.disabled =
-                true;
-
-            submitButton.innerHTML =
-                "⏳ Registering...";
-
+            return;
         }
 
 
-        if (message) {
+        /* =========================
+           VALUES
+        ========================= */
 
-            message.innerHTML =
-                "⏳ Registering Team...";
+        const tournamentName =
+            tournamentNameInput.value.trim();
 
-            message.style.color =
-                "#d97706";
+        const venue =
+            venueInput.value.trim();
 
+        const teamName =
+            teamNameInput.value.trim();
+
+        const captainName =
+            captainNameInput.value.trim();
+
+        const mobile =
+            mobileInput.value.trim();
+
+        const email =
+            emailInput.value.trim();
+
+        const city =
+            cityInput.value.trim();
+
+        const playersText =
+            playersInput.value.trim();
+
+
+        /* =========================
+           VALIDATION
+        ========================= */
+
+        if (!teamName) {
+
+            showMessage(
+                "❌ Please enter Team Name.",
+                "error"
+            );
+
+            teamNameInput.focus();
+
+            return;
         }
+
+
+        if (!captainName) {
+
+            showMessage(
+                "❌ Please enter Captain Name.",
+                "error"
+            );
+
+            captainNameInput.focus();
+
+            return;
+        }
+
+
+        if (!mobile) {
+
+            showMessage(
+                "❌ Please enter Mobile Number.",
+                "error"
+            );
+
+            mobileInput.focus();
+
+            return;
+        }
+
+
+        if (!city) {
+
+            showMessage(
+                "❌ Please enter City.",
+                "error"
+            );
+
+            cityInput.focus();
+
+            return;
+        }
+
+
+        if (!playersText) {
+
+            showMessage(
+                "❌ Please enter Player Names.",
+                "error"
+            );
+
+            playersInput.focus();
+
+            return;
+        }
+
+
+        const players =
+            playersText
+                .split(",")
+                .map(
+                    p => p.trim()
+                )
+                .filter(
+                    p => p.length > 0
+                );
+
+
+        if (players.length === 0) {
+
+            showMessage(
+                "❌ Please enter at least one player.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        /* =========================
+           BUTTON
+        ========================= */
+
+        submitButton.disabled = true;
+
+        submitButton.innerHTML =
+            "⏳ Registering...";
+
+
+        showMessage(
+            "⏳ Saving registration to Firebase...",
+            "loading"
+        );
 
 
         try {
-
-            /* =========================
-               GET FORM VALUES
-            ========================= */
-
-            const tournamentName =
-                tournamentNameInput.value.trim();
-
-
-            const venue =
-                venueInput.value.trim();
-
-
-            const teamName =
-                teamNameInput.value.trim();
-
-
-            const captainName =
-                captainNameInput.value.trim();
-
-
-            const mobile =
-                mobileInput.value.trim();
-
-
-            const email =
-                emailInput.value.trim();
-
-
-            const city =
-                cityInput.value.trim();
-
-
-            const playersText =
-                playersInput.value.trim();
-
-
-            console.log(
-                "📝 Form Values:",
-                {
-                    tournamentName,
-                    venue,
-                    teamName,
-                    captainName,
-                    mobile,
-                    email,
-                    city,
-                    playersText
-                }
-            );
-
-
-            /* =========================
-               VALIDATION
-            ========================= */
-
-            if (!tournamentName) {
-
-                throw new Error(
-                    "Tournament Name is missing"
-                );
-
-            }
-
-
-            if (!teamName) {
-
-                throw new Error(
-                    "Please enter Team Name"
-                );
-
-            }
-
-
-            if (!captainName) {
-
-                throw new Error(
-                    "Please enter Captain Name"
-                );
-
-            }
-
-
-            if (!mobile) {
-
-                throw new Error(
-                    "Please enter Mobile Number"
-                );
-
-            }
-
-
-            if (!city) {
-
-                throw new Error(
-                    "Please enter City"
-                );
-
-            }
-
-
-            if (!playersText) {
-
-                throw new Error(
-                    "Please enter Player Names"
-                );
-
-            }
-
-
-            /* =========================
-               PLAYERS ARRAY
-            ========================= */
-
-            const players =
-                playersText
-                    .split(",")
-                    .map(
-                        player =>
-                            player.trim()
-                    )
-                    .filter(
-                        player =>
-                            player.length > 0
-                    );
-
-
-            if (players.length === 0) {
-
-                throw new Error(
-                    "Please enter at least one player"
-                );
-
-            }
-
-
-            console.log(
-                "👥 Players:",
-                players
-            );
-
 
             /* =========================
                TEAM DATA
@@ -570,7 +533,16 @@ form.addEventListener(
                 paymentStatus:
                     "Unpaid",
 
+                registeredBy:
+                    currentUser.uid,
+
+                registeredEmail:
+                    currentUser.email || "",
+
                 createdAt:
+                    serverTimestamp(),
+
+                updatedAt:
                     serverTimestamp()
 
             };
@@ -583,10 +555,10 @@ form.addEventListener(
 
 
             /* =========================
-               FIRESTORE PATH
+               SAME PATH ADMIN USES
             ========================= */
 
-            const teamsCollection =
+            const teamsRef =
                 collection(
                     db,
                     "tournaments",
@@ -602,137 +574,75 @@ form.addEventListener(
 
 
             /* =========================
-               SAVE TEAM
+               ADD TEAM
             ========================= */
 
             const teamRef =
                 await addDoc(
-                    teamsCollection,
+                    teamsRef,
                     teamData
                 );
 
 
             console.log(
-                "✅ TEAM SAVED SUCCESSFULLY"
-            );
-
-
-            console.log(
-                "🆔 TEAM ID:",
+                "✅ TEAM SAVED:",
                 teamRef.id
             );
 
 
             /* =========================
-               SUCCESS MESSAGE
+               SUCCESS
             ========================= */
 
-            if (message) {
+            showMessage(
+                `
+                ✅ Team Registration Successful!
+                <br><br>
 
-                message.innerHTML = `
-                    ✅ Team Registration Successful!
-                    <br><br>
+                🏏 <b>Team:</b>
+                ${teamName}
 
-                    <b>Team:</b>
-                    ${teamName}
+                <br>
 
-                    <br>
+                👤 <b>Captain:</b>
+                ${captainName}
 
-                    <b>Captain:</b>
-                    ${captainName}
+                <br>
 
-                    <br>
+                🆔 <b>Team ID:</b>
+                ${teamRef.id}
 
-                    <b>Players:</b>
-                    ${players.length}
+                <br><br>
 
-                    <br>
-
-                    <b>Team ID:</b>
-                    ${teamRef.id}
-                `;
-
-                message.style.color =
-                    "green";
-
-                message.style.background =
-                    "#dcfce7";
-
-            }
+                🟢 Registration saved successfully.
+                `,
+                "success"
+            );
 
 
             /* =========================
-               CLEAR FORM
+               CLEAR
             ========================= */
 
-            teamNameInput.value =
-                "";
-
-            captainNameInput.value =
-                "";
-
-            mobileInput.value =
-                "";
-
-            emailInput.value =
-                "";
-
-            cityInput.value =
-                "";
-
-            playersInput.value =
-                "";
+            teamNameInput.value = "";
+            captainNameInput.value = "";
+            mobileInput.value = "";
+            emailInput.value = "";
+            cityInput.value = "";
+            playersInput.value = "";
 
 
-            /* =========================
-               KEEP TOURNAMENT INFO
-            ========================= */
+            tournamentNameInput.value =
+                tournamentName;
 
-            if (tournamentDisplay) {
-
-                tournamentDisplay.textContent =
-                    tournamentName;
-
-            }
+            venueInput.value =
+                venue;
 
 
-            if (venueDisplay) {
+            submitButton.disabled = false;
 
-                venueDisplay.textContent =
-                    venue;
-
-            }
-
-
-            if (tournamentNameInput) {
-
-                tournamentNameInput.value =
-                    tournamentName;
-
-            }
-
-
-            if (venueInput) {
-
-                venueInput.value =
-                    venue;
-
-            }
-
-
-            /* =========================
-               ENABLE BUTTON
-            ========================= */
-
-            if (submitButton) {
-
-                submitButton.disabled =
-                    false;
-
-                submitButton.innerHTML =
-                    "🏏 Register Team";
-
-            }
+            submitButton.innerHTML =
+                "🏏 Register Another Team";
 
 
         } catch (error) {
@@ -743,38 +653,26 @@ form.addEventListener(
             );
 
 
-            if (message) {
+            showMessage(
+                `
+                ❌ Registration Failed
+                <br><br>
 
-                message.innerHTML = `
-                    ❌ Registration Failed
-                    <br><br>
+                <b>Error:</b>
+                ${error.message}
 
-                    <b>Error:</b>
-                    ${error.message}
-                `;
+                <br><br>
 
-                message.style.color =
-                    "red";
-
-                message.style.background =
-                    "#fee2e2";
-
-            }
+                Please check Firebase Firestore Rules.
+                `,
+                "error"
+            );
 
 
-            /* =========================
-               ENABLE BUTTON AGAIN
-            ========================= */
+            submitButton.disabled = false;
 
-            if (submitButton) {
-
-                submitButton.disabled =
-                    false;
-
-                submitButton.innerHTML =
-                    "🏏 Register Team";
-
-            }
+            submitButton.innerHTML =
+                "🏏 Register Team";
 
         }
 

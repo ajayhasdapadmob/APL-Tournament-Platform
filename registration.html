@@ -19,163 +19,100 @@
 
 <style>
 
-.registration-card {
-
-    max-width: 650px;
-
-    margin: 30px auto;
-
-    background: white;
-
-    padding: 25px;
-
-    border-radius: 16px;
-
-    box-shadow:
-        0 5px 20px
-        rgba(0,0,0,0.08);
-
+.registration-container {
+    max-width: 700px;
+    margin: auto;
 }
 
+.registration-card {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
 
 .tournament-info {
-
     background: #eff6ff;
-
-    border: 1px solid #bfdbfe;
-
     padding: 16px;
-
     border-radius: 12px;
-
     margin-bottom: 22px;
-
 }
-
 
 .tournament-info p {
-
     margin: 7px 0;
-
 }
-
 
 .form-group {
-
     margin-bottom: 16px;
-
 }
-
 
 .form-group label {
-
     display: block;
-
     font-weight: bold;
-
     margin-bottom: 7px;
-
 }
-
 
 .form-group input,
 .form-group textarea {
-
     width: 100%;
-
-    padding: 13px;
-
-    border: 1px solid #d1d5db;
-
-    border-radius: 8px;
-
-    font-size: 15px;
-
     box-sizing: border-box;
-
+    padding: 13px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 15px;
 }
-
-
-.form-group input:focus,
-.form-group textarea:focus {
-
-    outline: none;
-
-    border-color: #2563eb;
-
-}
-
 
 .form-group textarea {
-
     min-height: 120px;
-
     resize: vertical;
-
 }
 
-
-.readonly-input {
-
+.form-group input[readonly] {
     background: #f3f4f6;
-
 }
-
-
-.players-help {
-
-    font-size: 13px;
-
-    color: #6b7280;
-
-    margin-top: 5px;
-
-}
-
-
-#message {
-
-    margin-top: 18px;
-
-    padding: 12px;
-
-    border-radius: 8px;
-
-    font-weight: bold;
-
-    text-align: center;
-
-}
-
 
 .buttons {
-
     display: flex;
-
     gap: 10px;
-
     flex-wrap: wrap;
-
     margin-top: 20px;
-
 }
-
 
 .submit-btn {
-
-    border: none;
-
-    cursor: pointer;
-
+    flex: 1;
+    min-width: 180px;
 }
 
-
 .submit-btn:disabled {
-
     opacity: 0.6;
-
     cursor: not-allowed;
+}
 
+#message {
+    margin-top: 20px;
+    padding: 14px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+    display: none;
+}
+
+.success-message {
+    display: block !important;
+    background: #dcfce7;
+    color: #166534;
+}
+
+.error-message {
+    display: block !important;
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.loading-message {
+    display: block !important;
+    background: #fef3c7;
+    color: #92400e;
 }
 
 </style>
@@ -185,10 +122,6 @@
 
 <body>
 
-
-<!-- =========================
-     HEADER
-========================= -->
 
 <header class="top-header">
 
@@ -211,13 +144,9 @@
 </header>
 
 
-
-<!-- =========================
-     MAIN
-========================= -->
-
 <main class="home-container">
 
+<div class="registration-container">
 
 <div class="registration-card">
 
@@ -240,14 +169,12 @@
         </span>
     </p>
 
-
     <p>
         📍 <b>Venue:</b>
         <span id="venueDisplay">
             Loading...
         </span>
     </p>
-
 
     <p>
         🆔 <b>Tournament ID:</b>
@@ -259,12 +186,14 @@
 </div>
 
 
-
 <!-- =========================
      REGISTRATION FORM
 ========================= -->
 
-<form id="registrationForm">
+<form
+    id="registrationForm"
+    novalidate
+>
 
 
 <!-- TOURNAMENT NAME -->
@@ -278,14 +207,11 @@
 <input
     type="text"
     id="tournamentName"
-    placeholder="Tournament Name"
-    class="readonly-input"
     readonly
     required
 >
 
 </div>
-
 
 
 <!-- VENUE -->
@@ -299,14 +225,11 @@
 <input
     type="text"
     id="venue"
-    placeholder="Venue"
-    class="readonly-input"
     readonly
     required
 >
 
 </div>
-
 
 
 <!-- TEAM NAME -->
@@ -321,11 +244,11 @@
     type="text"
     id="teamName"
     placeholder="Enter Team Name"
+    autocomplete="organization"
     required
 >
 
 </div>
-
 
 
 <!-- CAPTAIN -->
@@ -339,12 +262,12 @@
 <input
     type="text"
     id="captainName"
-    placeholder="Captain Name"
+    placeholder="Enter Captain Name"
+    autocomplete="name"
     required
 >
 
 </div>
-
 
 
 <!-- MOBILE -->
@@ -358,13 +281,13 @@
 <input
     type="tel"
     id="mobile"
-    placeholder="Mobile Number"
+    placeholder="Enter Mobile Number"
     inputmode="numeric"
+    autocomplete="tel"
     required
 >
 
 </div>
-
 
 
 <!-- EMAIL -->
@@ -378,11 +301,11 @@
 <input
     type="email"
     id="email"
-    placeholder="Email Address"
+    placeholder="Enter Email Address"
+    autocomplete="email"
 >
 
 </div>
-
 
 
 <!-- CITY -->
@@ -396,12 +319,12 @@
 <input
     type="text"
     id="city"
-    placeholder="City"
+    placeholder="Enter City"
+    autocomplete="address-level2"
     required
 >
 
 </div>
-
 
 
 <!-- PLAYERS -->
@@ -414,29 +337,28 @@
 
 <textarea
     id="players"
-    placeholder="Ajay, Rahul, Rohit, Amit, Suresh"
+    placeholder="Example: Ajay, Rahul, Rohit, Amit"
     required
 ></textarea>
 
-<p class="players-help">
-    Enter player names separated by commas.
-</p>
+<small>
+    Player names को comma (,) से अलग करें।
+</small>
 
 </div>
 
 
-
-<!-- =========================
-     BUTTONS
-========================= -->
+<!-- BUTTONS -->
 
 <div class="buttons">
 
 <button
     type="submit"
+    id="submitButton"
     class="btn primary-btn submit-btn"
+    disabled
 >
-    🏏 Register Team
+    ⏳ Loading Tournament...
 </button>
 
 
@@ -453,24 +375,21 @@
 </form>
 
 
-
 <!-- =========================
      MESSAGE
 ========================= -->
 
-<p id="message"></p>
+<div
+    id="message"
+></div>
 
 
 </div>
 
+</div>
 
 </main>
 
-
-
-<!-- =========================
-     FOOTER
-========================= -->
 
 <footer>
 
@@ -481,9 +400,8 @@
 </footer>
 
 
-
 <!-- =========================
-     REGISTRATION JAVASCRIPT
+     REGISTRATION JS
 ========================= -->
 
 <script
