@@ -1,4 +1,4 @@
-import { db, auth } from "./firebase.js";
+import { db, auth } from "../firebase.js";
 
 import {
     onAuthStateChanged
@@ -12,6 +12,53 @@ import {
     deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
+
+/* =========================
+   FIREBASE TEST
+========================= */
+
+console.log("🔥 FIREBASE TEST START");
+
+try {
+
+    const testSnapshot =
+        await getDocs(
+            collection(
+                db,
+                "tournaments"
+            )
+        );
+
+    console.log(
+        "🔥 FIRESTORE TOURNAMENT COUNT:",
+        testSnapshot.size
+    );
+
+    testSnapshot.forEach(
+        (tournamentDoc) => {
+
+            console.log(
+                "🏆 TOURNAMENT:",
+                tournamentDoc.id,
+                tournamentDoc.data()
+            );
+
+        }
+    );
+
+} catch (error) {
+
+    console.error(
+        "❌ FIRESTORE ERROR:",
+        error
+    );
+
+}
+
+
+/* =========================
+   ELEMENTS
+========================= */
 
 const tournamentSelect =
     document.getElementById("tournamentSelect");
@@ -94,6 +141,7 @@ async function loadTournaments() {
 
                 option.textContent =
                     t.tournamentName ||
+                    t.name ||
                     "Unnamed Tournament";
 
                 tournamentSelect.appendChild(
@@ -104,10 +152,9 @@ async function loadTournaments() {
         );
 
 
-        /*
-         * अगर URL में tournament ID है
-         * तो वही automatically select होगा
-         */
+        /* =========================
+           URL ID
+        ========================= */
 
         if (urlTournamentId) {
 
@@ -121,12 +168,38 @@ async function loadTournaments() {
         }
 
 
+        /*
+         * अगर URL ID नहीं है और
+         * tournament मौजूद है तो
+         * पहला tournament select करें
+         */
+
+        else if (!snapshot.empty) {
+
+            const firstTournamentId =
+                snapshot.docs[0].id;
+
+            tournamentSelect.value =
+                firstTournamentId;
+
+            loadTeams(
+                firstTournamentId
+            );
+
+        }
+
+
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "❌ TOURNAMENT LOAD ERROR:",
+            error
+        );
 
         teamList.innerHTML =
-            `<div class="empty">❌ ${error.message}</div>`;
+            `<div class="empty">
+                ❌ ${error.message}
+            </div>`;
 
     }
 
@@ -157,6 +230,12 @@ async function loadTeams(
 
     try {
 
+        console.log(
+            "🔥 Loading teams:",
+            tournamentId
+        );
+
+
         const snapshot =
             await getDocs(
                 collection(
@@ -166,6 +245,12 @@ async function loadTeams(
                     "teams"
                 )
             );
+
+
+        console.log(
+            "🔥 TEAMS FOUND:",
+            snapshot.size
+        );
 
 
         let total = 0;
@@ -325,7 +410,9 @@ async function loadTeams(
                 `;
 
 
-                /* STATUS BUTTONS */
+                /* =========================
+                   STATUS BUTTONS
+                ========================= */
 
                 card
                     .querySelectorAll(
@@ -351,7 +438,9 @@ async function loadTeams(
                     );
 
 
-                /* DELETE */
+                /* =========================
+                   DELETE
+                ========================= */
 
                 card
                     .querySelector(
@@ -402,7 +491,10 @@ async function loadTeams(
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "❌ TEAM LOAD ERROR:",
+            error
+        );
 
         teamList.innerHTML = `
             <div class="empty">
@@ -457,7 +549,10 @@ async function updateTeamStatus(
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "❌ UPDATE ERROR:",
+            error
+        );
 
         alert(
             "❌ " +
@@ -485,7 +580,9 @@ async function deleteTeam(
 
 
     if (!confirmDelete) {
+
         return;
+
     }
 
 
@@ -516,7 +613,10 @@ async function deleteTeam(
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "❌ DELETE ERROR:",
+            error
+        );
 
         alert(
             "❌ " +
@@ -534,13 +634,26 @@ async function deleteTeam(
 
 function resetCounters() {
 
-    totalTeams.textContent = "0";
-    pendingTeams.textContent = "0";
-    approvedTeams.textContent = "0";
-    rejectedTeams.textContent = "0";
-    paidTeams.textContent = "0";
-    holdTeams.textContent = "0";
-    cancelledTeams.textContent = "0";
+    totalTeams.textContent =
+        "0";
+
+    pendingTeams.textContent =
+        "0";
+
+    approvedTeams.textContent =
+        "0";
+
+    rejectedTeams.textContent =
+        "0";
+
+    paidTeams.textContent =
+        "0";
+
+    holdTeams.textContent =
+        "0";
+
+    cancelledTeams.textContent =
+        "0";
 
 }
 
@@ -575,7 +688,14 @@ onAuthStateChanged(
                 "login.html";
 
             return;
+
         }
+
+
+        console.log(
+            "🔥 ADMIN USER:",
+            user.uid
+        );
 
 
         loadTournaments();

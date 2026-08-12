@@ -1,105 +1,23 @@
 console.log("🔥 TOURNAMENT JS LOADED");
 
-import { db } from "../firebase.js";
+import { auth, db } from "../firebase.js";
+
+import {
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
 import {
     doc,
     getDoc,
+    getDocs,
     collection,
-    getDocs
+    query,
+    where
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 
 /* =========================
-   GET TOURNAMENT ID
-========================= */
-
-const params = new URLSearchParams(
-    window.location.search
-);
-
-let tournamentId = params.get("id");
-
-
-/*
-   Agar URL mein ID nahi hai,
-   to localStorage se try karein
-*/
-
-if (!tournamentId) {
-
-    tournamentId =
-        localStorage.getItem("tournamentId");
-
-}
-
-
-/* =========================
-   DEBUG
-========================= */
-
-console.log(
-    "🔥 Tournament ID:",
-    tournamentId
-);
-
-
-/* =========================
-   CHECK ID
-========================= */
-
-if (!tournamentId) {
-
-    document.body.innerHTML = `
-        <div style="
-            padding:40px;
-            text-align:center;
-            font-family:Arial;
-        ">
-
-            <h2>❌ Tournament ID Missing</h2>
-
-            <p>
-                Please open the tournament
-                from My Tournaments.
-            </p>
-
-            <br>
-
-            <a
-                href="my-tournaments.html"
-                style="
-                    display:inline-block;
-                    padding:12px 18px;
-                    background:#1d4ed8;
-                    color:white;
-                    text-decoration:none;
-                    border-radius:10px;
-                "
-            >
-                🏆 My Tournaments
-            </a>
-
-        </div>
-    `;
-
-    throw new Error("Tournament ID Missing");
-
-}
-
-
-/* =========================
-   SAVE ID
-========================= */
-
-localStorage.setItem(
-    "tournamentId",
-    tournamentId
-);
-
-
-/* =========================
-   ELEMENTS
+   GET ELEMENTS
 ========================= */
 
 const tournamentName =
@@ -131,6 +49,198 @@ const liveCount =
 
 
 /* =========================
+   GET URL ID
+========================= */
+
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
+
+let tournamentId =
+    params.get("id");
+
+console.log(
+    "🔥 URL:",
+    window.location.href
+);
+
+console.log(
+    "🔥 ID FROM URL:",
+    tournamentId
+);
+
+
+/* =========================
+   LOCAL STORAGE
+========================= */
+
+if (!tournamentId) {
+
+    tournamentId =
+        localStorage.getItem(
+            "tournamentId"
+        );
+
+    console.log(
+        "🔥 ID FROM LOCAL STORAGE:",
+        tournamentId
+    );
+}
+
+
+/* =========================
+   FIND TOURNAMENT
+========================= */
+
+async function findTournament(user) {
+
+    console.log(
+        "🔥 Searching tournaments..."
+    );
+
+
+    const tournamentsRef =
+        collection(
+            db,
+            "tournaments"
+        );
+
+
+    /* =========================
+       OWNER ID
+    ========================= */
+
+    if (user) {
+
+        try {
+
+            const ownerQuery =
+                query(
+                    tournamentsRef,
+                    where(
+                        "ownerId",
+                        "==",
+                        user.uid
+                    )
+                );
+
+
+            const ownerSnap =
+                await getDocs(
+                    ownerQuery
+                );
+
+
+            console.log(
+                "🔥 ownerId:",
+                ownerSnap.size
+            );
+
+
+            if (!ownerSnap.empty) {
+
+                return ownerSnap.docs[0].id;
+
+            }
+
+        } catch (error) {
+
+            console.log(
+                "⚠️ ownerId search failed:",
+                error.message
+            );
+
+        }
+
+
+        /* =========================
+           CREATED BY
+        ========================= */
+
+        try {
+
+            const createdQuery =
+                query(
+                    tournamentsRef,
+                    where(
+                        "createdBy",
+                        "==",
+                        user.uid
+                    )
+                );
+
+
+            const createdSnap =
+                await getDocs(
+                    createdQuery
+                );
+
+
+            console.log(
+                "🔥 createdBy:",
+                createdSnap.size
+            );
+
+
+            if (!createdSnap.empty) {
+
+                return createdSnap.docs[0].id;
+
+            }
+
+        } catch (error) {
+
+            console.log(
+                "⚠️ createdBy search failed:",
+                error.message
+            );
+
+        }
+
+    }
+
+
+    /* =========================
+       FINAL FALLBACK
+       GET ANY TOURNAMENT
+    ========================= */
+
+    try {
+
+        const allSnap =
+            await getDocs(
+                tournamentsRef
+            );
+
+
+        console.log(
+            "🔥 ALL TOURNAMENTS:",
+            allSnap.size
+        );
+
+
+        if (!allSnap.empty) {
+
+            return allSnap.docs[0].id;
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "❌ Cannot read tournaments:",
+            error
+        );
+
+    }
+
+
+    return null;
+}
+
+
+/* =========================
    LOAD TOURNAMENT
 ========================= */
 
@@ -138,11 +248,127 @@ async function loadTournament() {
 
     try {
 
+        /* =========================
+           WAIT FOR AUTH
+        ========================= */
+
+        const user =
+            await new Promise(
+                resolve => {
+
+                    let unsubscribe;
+
+                    unsubscribe =
+                        onAuthStateChanged(
+                            auth,
+                            currentUser => {
+
+                                if (unsubscribe) {
+                                    unsubscribe();
+                                }
+
+                                resolve(
+                                    currentUser
+                                );
+
+                            }
+                        );
+
+                }
+            );
+
+
         console.log(
-            "🔥 Loading tournament:",
+            "🔥 USER:",
+            user ? user.uid : "NOT LOGGED IN"
+        );
+
+
+        /* =========================
+           FIND ID
+        ========================= */
+
+        if (!tournamentId) {
+
+            tournamentId =
+                await findTournament(
+                    user
+                );
+
+
+            console.log(
+                "🔥 AUTO FOUND ID:",
+                tournamentId
+            );
+
+        }
+
+
+        /* =========================
+           NO ID
+        ========================= */
+
+        if (!tournamentId) {
+
+            document.body.innerHTML = `
+
+                <div style="
+                    padding:40px;
+                    text-align:center;
+                    font-family:Arial;
+                ">
+
+                    <h2>
+                        ❌ No Tournament Found
+                    </h2>
+
+                    <p>
+                        Firebase में कोई tournament नहीं मिला।
+                    </p>
+
+                    <br>
+
+                    <a
+                        href="my-tournaments.html"
+                        style="
+                            display:inline-block;
+                            padding:12px 20px;
+                            background:#1d4ed8;
+                            color:white;
+                            text-decoration:none;
+                            border-radius:10px;
+                        "
+                    >
+                        🏆 My Tournaments
+                    </a>
+
+                </div>
+
+            `;
+
+            return;
+        }
+
+
+        /* =========================
+           SAVE ID
+        ========================= */
+
+        localStorage.setItem(
+            "tournamentId",
             tournamentId
         );
 
+
+        console.log(
+            "✅ FINAL TOURNAMENT ID:",
+            tournamentId
+        );
+
+
+        /* =========================
+           FIRESTORE DOCUMENT
+        ========================= */
 
         const tournamentRef =
             doc(
@@ -159,65 +385,29 @@ async function loadTournament() {
 
 
         console.log(
-            "🔥 Tournament exists:",
+            "🔥 TOURNAMENT EXISTS:",
             tournamentSnap.exists()
         );
 
 
-        /* =========================
-           NOT FOUND
-        ========================= */
-
         if (!tournamentSnap.exists()) {
 
-            document.body.innerHTML = `
-                <div style="
-                    padding:40px;
-                    text-align:center;
-                    font-family:Arial;
-                ">
-
-                    <h2>❌ Tournament Not Found</h2>
-
-                    <p>
-                        Tournament ID:
-                    </p>
-
-                    <b>${tournamentId}</b>
-
-                    <br><br>
-
-                    <a
-                        href="my-tournaments.html"
-                        style="
-                            display:inline-block;
-                            padding:12px 18px;
-                            background:#1d4ed8;
-                            color:white;
-                            text-decoration:none;
-                            border-radius:10px;
-                        "
-                    >
-                        🏆 My Tournaments
-                    </a>
-
-                </div>
-            `;
+            console.error(
+                "❌ Tournament document not found:",
+                tournamentId
+            );
 
             return;
+
         }
 
-
-        /* =========================
-           TOURNAMENT DATA
-        ========================= */
 
         const tournament =
             tournamentSnap.data();
 
 
         console.log(
-            "🔥 Tournament data:",
+            "🔥 FULL TOURNAMENT DATA:",
             tournament
         );
 
@@ -240,15 +430,6 @@ async function loadTournament() {
             tournament.venue ||
             tournament.location ||
             "Venue not available";
-
-
-        /* =========================
-           STATUS
-        ========================= */
-
-        const status =
-            tournament.status ||
-            "Active";
 
 
         /* =========================
@@ -293,20 +474,15 @@ async function loadTournament() {
 
         if (heroStatus) {
 
-            if (
-                String(status).toLowerCase()
-                === "active"
-            ) {
+            const status =
+                tournament.status ||
+                "Active";
 
-                heroStatus.textContent =
-                    "🟢 Active";
 
-            } else {
-
-                heroStatus.textContent =
-                    status;
-
-            }
+            heroStatus.textContent =
+                status === "Active"
+                    ? "🟢 Active"
+                    : status;
 
         }
 
@@ -324,7 +500,7 @@ async function loadTournament() {
            COUNTS
         ========================= */
 
-        await loadTournamentCounts();
+        await loadCounts();
 
 
         /* =========================
@@ -335,13 +511,13 @@ async function loadTournament() {
 
 
         console.log(
-            "✅ Tournament loaded successfully"
+            "✅ TOURNAMENT DATA LOADED"
         );
 
     } catch (error) {
 
         console.error(
-            "❌ Tournament Error:",
+            "❌ TOURNAMENT ERROR:",
             error
         );
 
@@ -354,7 +530,7 @@ async function loadTournament() {
    LOAD COUNTS
 ========================= */
 
-async function loadTournamentCounts() {
+async function loadCounts() {
 
     try {
 
@@ -362,7 +538,7 @@ async function loadTournamentCounts() {
            TEAMS
         ========================= */
 
-        const teamsSnapshot =
+        const teamsSnap =
             await getDocs(
                 collection(
                     db,
@@ -374,15 +550,15 @@ async function loadTournamentCounts() {
 
 
         console.log(
-            "🔥 Teams:",
-            teamsSnapshot.size
+            "🔥 TEAMS:",
+            teamsSnap.size
         );
 
 
         if (teamCount) {
 
             teamCount.textContent =
-                teamsSnapshot.size;
+                teamsSnap.size;
 
         }
 
@@ -391,7 +567,7 @@ async function loadTournamentCounts() {
            MATCHES
         ========================= */
 
-        const matchesSnapshot =
+        const matchesSnap =
             await getDocs(
                 collection(
                     db,
@@ -403,15 +579,15 @@ async function loadTournamentCounts() {
 
 
         console.log(
-            "🔥 Matches:",
-            matchesSnapshot.size
+            "🔥 MATCHES:",
+            matchesSnap.size
         );
 
 
         if (matchCount) {
 
             matchCount.textContent =
-                matchesSnapshot.size;
+                matchesSnap.size;
 
         }
 
@@ -423,7 +599,7 @@ async function loadTournamentCounts() {
         let players = 0;
 
 
-        teamsSnapshot.forEach(
+        teamsSnap.forEach(
             teamDoc => {
 
                 const team =
@@ -431,7 +607,9 @@ async function loadTournamentCounts() {
 
 
                 if (
-                    Array.isArray(team.players)
+                    Array.isArray(
+                        team.players
+                    )
                 ) {
 
                     players +=
@@ -452,13 +630,13 @@ async function loadTournamentCounts() {
 
 
         /* =========================
-           LIVE MATCHES
+           LIVE
         ========================= */
 
         let live = 0;
 
 
-        matchesSnapshot.forEach(
+        matchesSnap.forEach(
             matchDoc => {
 
                 const match =
@@ -468,8 +646,9 @@ async function loadTournamentCounts() {
                 const status =
                     String(
                         match.status || ""
-                    ).toLowerCase()
-                     .trim();
+                    )
+                    .toLowerCase()
+                    .trim();
 
 
                 if (
@@ -497,24 +676,17 @@ async function loadTournamentCounts() {
         console.log(
             "🔥 COUNTS:",
             {
-                teams:
-                    teamsSnapshot.size,
-
-                matches:
-                    matchesSnapshot.size,
-
-                players:
-                    players,
-
-                live:
-                    live
+                teams: teamsSnap.size,
+                matches: matchesSnap.size,
+                players: players,
+                live: live
             }
         );
 
     } catch (error) {
 
         console.error(
-            "❌ Count Error:",
+            "❌ COUNT ERROR:",
             error
         );
 
@@ -524,7 +696,7 @@ async function loadTournamentCounts() {
 
 
 /* =========================
-   SET TOURNAMENT LINKS
+   SET ALL LINKS
 ========================= */
 
 function setTournamentLinks() {
@@ -574,18 +746,18 @@ function setTournamentLinks() {
 
 
     Object.keys(links).forEach(
-        elementId => {
+        key => {
 
             const element =
                 document.getElementById(
-                    elementId
+                    key
                 );
 
 
             if (element) {
 
                 element.href =
-                    links[elementId];
+                    links[key];
 
             }
 

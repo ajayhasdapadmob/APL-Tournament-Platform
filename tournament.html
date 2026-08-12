@@ -14,7 +14,7 @@
 
 <link
     rel="stylesheet"
-    href="css/tournament.css"
+    href="css/Tournament.css"
 >
 
 </head>
@@ -23,16 +23,13 @@
 <body>
 
 
-<!-- HEADER -->
-
 <header class="tournament-header">
 
     <button
         class="back-btn"
-        onclick="history.back()">
-
+        onclick="history.back()"
+    >
         ←
-
     </button>
 
 
@@ -51,40 +48,28 @@
 
     <button
         class="more-btn"
-        onclick="toggleMenu()">
-
+        onclick="toggleMenu()"
+    >
         ⋮
-
     </button>
 
 </header>
 
 
-
-<!-- MENU -->
-
 <div
     id="menu"
-    class="menu">
+    class="menu"
+>
 
-    <a href="profile.html">
-        👤 Profile
-    </a>
-
-    <a href="my-tournaments.html">
+    <a href="My-tournament.html">
         🏆 My Tournaments
     </a>
 
 </div>
 
 
-
-<!-- MAIN -->
-
 <main class="tournament-container">
 
-
-    <!-- TOURNAMENT HERO -->
 
     <section class="tournament-card">
 
@@ -111,9 +96,6 @@
 
     </section>
 
-
-
-    <!-- QUICK STATS -->
 
     <section class="stats-grid">
 
@@ -177,12 +159,8 @@
 
         </div>
 
-
     </section>
 
-
-
-    <!-- TOURNAMENT MENU -->
 
     <section class="section">
 
@@ -197,7 +175,8 @@
             <a
                 class="menu-card"
                 id="teamsLink"
-                href="#">
+                href="#"
+            >
 
                 <div class="menu-icon">
                     👥
@@ -214,11 +193,11 @@
             </a>
 
 
-
             <a
                 class="menu-card"
                 id="scheduleLink"
-                href="#">
+                href="#"
+            >
 
                 <div class="menu-icon">
                     📅
@@ -235,11 +214,11 @@
             </a>
 
 
-
             <a
                 class="menu-card live-card"
                 id="liveLink"
-                href="#">
+                href="#"
+            >
 
                 <div class="menu-icon">
                     🔴
@@ -256,11 +235,11 @@
             </a>
 
 
-
             <a
                 class="menu-card"
                 id="resultsLink"
-                href="#">
+                href="#"
+            >
 
                 <div class="menu-icon">
                     🏆
@@ -277,11 +256,11 @@
             </a>
 
 
-
             <a
                 class="menu-card"
                 id="pointsLink"
-                href="#">
+                href="#"
+            >
 
                 <div class="menu-icon">
                     📊
@@ -298,11 +277,11 @@
             </a>
 
 
-
             <a
                 class="menu-card"
                 id="statsLink"
-                href="#">
+                href="#"
+            >
 
                 <div class="menu-icon">
                     📈
@@ -319,11 +298,11 @@
             </a>
 
 
-
             <a
                 class="menu-card"
                 id="orangeLink"
-                href="#">
+                href="#"
+            >
 
                 <div class="menu-icon">
                     🟠
@@ -340,11 +319,11 @@
             </a>
 
 
-
             <a
                 class="menu-card"
                 id="purpleLink"
-                href="#">
+                href="#"
+            >
 
                 <div class="menu-icon">
                     🟣
@@ -360,14 +339,10 @@
 
             </a>
 
-
         </div>
 
     </section>
 
-
-
-    <!-- REGISTER TEAM -->
 
     <section class="register-card">
 
@@ -388,54 +363,68 @@
         <a
             id="registerTeamLink"
             href="#"
-            class="register-btn">
-
+            class="register-btn"
+        >
             Register Team
-
         </a>
 
     </section>
 
-
 </main>
 
-
-
-<!-- BOTTOM NAV -->
 
 <nav class="bottom-nav">
 
 
     <a href="index.html">
+
         🏠
-        <small>Home</small>
+
+        <small>
+            Home
+        </small>
+
     </a>
 
 
     <a
-        href="my-tournaments.html"
-        class="active">
+        href="My-tournament.html"
+        class="active"
+    >
 
         🏆
-        <small>Tournament</small>
+
+        <small>
+            Tournament
+        </small>
 
     </a>
 
 
-    <a id="bottomLiveLink"
-       href="#">
+    <a
+        id="bottomLiveLink"
+        href="#"
+    >
 
         🔴
-        <small>Live</small>
+
+        <small>
+            Live
+        </small>
 
     </a>
 
 
-    <a id="bottomPointsLink"
-       href="#">
+    <a
+        id="bottomPointsLink"
+        href="#"
+    >
 
         📊
-        <small>Points</small>
+
+        <small>
+            Points
+        </small>
 
     </a>
 
@@ -443,34 +432,49 @@
     <a href="profile.html">
 
         👤
-        <small>Profile</small>
+
+        <small>
+            Profile
+        </small>
 
     </a>
-
 
 </nav>
 
 
-
-<!-- JAVASCRIPT -->
-
 <script
     type="module"
-    src="js/tournament.js"
+    src="js/Tournament.js"
 ></script>
 
+
 <script>
+
 function toggleMenu() {
-    const menu = document.getElementById("menu");
+
+    const menu =
+        document.getElementById("menu");
+
 
     if (!menu) return;
 
-    if (menu.style.display === "block") {
-        menu.style.display = "none";
+
+    if (
+        menu.style.display === "block"
+    ) {
+
+        menu.style.display =
+            "none";
+
     } else {
-        menu.style.display = "block";
+
+        menu.style.display =
+            "block";
+
     }
+
 }
+
 </script>
 
 
