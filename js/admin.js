@@ -1,3 +1,5 @@
+console.log("🔥 ADMIN JS LOADED");
+
 import { db, auth } from "../firebase.js";
 
 import {
@@ -11,49 +13,6 @@ import {
     updateDoc,
     deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
-
-/* =========================
-   FIREBASE TEST
-========================= */
-
-console.log("🔥 FIREBASE TEST START");
-
-try {
-
-    const testSnapshot =
-        await getDocs(
-            collection(
-                db,
-                "tournaments"
-            )
-        );
-
-    console.log(
-        "🔥 FIRESTORE TOURNAMENT COUNT:",
-        testSnapshot.size
-    );
-
-    testSnapshot.forEach(
-        (tournamentDoc) => {
-
-            console.log(
-                "🏆 TOURNAMENT:",
-                tournamentDoc.id,
-                tournamentDoc.data()
-            );
-
-        }
-    );
-
-} catch (error) {
-
-    console.error(
-        "❌ FIRESTORE ERROR:",
-        error
-    );
-
-}
 
 
 /* =========================
@@ -100,6 +59,11 @@ const params =
 const urlTournamentId =
     params.get("id");
 
+console.log(
+    "🏆 URL Tournament ID:",
+    urlTournamentId
+);
+
 
 /* =========================
    LOAD TOURNAMENTS
@@ -109,13 +73,24 @@ async function loadTournaments() {
 
     try {
 
-        const snapshot =
+        console.log(
+            "🔥 Loading tournaments..."
+        );
+
+
+        const tournamentsSnapshot =
             await getDocs(
                 collection(
                     db,
                     "tournaments"
                 )
             );
+
+
+        console.log(
+            "🏆 Tournaments found:",
+            tournamentsSnapshot.size
+        );
 
 
         tournamentSelect.innerHTML = `
@@ -125,24 +100,28 @@ async function loadTournaments() {
         `;
 
 
-        snapshot.forEach(
+        tournamentsSnapshot.forEach(
             (tournamentDoc) => {
 
-                const t =
+                const tournament =
                     tournamentDoc.data();
+
 
                 const option =
                     document.createElement(
                         "option"
                     );
 
+
                 option.value =
                     tournamentDoc.id;
 
+
                 option.textContent =
-                    t.tournamentName ||
-                    t.name ||
+                    tournament.tournamentName ||
+                    tournament.name ||
                     "Unnamed Tournament";
+
 
                 tournamentSelect.appendChild(
                     option
@@ -153,37 +132,63 @@ async function loadTournaments() {
 
 
         /* =========================
-           URL ID
+           OPEN FROM URL
         ========================= */
 
         if (urlTournamentId) {
 
-            tournamentSelect.value =
-                urlTournamentId;
+            const tournamentExists =
+                [...tournamentSelect.options]
+                    .some(
+                        option =>
+                            option.value ===
+                            urlTournamentId
+                    );
 
-            loadTeams(
-                urlTournamentId
-            );
+
+            if (tournamentExists) {
+
+                tournamentSelect.value =
+                    urlTournamentId;
+
+
+                await loadTeams(
+                    urlTournamentId
+                );
+
+            } else {
+
+                teamList.innerHTML = `
+                    <div class="empty">
+                        ❌ Tournament not found
+                    </div>
+                `;
+
+                resetCounters();
+
+            }
+
+            return;
 
         }
 
 
-        /*
-         * अगर URL ID नहीं है और
-         * tournament मौजूद है तो
-         * पहला tournament select करें
-         */
+        /* =========================
+           AUTO SELECT FIRST
+        ========================= */
 
-        else if (!snapshot.empty) {
+        if (!tournamentsSnapshot.empty) {
 
-            const firstTournamentId =
-                snapshot.docs[0].id;
+            const firstTournament =
+                tournamentsSnapshot.docs[0];
+
 
             tournamentSelect.value =
-                firstTournamentId;
+                firstTournament.id;
 
-            loadTeams(
-                firstTournamentId
+
+            await loadTeams(
+                firstTournament.id
             );
 
         }
@@ -196,10 +201,12 @@ async function loadTournaments() {
             error
         );
 
-        teamList.innerHTML =
-            `<div class="empty">
+
+        teamList.innerHTML = `
+            <div class="empty">
                 ❌ ${error.message}
-            </div>`;
+            </div>
+        `;
 
     }
 
@@ -218,38 +225,43 @@ async function loadTeams(
 
         teamList.innerHTML = `
             <div class="empty">
-                Select a tournament.
+                🏆 Please select a tournament.
             </div>
         `;
 
         resetCounters();
 
         return;
+
     }
 
 
     try {
 
         console.log(
-            "🔥 Loading teams:",
+            "🔥 Loading teams for:",
             tournamentId
         );
 
 
-        const snapshot =
+        const teamsRef =
+            collection(
+                db,
+                "tournaments",
+                tournamentId,
+                "teams"
+            );
+
+
+        const teamsSnapshot =
             await getDocs(
-                collection(
-                    db,
-                    "tournaments",
-                    tournamentId,
-                    "teams"
-                )
+                teamsRef
             );
 
 
         console.log(
-            "🔥 TEAMS FOUND:",
-            snapshot.size
+            "👥 Teams found:",
+            teamsSnapshot.size
         );
 
 
@@ -265,22 +277,38 @@ async function loadTeams(
         teamList.innerHTML = "";
 
 
-        if (snapshot.empty) {
+        /* =========================
+           NO TEAMS
+        ========================= */
+
+        if (teamsSnapshot.empty) {
 
             teamList.innerHTML = `
                 <div class="empty">
                     👥 No Teams Registered
+                    <br><br>
+                    Registration data will
+                    appear here after submission.
                 </div>
             `;
+
+            resetCounters();
+
+            return;
 
         }
 
 
-        snapshot.forEach(
+        /* =========================
+           LOOP TEAMS
+        ========================= */
+
+        teamsSnapshot.forEach(
             (teamDoc) => {
 
                 const team =
                     teamDoc.data();
+
 
                 const status =
                     team.status ||
@@ -290,24 +318,66 @@ async function loadTeams(
                 total++;
 
 
-                if (status === "Pending")
+                /* =========================
+                   COUNTERS
+                ========================= */
+
+                if (status === "Pending") {
                     pending++;
+                }
 
-                if (status === "Approved")
+                if (status === "Approved") {
                     approved++;
+                }
 
-                if (status === "Rejected")
+                if (status === "Rejected") {
                     rejected++;
+                }
 
-                if (status === "Paid")
+                if (status === "Paid") {
                     paid++;
+                }
 
-                if (status === "On Hold")
+                if (status === "On Hold") {
                     hold++;
+                }
 
-                if (status === "Cancelled")
+                if (status === "Cancelled") {
                     cancelled++;
+                }
 
+
+                /* =========================
+                   PLAYERS
+                ========================= */
+
+                let playersText = "-";
+
+
+                if (
+                    Array.isArray(
+                        team.players
+                    )
+                ) {
+
+                    playersText =
+                        team.players.join(
+                            ", "
+                        );
+
+                } else if (
+                    team.players
+                ) {
+
+                    playersText =
+                        team.players;
+
+                }
+
+
+                /* =========================
+                   CARD
+                ========================= */
 
                 const card =
                     document.createElement(
@@ -322,37 +392,98 @@ async function loadTeams(
                 card.innerHTML = `
 
                     <h3>
-                        🏏 ${team.teamName || "-"}
+                        🏏
+                        ${
+                            team.teamName ||
+                            "Team"
+                        }
                     </h3>
 
                     <p>
-                        👤 <b>Captain:</b>
-                        ${team.captainName || "-"}
+                        🆔
+                        <b>Team ID:</b>
+                        ${teamDoc.id}
                     </p>
 
                     <p>
-                        📞 <b>Mobile:</b>
-                        ${team.mobile || "-"}
+                        🏆
+                        <b>Tournament:</b>
+                        ${
+                            team.tournamentName ||
+                            "-"
+                        }
                     </p>
 
                     <p>
-                        📧 <b>Email:</b>
-                        ${team.email || "-"}
+                        📍
+                        <b>Venue:</b>
+                        ${
+                            team.venue ||
+                            "-"
+                        }
                     </p>
 
                     <p>
-                        🏙️ <b>City:</b>
-                        ${team.city || "-"}
+                        👤
+                        <b>Captain:</b>
+                        ${
+                            team.captainName ||
+                            "-"
+                        }
                     </p>
 
                     <p>
-                        👥 <b>Players:</b>
-                        ${team.players || "-"}
+                        📞
+                        <b>Mobile:</b>
+                        ${
+                            team.mobile ||
+                            "-"
+                        }
+                    </p>
+
+                    <p>
+                        📧
+                        <b>Email:</b>
+                        ${
+                            team.email ||
+                            "-"
+                        }
+                    </p>
+
+                    <p>
+                        🏙️
+                        <b>City:</b>
+                        ${
+                            team.city ||
+                            "-"
+                        }
+                    </p>
+
+                    <p>
+                        👥
+                        <b>Players:</b>
+                        ${playersText}
+                    </p>
+
+                    <p>
+                        👥
+                        <b>Player Count:</b>
+                        ${
+                            team.playerCount ||
+                            (
+                                Array.isArray(
+                                    team.players
+                                )
+                                    ? team.players.length
+                                    : 0
+                            )
+                        }
                     </p>
 
                     <p class="status">
-                        📌 Status:
-                        <b>${status}</b>
+                        📌
+                        <b>Status:</b>
+                        ${status}
                     </p>
 
                     <div class="action-buttons">
@@ -407,6 +538,7 @@ async function loadTeams(
                         </button>
 
                     </div>
+
                 `;
 
 
@@ -423,9 +555,9 @@ async function loadTeams(
 
                             button.addEventListener(
                                 "click",
-                                () => {
+                                async () => {
 
-                                    updateTeamStatus(
+                                    await updateTeamStatus(
                                         tournamentId,
                                         teamDoc.id,
                                         button.dataset.status
@@ -442,21 +574,23 @@ async function loadTeams(
                    DELETE
                 ========================= */
 
-                card
-                    .querySelector(
+                const deleteButton =
+                    card.querySelector(
                         "[data-delete]"
-                    )
-                    .addEventListener(
-                        "click",
-                        () => {
-
-                            deleteTeam(
-                                tournamentId,
-                                teamDoc.id
-                            );
-
-                        }
                     );
+
+
+                deleteButton.addEventListener(
+                    "click",
+                    async () => {
+
+                        await deleteTeam(
+                            tournamentId,
+                            teamDoc.id
+                        );
+
+                    }
+                );
 
 
                 teamList.appendChild(
@@ -466,6 +600,10 @@ async function loadTeams(
             }
         );
 
+
+        /* =========================
+           UPDATE COUNTERS
+        ========================= */
 
         totalTeams.textContent =
             total;
@@ -489,6 +627,20 @@ async function loadTeams(
             cancelled;
 
 
+        console.log(
+            "📊 Counters:",
+            {
+                total,
+                pending,
+                approved,
+                rejected,
+                paid,
+                hold,
+                cancelled
+            }
+        );
+
+
     } catch (error) {
 
         console.error(
@@ -496,11 +648,16 @@ async function loadTeams(
             error
         );
 
+
         teamList.innerHTML = `
             <div class="empty">
-                ❌ ${error.message}
+                ❌ Team Load Error
+                <br><br>
+                ${error.message}
             </div>
         `;
+
+        resetCounters();
 
     }
 
@@ -519,30 +676,43 @@ async function updateTeamStatus(
 
     try {
 
-        await updateDoc(
+        console.log(
+            "🔄 Updating:",
+            teamId,
+            status
+        );
 
+
+        const teamRef =
             doc(
                 db,
                 "tournaments",
                 tournamentId,
                 "teams",
                 teamId
-            ),
+            );
 
+
+        await updateDoc(
+            teamRef,
             {
                 status: status
             }
+        );
 
+
+        console.log(
+            "✅ Status updated"
         );
 
 
         alert(
-            "Team status updated to " +
+            "✅ Team status updated to " +
             status
         );
 
 
-        loadTeams(
+        await loadTeams(
             tournamentId
         );
 
@@ -554,8 +724,9 @@ async function updateTeamStatus(
             error
         );
 
+
         alert(
-            "❌ " +
+            "❌ Update failed: " +
             error.message
         );
 
@@ -580,24 +751,30 @@ async function deleteTeam(
 
 
     if (!confirmDelete) {
-
         return;
-
     }
 
 
     try {
 
-        await deleteDoc(
-
+        const teamRef =
             doc(
                 db,
                 "tournaments",
                 tournamentId,
                 "teams",
                 teamId
-            )
+            );
 
+
+        await deleteDoc(
+            teamRef
+        );
+
+
+        console.log(
+            "🗑️ Team deleted:",
+            teamId
         );
 
 
@@ -606,7 +783,7 @@ async function deleteTeam(
         );
 
 
-        loadTeams(
+        await loadTeams(
             tournamentId
         );
 
@@ -618,8 +795,9 @@ async function deleteTeam(
             error
         );
 
+
         alert(
-            "❌ " +
+            "❌ Delete failed: " +
             error.message
         );
 
@@ -664,9 +842,15 @@ function resetCounters() {
 
 tournamentSelect.addEventListener(
     "change",
-    function () {
+    async function () {
 
-        loadTeams(
+        console.log(
+            "🏆 Selected tournament:",
+            this.value
+        );
+
+
+        await loadTeams(
             this.value
         );
 
@@ -680,7 +864,7 @@ tournamentSelect.addEventListener(
 
 onAuthStateChanged(
     auth,
-    (user) => {
+    async (user) => {
 
         if (!user) {
 
@@ -698,7 +882,7 @@ onAuthStateChanged(
         );
 
 
-        loadTournaments();
+        await loadTournaments();
 
     }
 );
