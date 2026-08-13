@@ -5,13 +5,11 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Admin Panel - APL Tournament Platform</title>
 
-<link rel="stylesheet"
-      href="css/style.css">
+<link rel="stylesheet" href="css/style.css">
 
 <style>
 
@@ -28,10 +26,6 @@
     box-shadow: 0 5px 20px rgba(0,0,0,0.08);
 }
 
-.admin-header h2 {
-    margin-top: 0;
-}
-
 #tournamentSelect {
     width: 100%;
     padding: 13px;
@@ -43,8 +37,7 @@
 
 .stats {
     display: grid;
-    grid-template-columns:
-        repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 12px;
     margin-bottom: 20px;
 }
@@ -78,18 +71,18 @@
     margin: 8px 0;
 }
 
-.status {
-    font-weight: bold;
-    padding: 10px;
-    border-radius: 7px;
-    background: #f3f4f6;
-}
-
 .players-box {
     background: #f8fafc;
     padding: 12px;
     border-radius: 8px;
     margin-top: 10px;
+}
+
+.status {
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 7px;
+    background: #f3f4f6;
 }
 
 .action-buttons {
@@ -108,33 +101,13 @@
     font-weight: bold;
 }
 
-.pending-btn {
-    background: #d97706;
-}
-
-.approved-btn {
-    background: #059669;
-}
-
-.rejected-btn {
-    background: #dc2626;
-}
-
-.paid-btn {
-    background: #047857;
-}
-
-.hold-btn {
-    background: #7c3aed;
-}
-
-.cancel-btn {
-    background: #4b5563;
-}
-
-.delete-btn {
-    background: #991b1b;
-}
+.pending-btn { background: #d97706; }
+.approved-btn { background: #059669; }
+.rejected-btn { background: #dc2626; }
+.paid-btn { background: #047857; }
+.hold-btn { background: #7c3aed; }
+.cancel-btn { background: #4b5563; }
+.delete-btn { background: #991b1b; }
 
 .empty {
     background: white;
@@ -170,26 +143,15 @@
 
 </head>
 
-
 <body>
-
 
 <header class="top-header">
 
-    <div class="logo">
-        🏏
-    </div>
+    <div class="logo">🏏</div>
 
     <div>
-
-        <h1>
-            Admin Panel
-        </h1>
-
-        <p>
-            APL Tournament Platform
-        </p>
-
+        <h1>Admin Panel</h1>
+        <p>APL Tournament Platform</p>
     </div>
 
 </header>
@@ -200,17 +162,11 @@
 <div class="admin-container">
 
 
-<!-- TOURNAMENT -->
-
 <div class="admin-header">
 
-    <h2>
-        ⚙️ Tournament Management
-    </h2>
+    <h2>⚙️ Tournament Management</h2>
 
-    <p>
-        Select a tournament to manage teams.
-    </p>
+    <p>Select a tournament to manage registered teams.</p>
 
     <select id="tournamentSelect">
 
@@ -223,104 +179,61 @@
 </div>
 
 
-<!-- MESSAGE -->
-
 <div id="adminMessage"></div>
 
-
-<!-- STATISTICS -->
 
 <div class="stats">
 
 
     <div class="stat-card">
-
         👥 Total Teams
-
-        <h2 id="totalTeams">
-            0
-        </h2>
-
+        <h2 id="totalTeams">0</h2>
     </div>
 
 
     <div class="stat-card">
-
         ⏳ Pending
-
-        <h2 id="pendingTeams">
-            0
-        </h2>
-
+        <h2 id="pendingTeams">0</h2>
     </div>
 
 
     <div class="stat-card">
-
         ✅ Approved
-
-        <h2 id="approvedTeams">
-            0
-        </h2>
-
+        <h2 id="approvedTeams">0</h2>
     </div>
 
 
     <div class="stat-card">
-
         ❌ Rejected
-
-        <h2 id="rejectedTeams">
-            0
-        </h2>
-
+        <h2 id="rejectedTeams">0</h2>
     </div>
 
 
     <div class="stat-card">
-
         💰 Paid
-
-        <h2 id="paidTeams">
-            0
-        </h2>
-
+        <h2 id="paidTeams">0</h2>
     </div>
 
 
     <div class="stat-card">
-
         ⏸️ On Hold
-
-        <h2 id="holdTeams">
-            0
-        </h2>
-
+        <h2 id="holdTeams">0</h2>
     </div>
 
 
     <div class="stat-card">
-
         🚫 Cancelled
-
-        <h2 id="cancelledTeams">
-            0
-        </h2>
-
+        <h2 id="cancelledTeams">0</h2>
     </div>
 
 
 </div>
 
 
-<!-- TEAM LIST -->
-
 <div id="teamList">
 
     <div class="empty">
-
-        ⏳ Loading Teams...
-
+        ⏳ Loading...
     </div>
 
 </div>
@@ -331,11 +244,12 @@
 
 <div style="text-align:center;">
 
-    <a
-        href="dashboard.html"
-        class="btn"
-    >
+    <a href="dashboard.html" class="btn">
         ⬅ Dashboard
+    </a>
+
+    <a href="my-tournaments.html" class="btn">
+        🏆 My Tournaments
     </a>
 
 </div>
@@ -355,11 +269,7 @@
 </footer>
 
 
-<script
-    type="module"
-    src="js/admin.js"
-></script>
-
+<script type="module" src="js/admin.js"></script>
 
 </body>
 

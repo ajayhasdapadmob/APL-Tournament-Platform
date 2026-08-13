@@ -1,10 +1,13 @@
 console.log("🔥 ADMIN JS LOADED");
 
+
 import { auth, db } from "../firebase.js";
+
 
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
 
 import {
     collection,
@@ -70,23 +73,17 @@ function showMessage(text, type = "") {
 
 
 /* =====================================================
-   RESET COUNTERS
+   RESET
 ===================================================== */
 
 function resetCounters() {
 
     totalTeams.textContent = "0";
-
     pendingTeams.textContent = "0";
-
     approvedTeams.textContent = "0";
-
     rejectedTeams.textContent = "0";
-
     paidTeams.textContent = "0";
-
     holdTeams.textContent = "0";
-
     cancelledTeams.textContent = "0";
 
 }
@@ -141,13 +138,20 @@ async function loadTournaments() {
                 "error"
             );
 
+
             teamList.innerHTML = `
                 <div class="empty">
+
                     🏆 No Tournament Found
+
                     <br><br>
+
                     Please create a tournament first.
+
                 </div>
             `;
+
+            resetCounters();
 
             return;
 
@@ -155,7 +159,7 @@ async function loadTournaments() {
 
 
         /* =================================================
-           ADD TOURNAMENTS TO SELECT
+           ADD TOURNAMENTS
         ================================================= */
 
         snapshot.forEach(
@@ -190,7 +194,7 @@ async function loadTournaments() {
 
 
         /* =================================================
-           GET ID FROM URL
+           GET URL ID
         ================================================= */
 
         const params =
@@ -199,21 +203,17 @@ async function loadTournaments() {
             );
 
 
-        const urlTournamentId =
+        const urlId =
             params.get("id");
 
 
-        /* =================================================
-           GET ID FROM LOCAL STORAGE
-        ================================================= */
-
-        const localTournamentId =
+        const localId =
             localStorage.getItem(
                 "tournamentId"
             );
 
 
-        const selectedTournamentId =
+        const selectedId =
             localStorage.getItem(
                 "selectedTournamentId"
             );
@@ -222,46 +222,57 @@ async function loadTournaments() {
         let tournamentId = null;
 
 
+        /* URL FIRST */
+
         if (
-            urlTournamentId &&
+            urlId &&
             [...tournamentSelect.options]
                 .some(
                     option =>
-                        option.value ===
-                        urlTournamentId
+                        option.value === urlId
                 )
         ) {
 
-            tournamentId =
-                urlTournamentId;
+            tournamentId = urlId;
 
-        } else if (
-            selectedTournamentId &&
+        }
+
+
+        /* SELECTED ID */
+
+        else if (
+            selectedId &&
             [...tournamentSelect.options]
                 .some(
                     option =>
-                        option.value ===
-                        selectedTournamentId
+                        option.value === selectedId
                 )
         ) {
 
-            tournamentId =
-                selectedTournamentId;
+            tournamentId = selectedId;
 
-        } else if (
-            localTournamentId &&
+        }
+
+
+        /* LOCAL ID */
+
+        else if (
+            localId &&
             [...tournamentSelect.options]
                 .some(
                     option =>
-                        option.value ===
-                        localTournamentId
+                        option.value === localId
                 )
         ) {
 
-            tournamentId =
-                localTournamentId;
+            tournamentId = localId;
 
-        } else {
+        }
+
+
+        /* FIRST TOURNAMENT */
+
+        else {
 
             tournamentId =
                 snapshot.docs[0].id;
@@ -270,7 +281,7 @@ async function loadTournaments() {
 
 
         /* =================================================
-           SELECT TOURNAMENT
+           SAVE ID
         ================================================= */
 
         tournamentSelect.value =
@@ -282,21 +293,18 @@ async function loadTournaments() {
             tournamentId
         );
 
+
         localStorage.setItem(
             "selectedTournamentId",
             tournamentId
         );
 
 
-        showMessage(
-            "✅ Tournament loaded.",
-            "success"
+        console.log(
+            "🏆 Selected Tournament:",
+            tournamentId
         );
 
-
-        /* =================================================
-           LOAD TEAMS
-        ================================================= */
 
         await loadTeams(
             tournamentId
@@ -306,7 +314,7 @@ async function loadTournaments() {
     } catch (error) {
 
         console.error(
-            "❌ LOAD TOURNAMENT ERROR:",
+            "❌ TOURNAMENT LOAD ERROR:",
             error
         );
 
@@ -319,9 +327,13 @@ async function loadTournaments() {
 
         teamList.innerHTML = `
             <div class="empty">
+
                 ❌ Tournament Load Failed
+
                 <br><br>
+
                 ${error.message}
+
             </div>
         `;
 
@@ -351,7 +363,9 @@ async function loadTeams(
 
         teamList.innerHTML = `
             <div class="empty">
+
                 🏆 Please select a tournament.
+
             </div>
         `;
 
@@ -368,10 +382,6 @@ async function loadTeams(
         );
 
 
-        /* =================================================
-           IMPORTANT FIRESTORE PATH
-        ================================================= */
-
         const teamsRef =
             collection(
                 db,
@@ -382,7 +392,7 @@ async function loadTeams(
 
 
         console.log(
-            "📁 Firestore Path:",
+            "📁 Firestore:",
             `tournaments/${tournamentId}/teams`
         );
 
@@ -403,21 +413,12 @@ async function loadTeams(
 
 
         let pending = 0;
-
         let approved = 0;
-
         let rejected = 0;
-
         let paid = 0;
-
         let hold = 0;
-
         let cancelled = 0;
 
-
-        /* =================================================
-           NO TEAMS
-        ================================================= */
 
         if (snapshot.empty) {
 
@@ -441,8 +442,7 @@ async function loadTeams(
 
 
             showMessage(
-                "ℹ️ No team registered yet.",
-                ""
+                "ℹ️ No team registered yet."
             );
 
 
@@ -452,7 +452,7 @@ async function loadTeams(
 
 
         /* =================================================
-           DISPLAY TEAMS
+           DISPLAY EACH TEAM
         ================================================= */
 
         snapshot.forEach(
@@ -467,67 +467,28 @@ async function loadTeams(
                     "Pending";
 
 
-                /* ===============================
-                   COUNTERS
-                =============================== */
+                /* COUNTERS */
 
-                if (
-                    status === "Pending"
-                ) {
-
+                if (status === "Pending")
                     pending++;
 
-                }
-
-
-                if (
-                    status === "Approved"
-                ) {
-
+                if (status === "Approved")
                     approved++;
 
-                }
-
-
-                if (
-                    status === "Rejected"
-                ) {
-
+                if (status === "Rejected")
                     rejected++;
 
-                }
-
-
-                if (
-                    status === "Paid"
-                ) {
-
+                if (status === "Paid")
                     paid++;
 
-                }
-
-
-                if (
-                    status === "On Hold"
-                ) {
-
+                if (status === "On Hold")
                     hold++;
 
-                }
-
-
-                if (
-                    status === "Cancelled"
-                ) {
-
+                if (status === "Cancelled")
                     cancelled++;
 
-                }
 
-
-                /* ===============================
-                   PLAYERS
-                =============================== */
+                /* PLAYERS */
 
                 let players = "-";
 
@@ -553,9 +514,7 @@ async function loadTeams(
                 }
 
 
-                /* ===============================
-                   CARD
-                =============================== */
+                /* CARD */
 
                 const card =
                     document.createElement(
@@ -629,7 +588,7 @@ async function loadTeams(
                         👥
                         <b>Players:</b>
 
-                        <br>
+                        <br><br>
 
                         ${players}
 
@@ -637,22 +596,16 @@ async function loadTeams(
 
 
                     <p>
-
                         👥
                         <b>Player Count:</b>
-
                         ${team.playerCount || 0}
-
                     </p>
 
 
                     <p>
-
                         💰
                         <b>Payment:</b>
-
                         ${team.paymentStatus || "Unpaid"}
-
                     </p>
 
 
@@ -730,9 +683,7 @@ async function loadTeams(
                 `;
 
 
-                /* =================================================
-                   STATUS BUTTONS
-                ================================================= */
+                /* STATUS BUTTONS */
 
                 card
                     .querySelectorAll(
@@ -758,9 +709,7 @@ async function loadTeams(
                     );
 
 
-                /* =================================================
-                   DELETE BUTTON
-                ================================================= */
+                /* DELETE */
 
                 const deleteButton =
                     card.querySelector(
@@ -790,7 +739,7 @@ async function loadTeams(
 
 
         /* =================================================
-           UPDATE COUNTERS
+           COUNTERS
         ================================================= */
 
         totalTeams.textContent =
@@ -865,9 +814,7 @@ async function updateTeamStatus(
     try {
 
         console.log(
-            "🔄 Updating:",
-            tournamentId,
-            teamId,
+            "🔄 Updating status:",
             status
         );
 
@@ -928,13 +875,11 @@ async function deleteTeam(
     teamId
 ) {
 
-    const confirmDelete =
-        confirm(
+    if (
+        !confirm(
             "क्या आप इस team को delete करना चाहते हैं?"
-        );
-
-
-    if (!confirmDelete) {
+        )
+    ) {
 
         return;
 
@@ -983,7 +928,7 @@ async function deleteTeam(
 
 
 /* =====================================================
-   TOURNAMENT SELECT CHANGE
+   TOURNAMENT CHANGE
 ===================================================== */
 
 if (tournamentSelect) {
@@ -996,20 +941,37 @@ if (tournamentSelect) {
                 tournamentSelect.value;
 
 
-            if (tournamentId) {
+            if (!tournamentId) {
 
-                localStorage.setItem(
-                    "tournamentId",
-                    tournamentId
-                );
+                resetCounters();
 
+                teamList.innerHTML = `
+                    <div class="empty">
+                        🏆 Please select a tournament.
+                    </div>
+                `;
 
-                localStorage.setItem(
-                    "selectedTournamentId",
-                    tournamentId
-                );
+                return;
 
             }
+
+
+            localStorage.setItem(
+                "tournamentId",
+                tournamentId
+            );
+
+
+            localStorage.setItem(
+                "selectedTournamentId",
+                tournamentId
+            );
+
+
+            console.log(
+                "🔄 Tournament changed:",
+                tournamentId
+            );
 
 
             await loadTeams(
@@ -1038,8 +1000,14 @@ onAuthStateChanged(
 
         if (!user) {
 
+            console.log(
+                "❌ User not logged in"
+            );
+
+
             window.location.href =
                 "login.html";
+
 
             return;
 
@@ -1047,7 +1015,7 @@ onAuthStateChanged(
 
 
         console.log(
-            "✅ Logged in UID:",
+            "✅ Logged in:",
             user.uid
         );
 
