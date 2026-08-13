@@ -10,7 +10,7 @@
     content="width=device-width, initial-scale=1.0"
 >
 
-<title>My Tournaments</title>
+<title>My Tournaments - APL Tournament Platform</title>
 
 <link
     rel="stylesheet"
@@ -40,10 +40,10 @@
 
     padding: 22px;
 
-    border-radius: 15px;
+    border-radius: 16px;
 
     box-shadow:
-        0 5px 18px
+        0 5px 20px
         rgba(0,0,0,0.08);
 
 }
@@ -51,16 +51,18 @@
 
 .tournament-card h2 {
 
-    margin-bottom: 12px;
+    margin-top: 0;
+
+    color: #0f172a;
 
 }
 
 
 .tournament-card p {
 
-    margin: 8px 0;
+    margin: 9px 0;
 
-    color: #4b5563;
+    color: #475569;
 
 }
 
@@ -69,27 +71,62 @@
 
     display: flex;
 
-    gap: 8px;
-
     flex-wrap: wrap;
 
-    margin-top: 18px;
+    gap: 10px;
+
+    margin-top: 20px;
+
+}
+
+
+.card-buttons .btn {
+
+    text-decoration: none;
 
 }
 
 
 .empty-message {
 
-    text-align: center;
-
     background: white;
 
-    padding: 35px;
+    padding: 35px 20px;
 
-    border-radius: 15px;
+    border-radius: 16px;
+
+    text-align: center;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0,0,0,0.06);
 
 }
 
+
+.loading {
+
+    font-size: 18px;
+
+}
+
+
+.error {
+
+    color: #991b1b;
+
+    background: #fee2e2;
+
+}
+
+
+.success {
+
+    color: #166534;
+
+    background: #dcfce7;
+
+}
 
 </style>
 
@@ -98,6 +135,8 @@
 
 <body>
 
+
+<!-- HEADER -->
 
 <header class="top-header">
 
@@ -121,13 +160,24 @@
 
 
 
+<!-- MAIN -->
+
 <main class="home-container">
 
 
-<div style="margin-bottom:20px;">
+<!-- BUTTONS -->
+
+<div
+    style="
+        margin-bottom:20px;
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+    "
+>
 
     <a
-        href="dashboard.html"
+        href="index.html"
         class="btn"
     >
         ⬅ Dashboard
@@ -145,12 +195,14 @@
 
 
 
+<!-- TOURNAMENT LIST -->
+
 <div
     id="tournamentList"
     class="tournament-grid"
 >
 
-    <div class="empty-message">
+    <div class="empty-message loading">
 
         ⏳ Loading Tournaments...
 
@@ -165,18 +217,557 @@
 
 <footer>
 
-    <p>
-        🏏 APL Tournament Platform
-    </p>
+<p>
+    🏏 APL Tournament Platform
+</p>
 
 </footer>
 
 
 
-<script
-    type="module"
-    src="js/My-tournament.js"
-></script>
+<!-- ==================================================
+     FIREBASE + MY TOURNAMENTS JAVASCRIPT
+================================================== -->
+
+<script type="module">
+
+console.log("🔥 MY TOURNAMENTS PAGE STARTED");
+
+
+/* =========================
+   FIREBASE
+========================= */
+
+import {
+    auth,
+    db
+} from "./firebase.js";
+
+
+import {
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+
+import {
+    collection,
+    getDocs,
+    query,
+    where
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+
+
+/* =========================
+   ELEMENT
+========================= */
+
+const tournamentList =
+    document.getElementById(
+        "tournamentList"
+    );
+
+
+console.log(
+    "🔥 tournamentList:",
+    tournamentList
+);
+
+
+
+/* =========================
+   MESSAGE
+========================= */
+
+function showMessage(
+    html,
+    className = ""
+) {
+
+    tournamentList.innerHTML = `
+
+        <div
+            class="empty-message ${className}"
+        >
+
+            ${html}
+
+        </div>
+
+    `;
+
+}
+
+
+
+/* =========================
+   CREATE CARD
+========================= */
+
+function createTournamentCard(
+    tournamentId,
+    tournament
+) {
+
+
+    console.log(
+        "🏆 Creating card:",
+        tournamentId,
+        tournament
+    );
+
+
+    const card =
+        document.createElement(
+            "div"
+        );
+
+
+    card.className =
+        "tournament-card";
+
+
+    const name =
+        tournament.tournamentName ||
+        tournament.name ||
+        "APL Tournament";
+
+
+    const venue =
+        tournament.venue ||
+        tournament.location ||
+        "Venue not available";
+
+
+    const startDate =
+        tournament.startDate ||
+        "-";
+
+
+    const endDate =
+        tournament.endDate ||
+        "-";
+
+
+    const totalTeams =
+        tournament.totalTeams ||
+        0;
+
+
+    const entryFee =
+        tournament.entryFee ||
+        0;
+
+
+    const winnerPrize =
+        tournament.winnerPrize ||
+        0;
+
+
+    const runnerPrize =
+        tournament.runnerPrize ||
+        0;
+
+
+    card.innerHTML = `
+
+        <h2>
+            🏆 ${name}
+        </h2>
+
+
+        <p>
+            🆔
+            <b>Tournament ID:</b>
+            ${tournamentId}
+        </p>
+
+
+        <p>
+            📍
+            <b>Venue:</b>
+            ${venue}
+        </p>
+
+
+        <p>
+            📅
+            <b>Start:</b>
+            ${startDate}
+        </p>
+
+
+        <p>
+            📅
+            <b>End:</b>
+            ${endDate}
+        </p>
+
+
+        <p>
+            👥
+            <b>Total Teams:</b>
+            ${totalTeams}
+        </p>
+
+
+        <p>
+            💰
+            <b>Entry Fee:</b>
+            ₹${entryFee}
+        </p>
+
+
+        <p>
+            🥇
+            <b>Winner:</b>
+            ₹${winnerPrize}
+        </p>
+
+
+        <p>
+            🥈
+            <b>Runner-up:</b>
+            ₹${runnerPrize}
+        </p>
+
+
+        <div class="card-buttons">
+
+
+            <a
+                href="tournament.html?id=${encodeURIComponent(tournamentId)}"
+                class="btn primary-btn"
+            >
+                🏆 Open Tournament
+            </a>
+
+
+            <a
+                href="registration.html?id=${encodeURIComponent(tournamentId)}"
+                class="btn"
+            >
+                👥 Team Registration
+            </a>
+
+
+            <a
+                href="schedule.html?id=${encodeURIComponent(tournamentId)}"
+                class="btn"
+            >
+                📅 Schedule
+            </a>
+
+
+            <a
+                href="live-score.html?id=${encodeURIComponent(tournamentId)}"
+                class="btn"
+            >
+                🔴 Live Score
+            </a>
+
+
+            <a
+                href="points.html?id=${encodeURIComponent(tournamentId)}"
+                class="btn"
+            >
+                📊 Points Table
+            </a>
+
+        </div>
+
+    `;
+
+
+    tournamentList.appendChild(
+        card
+    );
+
+}
+
+
+
+/* =========================
+   LOAD TOURNAMENTS
+========================= */
+
+async function loadTournaments(
+    user
+) {
+
+
+    console.log(
+        "🔥 LOAD TOURNAMENTS"
+    );
+
+
+    console.log(
+        "👤 USER UID:",
+        user.uid
+    );
+
+
+    showMessage(
+        "⏳ Loading Tournaments..."
+    );
+
+
+    try {
+
+
+        const tournamentsRef =
+            collection(
+                db,
+                "tournaments"
+            );
+
+
+        console.log(
+            "🔥 Reading tournaments collection..."
+        );
+
+
+        /*
+         * IMPORTANT:
+         * Tournament create code saves
+         * ownerId = currentUser.uid
+         */
+
+        const q =
+            query(
+                tournamentsRef,
+                where(
+                    "ownerId",
+                    "==",
+                    user.uid
+                )
+            );
+
+
+        const snapshot =
+            await getDocs(q);
+
+
+        console.log(
+            "🔥 FIRESTORE RESULT:",
+            snapshot.size
+        );
+
+
+        /*
+         * NO TOURNAMENT
+         */
+
+        if (
+            snapshot.empty
+        ) {
+
+
+            console.log(
+                "❌ No tournaments found"
+            );
+
+
+            showMessage(`
+
+                <h2>
+                    🏆 No Tournament Found
+                </h2>
+
+                <p>
+                    इस account से अभी कोई tournament create नहीं हुआ है।
+                </p>
+
+                <br>
+
+                <a
+                    href="create-tournament.html"
+                    class="btn primary-btn"
+                >
+                    ➕ Create Tournament
+                </a>
+
+            `);
+
+
+            return;
+
+        }
+
+
+        /*
+         * CLEAR LOADING
+         */
+
+        tournamentList.innerHTML =
+            "";
+
+
+        /*
+         * SHOW ALL
+         */
+
+        snapshot.forEach(
+            tournamentDoc => {
+
+
+                const tournamentId =
+                    tournamentDoc.id;
+
+
+                const tournament =
+                    tournamentDoc.data();
+
+
+                console.log(
+                    "🏆 FOUND TOURNAMENT:",
+                    tournamentId,
+                    tournament
+                );
+
+
+                /*
+                 * SAVE CURRENT ID
+                 */
+
+                localStorage.setItem(
+                    "tournamentId",
+                    tournamentId
+                );
+
+
+                localStorage.setItem(
+                    "selectedTournamentId",
+                    tournamentId
+                );
+
+
+                /*
+                 * CREATE CARD
+                 */
+
+                createTournamentCard(
+                    tournamentId,
+                    tournament
+                );
+
+            }
+        );
+
+
+        console.log(
+            "✅ TOURNAMENTS DISPLAYED"
+        );
+
+
+    } catch (error) {
+
+
+        console.error(
+            "❌ FIRESTORE ERROR:",
+            error
+        );
+
+
+        showMessage(`
+
+            <h2>
+                ❌ Tournament Load Error
+            </h2>
+
+            <p>
+                ${error.message}
+            </p>
+
+            <br>
+
+            <p>
+                Console में error देखें।
+            </p>
+
+        `);
+
+
+    }
+
+}
+
+
+
+/* =========================
+   AUTH STATE
+========================= */
+
+console.log(
+    "🔥 Checking Firebase Login..."
+);
+
+
+onAuthStateChanged(
+    auth,
+    user => {
+
+
+        console.log(
+            "🔥 AUTH STATE:",
+            user
+        );
+
+
+        if (!user) {
+
+
+            console.log(
+                "❌ USER NOT LOGGED IN"
+            );
+
+
+            showMessage(`
+
+                <h2>
+                    🔐 Login Required
+                </h2>
+
+                <p>
+                    Tournament देखने के लिए पहले login करें।
+                </p>
+
+                <br>
+
+                <a
+                    href="login.html"
+                    class="btn primary-btn"
+                >
+                    🔐 Login
+                </a>
+
+            `);
+
+
+            return;
+
+        }
+
+
+        console.log(
+            "✅ USER LOGGED IN"
+        );
+
+
+        console.log(
+            "👤 UID:",
+            user.uid
+        );
+
+
+        loadTournaments(
+            user
+        );
+
+    }
+);
+
+</script>
 
 
 </body>

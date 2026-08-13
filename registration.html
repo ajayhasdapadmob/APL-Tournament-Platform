@@ -5,17 +5,12 @@
 
 <meta charset="UTF-8">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
 <title>Team Registration - APL Tournament Platform</title>
 
-<link
-    rel="stylesheet"
-    href="css/style.css"
->
+<link rel="stylesheet" href="css/style.css">
 
 <style>
 
@@ -83,11 +78,6 @@
     min-width: 180px;
 }
 
-.submit-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
 #message {
     margin-top: 20px;
     padding: 14px;
@@ -131,13 +121,9 @@
 
     <div>
 
-        <h1>
-            Team Registration
-        </h1>
+        <h1>Team Registration</h1>
 
-        <p>
-            APL Tournament Platform
-        </p>
+        <p>APL Tournament Platform</p>
 
     </div>
 
@@ -156,9 +142,7 @@
 </h2>
 
 
-<!-- =========================
-     TOURNAMENT INFORMATION
-========================= -->
+<!-- TOURNAMENT INFORMATION -->
 
 <div class="tournament-info">
 
@@ -186,17 +170,8 @@
 </div>
 
 
-<!-- =========================
-     REGISTRATION FORM
-========================= -->
+<form id="registrationForm">
 
-<form
-    id="registrationForm"
-    novalidate
->
-
-
-<!-- TOURNAMENT NAME -->
 
 <div class="form-group">
 
@@ -214,8 +189,6 @@
 </div>
 
 
-<!-- VENUE -->
-
 <div class="form-group">
 
 <label>
@@ -232,8 +205,6 @@
 </div>
 
 
-<!-- TEAM NAME -->
-
 <div class="form-group">
 
 <label>
@@ -244,14 +215,11 @@
     type="text"
     id="teamName"
     placeholder="Enter Team Name"
-    autocomplete="organization"
     required
 >
 
 </div>
 
-
-<!-- CAPTAIN -->
 
 <div class="form-group">
 
@@ -263,14 +231,11 @@
     type="text"
     id="captainName"
     placeholder="Enter Captain Name"
-    autocomplete="name"
     required
 >
 
 </div>
 
-
-<!-- MOBILE -->
 
 <div class="form-group">
 
@@ -282,15 +247,11 @@
     type="tel"
     id="mobile"
     placeholder="Enter Mobile Number"
-    inputmode="numeric"
-    autocomplete="tel"
     required
 >
 
 </div>
 
-
-<!-- EMAIL -->
 
 <div class="form-group">
 
@@ -302,13 +263,10 @@
     type="email"
     id="email"
     placeholder="Enter Email Address"
-    autocomplete="email"
 >
 
 </div>
 
-
-<!-- CITY -->
 
 <div class="form-group">
 
@@ -320,14 +278,11 @@
     type="text"
     id="city"
     placeholder="Enter City"
-    autocomplete="address-level2"
     required
 >
 
 </div>
 
-
-<!-- PLAYERS -->
 
 <div class="form-group">
 
@@ -348,17 +303,14 @@
 </div>
 
 
-<!-- BUTTONS -->
-
 <div class="buttons">
 
 <button
     type="submit"
     id="submitButton"
     class="btn primary-btn submit-btn"
-    disabled
 >
-    ⏳ Loading Tournament...
+    🏏 Register Team
 </button>
 
 
@@ -375,13 +327,7 @@
 </form>
 
 
-<!-- =========================
-     MESSAGE
-========================= -->
-
-<div
-    id="message"
-></div>
+<div id="message"></div>
 
 
 </div>
@@ -400,13 +346,9 @@
 </footer>
 
 
-<!-- =========================
-     REGISTRATION JS
-========================= -->
-
 <script
     type="module"
-    src="js/registration.js"
+    src="js/registration.js?v=20"
 ></script>
 
 

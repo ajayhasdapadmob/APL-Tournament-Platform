@@ -1,13 +1,10 @@
-console.log("🔥🔥 MY TOURNAMENTS JS LOADED 🔥🔥");
-
+console.log("🔥 MY TOURNAMENTS JS LOADED");
 
 import { auth, db } from "../firebase.js";
-
 
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-
 
 import {
     collection,
@@ -22,9 +19,39 @@ import {
 ========================= */
 
 const tournamentList =
-    document.getElementById(
-        "tournamentList"
+    document.getElementById("tournamentList");
+
+
+/* =========================
+   CHECK ELEMENT
+========================= */
+
+if (!tournamentList) {
+
+    console.error(
+        "❌ tournamentList not found"
     );
+
+    throw new Error(
+        "tournamentList not found"
+    );
+
+}
+
+
+/* =========================
+   MESSAGE
+========================= */
+
+function showMessage(html) {
+
+    tournamentList.innerHTML = `
+        <div class="empty-message">
+            ${html}
+        </div>
+    `;
+
+}
 
 
 /* =========================
@@ -33,26 +60,18 @@ const tournamentList =
 
 async function loadTournaments(user) {
 
+    console.log(
+        "🔥 Loading tournaments for UID:",
+        user.uid
+    );
+
+
+    showMessage(
+        "⏳ Loading Tournaments..."
+    );
+
+
     try {
-
-        console.log(
-            "🔥 USER UID:",
-            user.uid
-        );
-
-
-        tournamentList.innerHTML = `
-
-            <div class="tournament-card">
-
-                <h2>
-                    ⏳ Loading...
-                </h2>
-
-            </div>
-
-        `;
-
 
         const tournamentsRef =
             collection(
@@ -62,7 +81,7 @@ async function loadTournaments(user) {
 
 
         /* =========================
-           OWNER ID
+           FIND BY OWNER ID
         ========================= */
 
         let snapshot =
@@ -78,8 +97,14 @@ async function loadTournaments(user) {
             );
 
 
+        console.log(
+            "🔥 ownerId tournaments:",
+            snapshot.size
+        );
+
+
         /* =========================
-           CREATED BY
+           FIND BY CREATED BY
         ========================= */
 
         if (snapshot.empty) {
@@ -96,10 +121,13 @@ async function loadTournaments(user) {
                     )
                 );
 
+
+            console.log(
+                "🔥 createdBy tournaments:",
+                snapshot.size
+            );
+
         }
-
-
-        tournamentList.innerHTML = "";
 
 
         /* =========================
@@ -108,21 +136,26 @@ async function loadTournaments(user) {
 
         if (snapshot.empty) {
 
-            tournamentList.innerHTML = `
+            showMessage(`
+                
+                <h2>
+                    🏆 No Tournament Found
+                </h2>
 
-                <div class="tournament-card">
+                <p>
+                    अभी आपके account में कोई tournament नहीं है।
+                </p>
 
-                    <h2>
-                        🏆 No Tournament Found
-                    </h2>
+                <br>
 
-                    <p>
-                        Create your first tournament.
-                    </p>
+                <a
+                    href="create-tournament.html"
+                    class="btn primary-btn"
+                >
+                    ➕ Create Tournament
+                </a>
 
-                </div>
-
-            `;
+            `);
 
             return;
 
@@ -130,7 +163,14 @@ async function loadTournaments(user) {
 
 
         /* =========================
-           DISPLAY
+           CLEAR LOADING
+        ========================= */
+
+        tournamentList.innerHTML = "";
+
+
+        /* =========================
+           SHOW TOURNAMENTS
         ========================= */
 
         snapshot.forEach(
@@ -139,14 +179,14 @@ async function loadTournaments(user) {
                 const tournamentId =
                     tournamentDoc.id;
 
-
                 const tournament =
                     tournamentDoc.data();
 
 
                 console.log(
-                    "🔥 TOURNAMENT ID:",
-                    tournamentId
+                    "🏆 Tournament:",
+                    tournamentId,
+                    tournament
                 );
 
 
@@ -159,29 +199,30 @@ async function loadTournaments(user) {
         );
 
 
+        console.log(
+            "✅ ALL TOURNAMENTS LOADED"
+        );
+
+
     } catch (error) {
 
         console.error(
-            "❌ LOAD ERROR:",
+            "❌ TOURNAMENT LOAD ERROR:",
             error
         );
 
 
-        tournamentList.innerHTML = `
+        showMessage(`
 
-            <div class="tournament-card">
+            <h2>
+                ❌ Error
+            </h2>
 
-                <h2>
-                    ❌ Error
-                </h2>
+            <p>
+                ${error.message}
+            </p>
 
-                <p>
-                    ${error.message}
-                </p>
-
-            </div>
-
-        `;
+        `);
 
     }
 
@@ -190,213 +231,6 @@ async function loadTournaments(user) {
 
 /* =========================
    CREATE CARD
-========================= */
-
-function createTournamentCard(
-    tournamentId,
-    tournament
-) {
-
-    const card =
-        document.createElement(
-            "div"
-        );
-
-
-    card.className =
-        "tournament-card";
-
-
-    const name =
-        tournament.tournamentName ||
-        tournament.name ||
-        "Tournament";
-
-
-    const venue =
-        tournament.venue ||
-        tournament.location ||
-        "Venue not available";
-
-
-    card.innerHTML = `
-
-        <div>
-
-            <h2>
-                🏆 ${name}
-            </h2>
-
-            <p>
-                🆔
-                <b>Tournament ID:</b>
-                ${tournamentId}
-            </p>
-
-            <p>
-                📍
-                <b>Venue:</b>
-                ${venue}
-            </p>
-
-        </div>
-
-
-        <div class="card-buttons">
-
-            <button
-                class="register-btn openTournamentBtn"
-                type="button"
-            >
-                🏆 Open Tournament
-            </button>
-
-        </div>
-
-    `;
-
-
-    /* =========================
-       OPEN BUTTON
-    ========================= */
-
-    const openButton =
-        card.querySelector(
-            ".openTournamentBtn"
-        );
-
-
-    openButton.addEventListener(
-        "click",
-        function() {
-
-            console.log(
-                "🔥 OPEN ID:",
-                tournamentId
-            );
-
-
-            /*
-             * Save ID
-             */
-
-            localStorage.setItem(
-                "tournamentId",
-                tournamentId
-            );
-
-
-            /*
-             * Create URL
-             */
-
-            const url =
-                "Tournament.html?id=" +
-                encodeURIComponent(
-                    tournamentId
-                );
-
-
-            console.log(
-                "🔥 OPEN URL:",
-                url
-            );
-
-
-            /*
-             * Open Tournament
-             */
-
-            window.location.assign(
-                url
-            );
-
-        }
-    );
-
-
-    tournamentList.appendChild(
-        card
-    );
-
-}
-
-
-/* =========================
-   AUTH
-========================= */
-
-onAuthStateChanged(
-    auth,
-    user => {
-
-        console.log(
-            "🔥 AUTH:",
-            user
-        );
-
-
-        if (!user) {
-
-            window.location.href =
-                "login.html";
-
-            return;
-
-        }
-
-
-        loadTournaments(
-            user
-        );
-
-    }
-console.log("🔥 MY TOURNAMENTS JS LOADED");
-
-import { auth, db } from "../firebase.js";
-
-import {
-    onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-
-import {
-    collection,
-    getDocs,
-    query,
-    where,
-    doc,
-    getDoc
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
-
-/* =========================
-   ELEMENT
-========================= */
-
-const tournamentList =
-    document.getElementById("tournamentList");
-
-
-/* =========================
-   SHOW MESSAGE
-========================= */
-
-function showMessage(message) {
-
-    if (!tournamentList) return;
-
-    tournamentList.innerHTML = `
-        <div class="empty-message">
-
-            ${message}
-
-        </div>
-    `;
-}
-
-
-/* =========================
-   CREATE TOURNAMENT CARD
 ========================= */
 
 function createTournamentCard(
@@ -421,7 +255,7 @@ function createTournamentCard(
     const venue =
         tournament.venue ||
         tournament.location ||
-        "-";
+        "Venue not available";
 
 
     const startDate =
@@ -445,13 +279,11 @@ function createTournamentCard(
             🏆 ${name}
         </h2>
 
-
         <p>
             🆔
             <b>Tournament ID:</b>
             ${tournamentId}
         </p>
-
 
         <p>
             📍
@@ -459,13 +291,11 @@ function createTournamentCard(
             ${venue}
         </p>
 
-
         <p>
             📅
             <b>Start:</b>
             ${startDate}
         </p>
-
 
         <p>
             📅
@@ -473,351 +303,62 @@ function createTournamentCard(
             ${endDate}
         </p>
 
-
         <p>
             👥
-            <b>Teams:</b>
+            <b>Total Teams:</b>
             ${totalTeams}
         </p>
 
 
         <div class="card-buttons">
 
-
             <a
-                class="btn primary-btn"
                 href="tournament.html?id=${encodeURIComponent(tournamentId)}"
+                class="btn primary-btn"
             >
                 🏆 Open Tournament
             </a>
 
 
             <a
+                href="registration.html?id=${encodeURIComponent(tournamentId)}"
                 class="btn"
+            >
+                👥 Team Registration
+            </a>
+
+
+            <a
                 href="schedule.html?id=${encodeURIComponent(tournamentId)}"
+                class="btn"
             >
                 📅 Schedule
             </a>
 
 
             <a
-                class="btn"
-                href="results.html?id=${encodeURIComponent(tournamentId)}"
-            >
-                🏆 Results
-            </a>
-
-
-            <a
-                class="btn"
                 href="live-score.html?id=${encodeURIComponent(tournamentId)}"
+                class="btn"
             >
                 🔴 Live Score
             </a>
 
 
             <a
-                class="btn"
                 href="points.html?id=${encodeURIComponent(tournamentId)}"
+                class="btn"
             >
-                📊 Points
+                📊 Points Table
             </a>
-
 
         </div>
 
     `;
 
 
-    tournamentList.appendChild(card);
-
-}
-
-
-/* =========================
-   LOAD TOURNAMENTS
-========================= */
-
-async function loadTournaments(user) {
-
-    try {
-
-        console.log(
-            "🔥 Loading tournaments for:",
-            user.uid
-        );
-
-
-        showMessage(
-            "⏳ Loading Tournaments..."
-        );
-
-
-        const tournamentsRef =
-            collection(
-                db,
-                "tournaments"
-            );
-
-
-        let snapshot = null;
-
-
-        /* =========================
-           TRY ownerId
-        ========================= */
-
-        try {
-
-            snapshot =
-                await getDocs(
-                    query(
-                        tournamentsRef,
-                        where(
-                            "ownerId",
-                            "==",
-                            user.uid
-                        )
-                    )
-                );
-
-
-            console.log(
-                "🔥 ownerId result:",
-                snapshot.size
-            );
-
-        } catch (error) {
-
-            console.log(
-                "⚠️ ownerId query failed:",
-                error.message
-            );
-
-        }
-
-
-        /* =========================
-           TRY createdBy
-        ========================= */
-
-        if (!snapshot || snapshot.empty) {
-
-            try {
-
-                snapshot =
-                    await getDocs(
-                        query(
-                            tournamentsRef,
-                            where(
-                                "createdBy",
-                                "==",
-                                user.uid
-                            )
-                        )
-                    );
-
-
-                console.log(
-                    "🔥 createdBy result:",
-                    snapshot.size
-                );
-
-            } catch (error) {
-
-                console.log(
-                    "⚠️ createdBy query failed:",
-                    error.message
-                );
-
-            }
-
-        }
-
-
-        /* =========================
-           TRY LOCAL STORAGE ID
-        ========================= */
-
-        if (!snapshot || snapshot.empty) {
-
-            const savedId =
-                localStorage.getItem(
-                    "tournamentId"
-                );
-
-
-            console.log(
-                "🔥 Local Storage Tournament ID:",
-                savedId
-            );
-
-
-            if (savedId) {
-
-                try {
-
-                    const tournamentRef =
-                        doc(
-                            db,
-                            "tournaments",
-                            savedId
-                        );
-
-
-                    const tournamentSnap =
-                        await getDoc(
-                            tournamentRef
-                        );
-
-
-                    if (
-                        tournamentSnap.exists()
-                    ) {
-
-                        console.log(
-                            "✅ Tournament found from Local Storage"
-                        );
-
-
-                        snapshot = {
-                            docs: [
-                                tournamentSnap
-                            ],
-                            empty: false,
-                            size: 1
-                        };
-
-                    }
-
-                } catch (error) {
-
-                    console.error(
-                        "❌ Local Storage tournament error:",
-                        error
-                    );
-
-                }
-
-            }
-
-        }
-
-
-        /* =========================
-           NO TOURNAMENT
-        ========================= */
-
-        if (
-            !snapshot ||
-            snapshot.empty
-        ) {
-
-            showMessage(`
-
-                <h2>
-                    🏆 No Tournaments Found
-                </h2>
-
-                <p>
-                    Your tournament could not be found.
-                </p>
-
-                <br>
-
-                <a
-                    href="create-tournament.html"
-                    class="btn primary-btn"
-                >
-                    ➕ Create Tournament
-                </a>
-
-            `);
-
-            console.log(
-                "❌ No tournament found"
-            );
-
-            return;
-
-        }
-
-
-        /* =========================
-           CLEAR LIST
-        ========================= */
-
-        tournamentList.innerHTML = "";
-
-
-        /* =========================
-           DISPLAY
-        ========================= */
-
-        snapshot.docs.forEach(
-            tournamentDoc => {
-
-                const tournamentId =
-                    tournamentDoc.id;
-
-
-                const tournament =
-                    tournamentDoc.data();
-
-
-                console.log(
-                    "🏆 Tournament:",
-                    tournamentId,
-                    tournament
-                );
-
-
-                /*
-                 * Save latest tournament ID
-                 */
-
-                localStorage.setItem(
-                    "tournamentId",
-                    tournamentId
-                );
-
-
-                createTournamentCard(
-                    tournamentId,
-                    tournament
-                );
-
-            }
-        );
-
-
-        console.log(
-            "✅ My Tournaments Loaded:",
-            snapshot.size
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "❌ MY TOURNAMENT ERROR:",
-            error
-        );
-
-
-        showMessage(`
-
-            <h2>
-                ❌ Error
-            </h2>
-
-            <p>
-                ${error.message}
-            </p>
-
-        `);
-
-    }
+    tournamentList.appendChild(
+        card
+    );
 
 }
 
@@ -831,7 +372,7 @@ onAuthStateChanged(
     user => {
 
         console.log(
-            "🔥 AUTH USER:",
+            "🔥 AUTH STATE:",
             user
         );
 
@@ -839,7 +380,7 @@ onAuthStateChanged(
         if (!user) {
 
             console.log(
-                "❌ User not logged in"
+                "❌ USER NOT LOGGED IN"
             );
 
 
@@ -853,7 +394,7 @@ onAuthStateChanged(
 
 
         console.log(
-            "✅ User logged in:",
+            "✅ USER LOGGED IN:",
             user.uid
         );
 
