@@ -1,16 +1,20 @@
 /* =========================
-   DASHBOARD
+   GLOBAL
 ========================= */
 
 * {
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background: #31BA37;
-    color: #1663CF;
+    background: #f1f5f9;
+    color: #1e293b;
 }
 
 
@@ -25,27 +29,30 @@ body {
         #1d4ed8
     );
 
-    color: white;
+    color: #ffffff;
 
     padding: 20px;
 
     display: flex;
-
     align-items: center;
 
     gap: 15px;
+
+    box-shadow:
+        0 4px 15px rgba(0, 0, 0, 0.12);
 }
 
 .logo {
     width: 55px;
     height: 55px;
 
+    flex-shrink: 0;
+
     border-radius: 14px;
 
-    background: rgba(255,255,255,0.15);
+    background: rgba(255, 255, 255, 0.15);
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
@@ -56,12 +63,16 @@ body {
     margin: 0;
 
     font-size: 26px;
+
+    color: #ffffff;
 }
 
 .top-header p {
     margin: 5px 0 0;
 
-    opacity: 0.85;
+    color: #e2e8f0;
+
+    opacity: 0.9;
 }
 
 
@@ -83,7 +94,7 @@ body {
 ========================= */
 
 .hero {
-    background: white;
+    background: #ffffff;
 
     padding: 28px;
 
@@ -92,8 +103,7 @@ body {
     margin-bottom: 25px;
 
     box-shadow:
-        0 5px 18px
-        rgba(0,0,0,0.08);
+        0 5px 18px rgba(0, 0, 0, 0.08);
 }
 
 .hero h2 {
@@ -131,7 +141,7 @@ body {
 ========================= */
 
 .feature-card {
-    background: white;
+    background: #FFFFFF;
 
     padding: 24px;
 
@@ -140,8 +150,7 @@ body {
     text-align: center;
 
     box-shadow:
-        0 5px 18px
-        rgba(0,0,0,0.08);
+        0 5px 18px rgba(0, 0, 0, 0.08);
 
     transition:
         transform 0.2s,
@@ -152,13 +161,12 @@ body {
     transform: translateY(-4px);
 
     box-shadow:
-        0 10px 25px
-        rgba(0,0,0,0.12);
+        0 10px 25px rgba(0, 0, 0, 0.12);
 }
 
 
 /* =========================
-   ICON
+   FEATURE ICON
 ========================= */
 
 .feature-icon {
@@ -205,9 +213,9 @@ body {
 
     border: none;
 
-    background: #475569;
+    background: #C5D11C;
 
-    color: white;
+    color: #CFCE24;
 
     text-decoration: none;
 
@@ -215,7 +223,9 @@ body {
 
     cursor: pointer;
 
-    transition: 0.2s;
+    transition:
+        transform 0.2s,
+        opacity 0.2s;
 }
 
 .btn:hover {
@@ -262,6 +272,8 @@ body {
     background: #991b1b;
 
     min-width: 150px;
+
+    color: #ffffff;
 }
 
 #logoutBtn:hover {
@@ -283,6 +295,15 @@ footer {
 
 
 /* =========================
+   LINKS
+========================= */
+
+a {
+    color: inherit;
+}
+
+
+/* =========================
    MOBILE
 ========================= */
 
@@ -294,6 +315,10 @@ footer {
 
     .top-header h1 {
         font-size: 21px;
+    }
+
+    .top-header p {
+        font-size: 14px;
     }
 
     .logo {
@@ -317,6 +342,34 @@ footer {
 
     .feature-card {
         padding: 20px;
+    }
+
+    .btn {
+        padding: 10px 15px;
+    }
+
+}
+
+
+/* =========================
+   SMALL MOBILE
+========================= */
+
+@media (max-width: 380px) {
+
+    .top-header h1 {
+        font-size: 19px;
+    }
+
+    .top-header p {
+        font-size: 13px;
+    }
+
+    .logo {
+        width: 44px;
+        height: 44px;
+
+        font-size: 23px;
     }
 
 }

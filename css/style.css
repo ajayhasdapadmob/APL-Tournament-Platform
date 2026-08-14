@@ -14,11 +14,21 @@ html {
 }
 
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    background: #f1f5f9;
-    color: #0f172a;
-    min-height: 100vh;
-    padding-bottom: 75px;
+    margin: 0;
+    font-family: Arial, sans-serif;
+
+    background-image:
+        linear-gradient(
+            rgba(255,255,255,0.88),
+            rgba(255,255,255,0.88)
+        ),
+        url("../images/apl-background.jpg");
+
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+
+    color: #1663CF;
 }
 
 a {
