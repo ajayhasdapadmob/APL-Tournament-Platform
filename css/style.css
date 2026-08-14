@@ -19,8 +19,8 @@ body {
 
     background-image:
         linear-gradient(
-            rgba(255,255,255,0.88),
-            rgba(255,255,255,0.88)
+            rgba(240, 245, 255, 0.95)
+            rgba(240, 245, 255, 0.75)
         ),
         url("../images/apl-background.jpg");
 
