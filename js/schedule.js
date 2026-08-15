@@ -1,26 +1,39 @@
-import { auth, db } from "./firebase.js";
+// ========================================
+// SCHEDULE.JS
+// APL TOURNAMENT PLATFORM
+// ========================================
+
+import { db } from "../firebase.js";
 
 import {
-    onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-
-import {
-    collection,
-    getDocs,
+    doc,
     getDoc,
-    doc
+    collection,
+    getDocs
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 
-/* =========================
-   ELEMENTS
-========================= */
+console.log("🔥 SCHEDULE JS LOADED");
 
-const scheduleHeader =
-    document.getElementById("scheduleHeader");
 
-const scheduleList =
-    document.getElementById("scheduleList");
+// ========================================
+// ELEMENTS
+// ========================================
+
+const tournamentSelect =
+    document.getElementById("tournamentSelect");
+
+const tournamentNameElement =
+    document.getElementById("tournamentName");
+
+const tournamentIdElement =
+    document.getElementById("tournamentId");
+
+const venueElement =
+    document.getElementById("venue");
+
+const matchListElement =
+    document.getElementById("matchList");
 
 const tournamentLink =
     document.getElementById("tournamentLink");
@@ -31,270 +44,569 @@ const resultsLink =
 const pointsLink =
     document.getElementById("pointsLink");
 
-const liveScoreLink =
-    document.getElementById("liveScoreLink");
+const liveLink =
+    document.getElementById("liveLink");
+
+const teamsLink =
+    document.getElementById("teamsLink");
 
 
-/* =========================
-   GET TOURNAMENT ID
-========================= */
+// ========================================
+// GET INITIAL TOURNAMENT ID
+// ========================================
 
-const params =
-    new URLSearchParams(
-        window.location.search
-    );
+function getTournamentId() {
 
-let tournamentId =
-    params.get("id");
-
-
-if (!tournamentId) {
-
-    tournamentId =
-        params.get("tournamentId");
-
-}
-
-
-if (!tournamentId) {
-
-    tournamentId =
-        localStorage.getItem(
-            "selectedTournamentId"
+    const params =
+        new URLSearchParams(
+            window.location.search
         );
 
-}
+    let id =
+        params.get("id");
 
 
-if (!tournamentId) {
+    if (!id) {
 
-    tournamentId =
-        localStorage.getItem(
-            "tournamentId"
-        );
-
-}
-
-
-/* =========================
-   CHECK ID
-========================= */
-
-if (!tournamentId) {
-
-    scheduleHeader.innerHTML = `
-
-        <div class="empty">
-
-            <h2>
-                ❌ Tournament ID Missing
-            </h2>
-
-            <p>
-                Please open Schedule
-                from a tournament.
-            </p>
-
-            <br>
-
-            <a
-                href="my-tournaments.html"
-                class="btn"
-            >
-                🏆 My Tournaments
-            </a>
-
-        </div>
-
-    `;
-
-    scheduleList.innerHTML = "";
-
-    throw new Error(
-        "Tournament ID Missing"
-    );
-
-}
-
-
-/* =========================
-   SAVE ID
-========================= */
-
-localStorage.setItem(
-    "tournamentId",
-    tournamentId
-);
-
-localStorage.setItem(
-    "selectedTournamentId",
-    tournamentId
-);
-
-
-/* =========================
-   NAVIGATION
-========================= */
-
-tournamentLink.href =
-    "tournament.html?id=" +
-    encodeURIComponent(
-        tournamentId
-    );
-
-
-resultsLink.href =
-    "results.html?id=" +
-    encodeURIComponent(
-        tournamentId
-    );
-
-
-pointsLink.href =
-    "points.html?id=" +
-    encodeURIComponent(
-        tournamentId
-    );
-
-
-/*
-   IMPORTANT:
-   Live Score page is live.html
-*/
-
-liveScoreLink.href =
-    "live.html?id=" +
-    encodeURIComponent(
-        tournamentId
-    );
-
-
-/* =========================
-   LOAD TOURNAMENT
-========================= */
-
-async function loadTournament() {
-
-    const tournamentSnap =
-        await getDoc(
-
-            doc(
-                db,
-                "tournaments",
-                tournamentId
-            )
-
-        );
-
-
-    if (
-        !tournamentSnap.exists()
-    ) {
-
-        scheduleHeader.innerHTML = `
-
-            <div class="empty">
-
-                <h2>
-                    ❌ Tournament Not Found
-                </h2>
-
-                <p>
-
-                    Tournament ID:
-                    <b>${tournamentId}</b>
-
-                </p>
-
-            </div>
-
-        `;
-
-        return false;
+        id =
+            localStorage.getItem(
+                "selectedTournamentId"
+            );
 
     }
 
 
-    const tournament =
-        tournamentSnap.data();
+    if (!id) {
+
+        id =
+            localStorage.getItem(
+                "tournamentId"
+            );
+
+    }
 
 
-    scheduleHeader.innerHTML = `
+    if (!id) {
 
-        <h2>
+        id =
+            sessionStorage.getItem(
+                "selectedTournamentId"
+            );
 
-            🏆
-            ${
-                tournament.tournamentName ||
-                "Tournament"
-            }
-
-        </h2>
+    }
 
 
-        <p>
+    if (!id) {
 
-            📍
-            <b>Venue:</b>
+        id =
+            sessionStorage.getItem(
+                "tournamentId"
+            );
 
-            ${
-                tournament.venue ||
-                "-"
-            }
-
-        </p>
+    }
 
 
-        <p>
+    if (id) {
 
-            📅
-            <b>Start:</b>
+        id =
+            String(id).trim();
 
-            ${
-                tournament.startDate ||
-                "-"
-            }
-
-        </p>
+    }
 
 
-        <p>
+    console.log(
+        "🔎 URL Tournament ID:",
+        params.get("id")
+    );
 
-            📅
-            <b>End:</b>
-
-            ${
-                tournament.endDate ||
-                "-"
-            }
-
-        </p>
+    console.log(
+        "🏆 FINAL SCHEDULE TOURNAMENT ID:",
+        id
+    );
 
 
-        <div class="id-box">
-
-            🆔
-            <b>Tournament ID:</b>
-
-            ${tournamentId}
-
-        </div>
-
-    `;
-
-
-    return true;
+    return id || null;
 
 }
 
 
-/* =========================
-   LOAD MATCHES
-========================= */
+// ========================================
+// SAVE TOURNAMENT ID
+// ========================================
+
+function saveTournamentId(id) {
+
+    if (!id) return;
+
+
+    const cleanId =
+        String(id).trim();
+
+
+    localStorage.setItem(
+        "selectedTournamentId",
+        cleanId
+    );
+
+    localStorage.setItem(
+        "tournamentId",
+        cleanId
+    );
+
+    sessionStorage.setItem(
+        "selectedTournamentId",
+        cleanId
+    );
+
+    sessionStorage.setItem(
+        "tournamentId",
+        cleanId
+    );
+
+
+    console.log(
+        "💾 Schedule Tournament ID saved:",
+        cleanId
+    );
+
+}
+
+
+// ========================================
+// INITIAL ID
+// ========================================
+
+let tournamentId =
+    getTournamentId();
+
+
+// ========================================
+// LOAD ALL TOURNAMENTS
+// ========================================
+
+async function loadTournamentDropdown() {
+
+    try {
+
+        console.log(
+            "🏆 Loading tournaments for dropdown..."
+        );
+
+
+        if (!tournamentSelect) return;
+
+
+        tournamentSelect.innerHTML = `
+            <option value="">
+                ⏳ Loading Tournaments...
+            </option>
+        `;
+
+
+        const tournamentsRef =
+            collection(
+                db,
+                "tournaments"
+            );
+
+
+        const snapshot =
+            await getDocs(
+                tournamentsRef
+            );
+
+
+        console.log(
+            "🏆 Total tournaments:",
+            snapshot.size
+        );
+
+
+        tournamentSelect.innerHTML = "";
+
+
+        if (snapshot.empty) {
+
+            tournamentSelect.innerHTML = `
+                <option value="">
+                    No tournaments found
+                </option>
+            `;
+
+            return;
+
+        }
+
+
+        const tournaments =
+            snapshot.docs.map(
+                tournamentDoc => ({
+
+                    id:
+                        tournamentDoc.id,
+
+                    ...tournamentDoc.data()
+
+                })
+            );
+
+
+        // Sort newest first if createdAt exists
+
+        tournaments.sort(
+            (a, b) => {
+
+                const aTime =
+                    a.createdAt?.seconds || 0;
+
+                const bTime =
+                    b.createdAt?.seconds || 0;
+
+                return bTime - aTime;
+
+            }
+        );
+
+
+        tournaments.forEach(
+            tournament => {
+
+                const name =
+                    tournament.tournamentName ||
+                    tournament.name ||
+                    tournament.title ||
+                    "Unnamed Tournament";
+
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    tournament.id;
+
+
+                option.textContent =
+                    name;
+
+
+                tournamentSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        // =================================
+        // SELECT CURRENT TOURNAMENT
+        // =================================
+
+        if (tournamentId) {
+
+            const exists =
+                tournaments.some(
+                    tournament =>
+                        tournament.id === tournamentId
+                );
+
+
+            if (exists) {
+
+                tournamentSelect.value =
+                    tournamentId;
+
+            }
+
+        }
+
+
+        // If no current ID, select first
+
+        if (
+            !tournamentId &&
+            tournaments.length > 0
+        ) {
+
+            tournamentId =
+                tournaments[0].id;
+
+
+            tournamentSelect.value =
+                tournamentId;
+
+
+            saveTournamentId(
+                tournamentId
+            );
+
+
+            updateURL(
+                tournamentId
+            );
+
+        }
+
+
+        console.log(
+            "✅ Tournament dropdown ready"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "❌ Tournament dropdown error:",
+            error
+        );
+
+
+        if (tournamentSelect) {
+
+            tournamentSelect.innerHTML = `
+                <option value="">
+                    ❌ Unable to load tournaments
+                </option>
+            `;
+
+        }
+
+    }
+
+}
+
+
+// ========================================
+// DROPDOWN CHANGE
+// ========================================
+
+if (tournamentSelect) {
+
+    tournamentSelect.addEventListener(
+        "change",
+        async function () {
+
+            const selectedId =
+                this.value;
+
+
+            if (!selectedId) return;
+
+
+            console.log(
+                "🔄 Tournament changed:",
+                selectedId
+            );
+
+
+            tournamentId =
+                selectedId;
+
+
+            saveTournamentId(
+                tournamentId
+            );
+
+
+            updateURL(
+                tournamentId
+            );
+
+
+            await loadSchedule();
+
+        }
+    );
+
+}
+
+
+// ========================================
+// UPDATE URL
+// ========================================
+
+function updateURL(id) {
+
+    if (!id) return;
+
+
+    const newURL =
+        `${window.location.pathname}?id=${encodeURIComponent(id)}`;
+
+
+    window.history.replaceState(
+        {},
+        "",
+        newURL
+    );
+
+
+    console.log(
+        "🔗 URL updated:",
+        newURL
+    );
+
+}
+
+
+// ========================================
+// LOAD TOURNAMENT
+// ========================================
+
+async function loadSchedule() {
+
+    if (!tournamentId) {
+
+        showNoTournament();
+
+        return;
+
+    }
+
+
+    try {
+
+        console.log(
+            "🏆 Loading tournament:",
+            tournamentId
+        );
+
+
+        const tournamentRef =
+            doc(
+                db,
+                "tournaments",
+                tournamentId
+            );
+
+
+        const tournamentSnap =
+            await getDoc(
+                tournamentRef
+            );
+
+
+        if (!tournamentSnap.exists()) {
+
+            throw new Error(
+                "Tournament not found."
+            );
+
+        }
+
+
+        const tournament =
+            tournamentSnap.data();
+
+
+        console.log(
+            "✅ Tournament:",
+            tournament
+        );
+
+
+        const name =
+            tournament.tournamentName ||
+            tournament.name ||
+            tournament.title ||
+            "Tournament";
+
+
+        const venue =
+            tournament.venue ||
+            tournament.location ||
+            "-";
+
+
+        if (tournamentNameElement) {
+
+            tournamentNameElement.textContent =
+                name;
+
+        }
+
+
+        if (tournamentIdElement) {
+
+            tournamentIdElement.textContent =
+                tournamentId;
+
+        }
+
+
+        if (venueElement) {
+
+            venueElement.textContent =
+                venue;
+
+        }
+
+
+        saveTournamentId(
+            tournamentId
+        );
+
+
+        await loadMatches();
+
+
+        setupLinks();
+
+
+        console.log(
+            "✅ SCHEDULE PAGE READY"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "❌ SCHEDULE ERROR:",
+            error
+        );
+
+
+        if (tournamentNameElement) {
+
+            tournamentNameElement.textContent =
+                "Tournament Error";
+
+        }
+
+
+        if (matchListElement) {
+
+            matchListElement.className =
+                "empty";
+
+            matchListElement.innerHTML = `
+                ❌ Unable to load schedule.
+                <br><br>
+                ${escapeHTML(error.message)}
+            `;
+
+        }
+
+    }
+
+}
+
+
+// ========================================
+// LOAD MATCHES
+// ========================================
 
 async function loadMatches() {
 
     try {
+
+        console.log(
+            "📅 Loading matches for:",
+            tournamentId
+        );
+
 
         const matchesRef =
             collection(
@@ -311,28 +623,22 @@ async function loadMatches() {
             );
 
 
-        scheduleList.innerHTML = "";
+        console.log(
+            "📅 Matches:",
+            snapshot.size
+        );
 
 
-        if (
-            snapshot.empty
-        ) {
+        if (!matchListElement) return;
 
-            scheduleList.innerHTML = `
 
-                <div class="empty">
+        if (snapshot.empty) {
 
-                    <h3>
-                        📅 No Matches Found
-                    </h3>
+            matchListElement.className =
+                "empty";
 
-                    <p>
-                        Please create matches
-                        from the tournament.
-                    </p>
-
-                </div>
-
+            matchListElement.innerHTML = `
+                📅 No matches scheduled yet.
             `;
 
             return;
@@ -340,73 +646,92 @@ async function loadMatches() {
         }
 
 
-        const matches = [];
+        matchListElement.className =
+            "match-list";
+
+        matchListElement.innerHTML =
+            "";
 
 
-        snapshot.forEach(
-            matchDoc => {
-
-                matches.push({
+        const matches =
+            snapshot.docs.map(
+                matchDoc => ({
 
                     id:
                         matchDoc.id,
 
                     ...matchDoc.data()
 
-                });
+                })
+            );
 
-            }
-        );
-
-
-        /* =========================
-           SORT MATCHES
-        ========================= */
 
         matches.sort(
             (a, b) => {
 
-                const dateA =
-                    String(
-                        a.date || ""
+                const aNo =
+                    Number(
+                        a.matchNumber ||
+                        a.matchNo ||
+                        a.number ||
+                        999999
                     );
 
-                const dateB =
-                    String(
-                        b.date || ""
+
+                const bNo =
+                    Number(
+                        b.matchNumber ||
+                        b.matchNo ||
+                        b.number ||
+                        999999
                     );
 
 
-                if (
-                    dateA !== dateB
-                ) {
-
-                    return dateA.localeCompare(
-                        dateB
-                    );
-
-                }
-
-
-                return String(
-                    a.time || ""
-                )
-                .localeCompare(
-                    String(
-                        b.time || ""
-                    )
-                );
+                return aNo - bNo;
 
             }
         );
 
 
-        /* =========================
-           DISPLAY
-        ========================= */
-
         matches.forEach(
             (match, index) => {
+
+                const team1 =
+                    match.team1Name ||
+                    match.team1 ||
+                    match.homeTeam ||
+                    "Team 1";
+
+
+                const team2 =
+                    match.team2Name ||
+                    match.team2 ||
+                    match.awayTeam ||
+                    "Team 2";
+
+
+                const date =
+                    match.date ||
+                    match.matchDate ||
+                    "Date not set";
+
+
+                const time =
+                    match.time ||
+                    match.matchTime ||
+                    "Time not set";
+
+
+                const status =
+                    match.status ||
+                    "Scheduled";
+
+
+                const matchNumber =
+                    match.matchNumber ||
+                    match.matchNo ||
+                    index + 1;
+
 
                 const card =
                     document.createElement(
@@ -418,150 +743,70 @@ async function loadMatches() {
                     "match-card";
 
 
-                const status =
-                    match.status ||
-                    "Scheduled";
-
-
                 card.innerHTML = `
 
-                    <div class="match-title">
-
+                    <h3>
                         🏏 Match
-                        ${
-                            match.matchNumber ||
-                            index + 1
-                        }
+                        ${escapeHTML(matchNumber)}
+                    </h3>
 
-                    </div>
+                    <p>
 
+                        🏏
 
-                    <div class="teams">
+                        <b>
+                            ${escapeHTML(team1)}
+                        </b>
 
-                        ${
-                            match.teamA ||
-                            "Team A"
-                        }
+                        VS
 
-                        🆚
+                        <b>
+                            ${escapeHTML(team2)}
+                        </b>
 
-                        ${
-                            match.teamB ||
-                            "Team B"
-                        }
+                    </p>
 
-                    </div>
-
-
-                    <div class="info">
+                    <p>
 
                         📅
                         <b>Date:</b>
 
-                        ${
-                            match.date ||
-                            "-"
-                        }
+                        ${escapeHTML(date)}
 
-                    </div>
+                    </p>
 
-
-                    <div class="info">
+                    <p>
 
                         ⏰
                         <b>Time:</b>
 
-                        ${
-                            match.time ||
-                            "-"
-                        }
+                        ${escapeHTML(time)}
 
-                    </div>
+                    </p>
 
-
-                    <div class="info">
+                    <p>
 
                         📍
                         <b>Venue:</b>
 
-                        ${
+                        ${escapeHTML(
                             match.venue ||
+                            venueElement?.textContent ||
                             "-"
-                        }
+                        )}
 
-                    </div>
+                    </p>
 
+                    <span class="match-status">
 
-                    <div class="info">
+                        ${escapeHTML(status)}
 
-                        📌
-                        <b>Status:</b>
-
-                        ${status}
-
-                    </div>
-
-
-                    ${
-                        match.winner
-                        ?
-
-                        `
-
-                        <div
-                            class="info"
-                            style="
-                                color:#166534;
-                                font-weight:bold;
-                            "
-                        >
-
-                            🏆 Winner:
-
-                            ${match.winner}
-
-                        </div>
-
-                        `
-
-                        :
-
-                        ""
-
-                    }
-
-
-                    <div
-                        style="
-                            margin-top:15px;
-                        "
-                    >
-
-                        <a
-                            class="btn"
-                            href="results.html?id=${encodeURIComponent(tournamentId)}"
-                        >
-
-                            🏆 Result
-
-                        </a>
-
-
-                        <a
-                            class="btn"
-                            href="live.html?id=${encodeURIComponent(tournamentId)}&matchId=${encodeURIComponent(match.id)}"
-                        >
-
-                            🔴 Live Score
-
-                        </a>
-
-                    </div>
+                    </span>
 
                 `;
 
 
-                scheduleList.appendChild(
+                matchListElement.appendChild(
                     card
                 );
 
@@ -572,20 +817,128 @@ async function loadMatches() {
     } catch (error) {
 
         console.error(
-            "Schedule Error:",
+            "❌ MATCH LOAD ERROR:",
             error
         );
 
 
-        scheduleList.innerHTML = `
+        if (matchListElement) {
 
-            <div class="empty">
+            matchListElement.className =
+                "empty";
 
-                ❌
-                ${error.message}
+            matchListElement.innerHTML = `
+                ❌ Unable to load matches.
+                <br><br>
+                ${escapeHTML(error.message)}
+            `;
 
-            </div>
+        }
 
+    }
+
+}
+
+
+// ========================================
+// LINKS
+// ========================================
+
+function setupLinks() {
+
+    if (!tournamentId) return;
+
+
+    const id =
+        encodeURIComponent(
+            tournamentId
+        );
+
+
+    if (tournamentLink) {
+
+        tournamentLink.href =
+            `tournament.html?id=${id}`;
+
+    }
+
+
+    if (resultsLink) {
+
+        resultsLink.href =
+            `results.html?id=${id}`;
+
+    }
+
+
+    if (pointsLink) {
+
+        pointsLink.href =
+            `points.html?id=${id}`;
+
+    }
+
+
+    if (liveLink) {
+
+        liveLink.href =
+            `live-score.html?id=${id}`;
+
+    }
+
+
+    if (teamsLink) {
+
+        teamsLink.href =
+            `teams.html?id=${id}`;
+
+    }
+
+
+    console.log(
+        "🔗 Schedule links ready"
+    );
+
+}
+
+
+// ========================================
+// NO TOURNAMENT
+// ========================================
+
+function showNoTournament() {
+
+    if (tournamentNameElement) {
+
+        tournamentNameElement.textContent =
+            "No Tournament Selected";
+
+    }
+
+
+    if (tournamentIdElement) {
+
+        tournamentIdElement.textContent =
+            "-";
+
+    }
+
+
+    if (venueElement) {
+
+        venueElement.textContent =
+            "-";
+
+    }
+
+
+    if (matchListElement) {
+
+        matchListElement.className =
+            "empty";
+
+        matchListElement.innerHTML = `
+            ❌ No tournament selected.
         `;
 
     }
@@ -593,45 +946,67 @@ async function loadMatches() {
 }
 
 
-/* =========================
-   LOGIN
-========================= */
+// ========================================
+// SAFE HTML
+// ========================================
 
-onAuthStateChanged(
-    auth,
-    async user => {
+function escapeHTML(value) {
 
-        if (!user) {
+    return String(value)
 
-            window.location.href =
-                "login.html";
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
 
-            return;
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
 
-        }
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
 
 
-        try {
+// ========================================
+// START
+// ========================================
 
-            const loaded =
-                await loadTournament();
+async function init() {
+
+    console.log(
+        "🚀 Starting Schedule..."
+    );
 
 
-            if (
-                loaded
-            ) {
+    await loadTournamentDropdown();
 
-                await loadMatches();
 
-            }
+    if (tournamentId) {
 
-        } catch (error) {
+        await loadSchedule();
 
-            console.error(
-                error
-            );
+    } else {
 
-        }
+        showNoTournament();
 
     }
-);
+
+}
+
+
+init();

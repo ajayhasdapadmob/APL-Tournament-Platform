@@ -10,74 +10,121 @@
     content="width=device-width, initial-scale=1.0"
 >
 
-<title>Tournament Schedule</title>
+<title>Tournament Schedule - APL Tournament Platform</title>
 
 <link
     rel="stylesheet"
-    href="css/style.css"
+    href="./css/style.css"
 >
 
 <style>
 
 .schedule-container {
-    max-width: 1000px;
+    width: 100%;
+    max-width: 900px;
     margin: auto;
+    padding: 20px 14px 90px;
 }
 
-.schedule-header {
+.tournament-selector {
     background: white;
-    padding: 22px;
-    border-radius: 15px;
+    padding: 18px;
+    border-radius: 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.10);
+}
+
+.tournament-selector label {
+    display: block;
+    font-weight: bold;
+    color: #1e3a8a;
+    margin-bottom: 8px;
+}
+
+#tournamentSelect {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 15px;
+    background: white;
+    color: #0f172a;
+    outline: none;
+}
+
+#tournamentSelect:focus {
+    border-color: #2563eb;
+}
+
+.tournament-card {
+    background: white;
+    padding: 20px;
+    border-radius: 18px;
     margin-bottom: 20px;
-    box-shadow: 0 5px 18px rgba(0,0,0,0.08);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.10);
+}
+
+.tournament-card h2 {
+    color: #1e3a8a;
+    margin-bottom: 10px;
+}
+
+.tournament-card p {
+    margin: 7px 0;
+}
+
+.schedule-title {
+    color: white;
+    margin-bottom: 15px;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.6);
+}
+
+.match-list {
+    display: grid;
+    gap: 15px;
 }
 
 .match-card {
     background: white;
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    padding: 18px;
+    border-radius: 17px;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.10);
 }
 
-.match-title {
+.match-card h3 {
     color: #1e3a8a;
-    font-weight: bold;
     margin-bottom: 12px;
 }
 
-.teams {
-    font-size: 20px;
-    font-weight: bold;
-    margin: 12px 0;
-}
-
-.info {
+.match-card p {
     margin: 7px 0;
-    color: #4b5563;
+    color: #334155;
 }
 
-.id-box {
-    background: #eff6ff;
-    padding: 10px;
+.match-status {
+    display: inline-block;
+    padding: 6px 10px;
     border-radius: 8px;
-    margin-top: 10px;
-    word-break: break-all;
+    background: #dbeafe;
+    color: #1e40af;
+    font-weight: bold;
+    margin-top: 8px;
 }
 
 .empty {
     background: white;
     padding: 30px;
+    border-radius: 16px;
     text-align: center;
-    border-radius: 15px;
+    color: #475569;
 }
 
 .navigation {
     display: flex;
-    flex-wrap: wrap;
     justify-content: center;
+    flex-wrap: wrap;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 25px;
 }
 
 </style>
@@ -96,54 +143,94 @@
 
     <div>
 
-        <h1>
-            Tournament Schedule
-        </h1>
+        <h1>Tournament Schedule</h1>
 
-        <p>
-            APL Tournament Platform
-        </p>
+        <p>APL Tournament Platform</p>
 
     </div>
 
 </header>
 
 
-
-<main class="home-container">
-
-
-<div class="schedule-container">
+<main class="schedule-container">
 
 
-    <div
-        id="scheduleHeader"
-        class="schedule-header"
-    >
+    <!-- ====================================
+         TOURNAMENT DROPDOWN
+    ===================================== -->
 
-        ⏳ Loading Tournament...
+    <div class="tournament-selector">
+
+        <label for="tournamentSelect">
+            🏆 Select Tournament
+        </label>
+
+        <select id="tournamentSelect">
+
+            <option value="">
+                ⏳ Loading Tournaments...
+            </option>
+
+        </select>
 
     </div>
 
 
-    <h2>
+    <!-- ====================================
+         TOURNAMENT INFORMATION
+    ===================================== -->
+
+    <div class="tournament-card">
+
+        <h2 id="tournamentName">
+            ⏳ Loading Tournament...
+        </h2>
+
+        <p>
+            🆔
+            <b>Tournament ID:</b>
+            <span id="tournamentId">
+                -
+            </span>
+        </p>
+
+        <p>
+            📍
+            <b>Venue:</b>
+            <span id="venue">
+                -
+            </span>
+        </p>
+
+    </div>
+
+
+    <!-- ====================================
+         SCHEDULE
+    ===================================== -->
+
+    <h2 class="schedule-title">
         📅 Match Schedule
     </h2>
 
 
-    <div id="scheduleList">
+    <div
+        id="matchList"
+        class="match-list"
+    >
 
         <div class="empty">
-
             ⏳ Loading Matches...
-
         </div>
 
     </div>
 
 
-    <div class="navigation">
+    <!-- ====================================
+         NAVIGATION
+    ===================================== -->
 
+    <div class="navigation">
 
         <a
             id="tournamentLink"
@@ -173,7 +260,7 @@
 
 
         <a
-            id="liveScoreLink"
+            id="liveLink"
             href="#"
             class="btn"
         >
@@ -188,15 +275,10 @@
             ⬅ My Tournaments
         </a>
 
-
     </div>
 
 
-</div>
-
-
 </main>
-
 
 
 <footer>
@@ -208,10 +290,9 @@
 </footer>
 
 
-
 <script
     type="module"
-    src="js/schedule.js"
+    src="./js/schedule.js?v=2"
 ></script>
 
 

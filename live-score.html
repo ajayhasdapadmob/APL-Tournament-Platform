@@ -10,23 +10,83 @@
     content="width=device-width, initial-scale=1.0"
 >
 
-<title>Live Score</title>
+<title>Live Score - APL Tournament Platform</title>
 
 <link
     rel="stylesheet"
-    href="css/style.css"
+    href="./css/style.css"
 >
 
 <style>
 
 .live-container {
-
     max-width: 1000px;
-
     margin: auto;
+}
+
+
+/* ================================
+   TOURNAMENT SELECTOR
+================================ */
+
+.tournament-selector {
+
+    background: white;
+
+    padding: 18px;
+
+    border-radius: 16px;
+
+    margin-bottom: 20px;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0,0,0,0.08);
 
 }
 
+.tournament-selector label {
+
+    display: block;
+
+    color: #1e3a8a;
+
+    font-weight: bold;
+
+    margin-bottom: 8px;
+
+}
+
+#tournamentSelect {
+
+    width: 100%;
+
+    padding: 13px;
+
+    border: 1px solid #cbd5e1;
+
+    border-radius: 10px;
+
+    background: white;
+
+    font-size: 15px;
+
+    color: #0f172a;
+
+    outline: none;
+
+}
+
+#tournamentSelect:focus {
+
+    border-color: #2563eb;
+
+}
+
+
+/* ================================
+   TOURNAMENT HEADER
+================================ */
 
 .live-header {
 
@@ -85,6 +145,10 @@
 
 }
 
+
+/* ================================
+   MATCHES
+================================ */
 
 .matches {
 
@@ -290,11 +354,8 @@
 <header class="top-header">
 
     <div class="logo">
-
         🏏
-
     </div>
-
 
     <div>
 
@@ -311,12 +372,42 @@
 </header>
 
 
-
 <main class="home-container">
 
 
 <div class="live-container">
 
+
+    <!-- =================================
+         TOURNAMENT DROPDOWN
+    ================================== -->
+
+    <div class="tournament-selector">
+
+        <label for="tournamentSelect">
+
+            🏆 Select Tournament
+
+        </label>
+
+
+        <select id="tournamentSelect">
+
+            <option value="">
+
+                ⏳ Loading Tournaments...
+
+            </option>
+
+        </select>
+
+    </div>
+
+
+
+    <!-- =================================
+         TOURNAMENT INFORMATION
+    ================================== -->
 
     <div
         id="tournamentInfo"
@@ -337,6 +428,10 @@
 
 
 
+    <!-- =================================
+         LIVE MATCHES
+    ================================== -->
+
     <div
         id="matchesList"
         class="matches"
@@ -352,6 +447,10 @@
 
 
 
+    <!-- =================================
+         NAVIGATION
+    ================================== -->
+
     <div class="navigation">
 
 
@@ -362,6 +461,17 @@
         >
 
             🏆 Tournament
+
+        </a>
+
+
+        <a
+            id="teamsLink"
+            href="#"
+            class="btn"
+        >
+
+            👥 Teams
 
         </a>
 
@@ -399,6 +509,16 @@
         </a>
 
 
+        <a
+            href="my-tournaments.html"
+            class="btn"
+        >
+
+            ⬅ My Tournaments
+
+        </a>
+
+
     </div>
 
 
@@ -406,7 +526,6 @@
 
 
 </main>
-
 
 
 <footer>
@@ -423,7 +542,7 @@
 
 <script
     type="module"
-    src="js/live-score.js"
+    src="./js/live-score.js?v=10"
 ></script>
 
 

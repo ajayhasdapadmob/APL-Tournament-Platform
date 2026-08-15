@@ -1,30 +1,43 @@
-// Firebase App
+// ========================================
+// FIREBASE APP
+// ========================================
+
 import {
     initializeApp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 
 
-// Firebase Authentication
+// ========================================
+// FIREBASE AUTHENTICATION
+// ========================================
+
 import {
     getAuth
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
 
-// Firebase Firestore
+// ========================================
+// FIRESTORE
+// ========================================
+
 import {
-    getFirestore
+    getFirestore,
+    enableNetwork
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 
-// Firebase Storage
+// ========================================
+// FIREBASE STORAGE
+// ========================================
+
 import {
     getStorage
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js";
 
 
-// ===============================
-// Firebase Configuration
-// ===============================
+// ========================================
+// FIREBASE CONFIGURATION
+// ========================================
 
 const firebaseConfig = {
 
@@ -52,25 +65,65 @@ const firebaseConfig = {
 };
 
 
-// ===============================
-// Initialize Firebase
-// ===============================
+// ========================================
+// INITIALIZE FIREBASE
+// ========================================
 
 const app =
     initializeApp(firebaseConfig);
 
 
-// ===============================
-// Export Firebase Services
-// ===============================
+// ========================================
+// AUTH
+// ========================================
 
 export const auth =
     getAuth(app);
 
 
+// ========================================
+// FIRESTORE
+// ========================================
+
 export const db =
     getFirestore(app);
 
 
+// ========================================
+// STORAGE
+// ========================================
+
 export const storage =
     getStorage(app);
+
+
+// ========================================
+// FIRESTORE NETWORK
+// ========================================
+
+enableNetwork(db)
+    .then(() => {
+
+        console.log(
+            "🔥 Firestore network enabled"
+        );
+
+    })
+    .catch((error) => {
+
+        console.error(
+            "❌ Firestore network error:",
+            error
+        );
+
+    });
+
+
+console.log(
+    "✅ Firebase initialized successfully"
+);
+
+console.log(
+    "🔥 Project:",
+    firebaseConfig.projectId
+);

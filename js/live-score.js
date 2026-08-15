@@ -1,8 +1,4 @@
-import { auth, db } from "./firebase.js";
-
-import {
-    onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { db } from "./firebase.js";
 
 import {
     collection,
@@ -10,6 +6,9 @@ import {
     getDoc,
     doc
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+
+console.log("🔥 LIVE SCORE JS LOADED");
 
 
 /* =========================
@@ -46,21 +45,24 @@ const pointsLink =
         "pointsLink"
     );
 
+const tournamentSelector =
+    document.getElementById(
+        "tournamentSelector"
+    );
+
 
 /* =========================
    GET TOURNAMENT ID
 ========================= */
 
-const params = new URLSearchParams(
-    window.location.search
-);
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
 
-let tournamentId = params.get("id");
+let tournamentId =
+    params.get("id");
 
-
-/* =========================
-   FALLBACK 1
-========================= */
 
 if (!tournamentId) {
 
@@ -69,10 +71,6 @@ if (!tournamentId) {
 
 }
 
-
-/* =========================
-   FALLBACK 2
-========================= */
 
 if (!tournamentId) {
 
@@ -84,10 +82,6 @@ if (!tournamentId) {
 }
 
 
-/* =========================
-   FALLBACK 3
-========================= */
-
 if (!tournamentId) {
 
     tournamentId =
@@ -98,107 +92,356 @@ if (!tournamentId) {
 }
 
 
-/* =========================
-   DEBUG
-========================= */
+if (!tournamentId) {
+
+    tournamentId =
+        sessionStorage.getItem(
+            "selectedTournamentId"
+        );
+
+}
+
+
+if (!tournamentId) {
+
+    tournamentId =
+        sessionStorage.getItem(
+            "tournamentId"
+        );
+
+}
+
+
+if (tournamentId) {
+
+    tournamentId =
+        String(
+            tournamentId
+        ).trim();
+
+}
+
 
 console.log(
-    "LIVE SCORE URL:",
+    "🔎 LIVE SCORE URL:",
     window.location.href
 );
 
 console.log(
-    "LIVE SCORE TOURNAMENT ID:",
+    "🏆 LIVE SCORE TOURNAMENT ID:",
     tournamentId
 );
-
-
-/* =========================
-   CHECK
-========================= */
-
-if (!tournamentId) {
-
-    tournamentInfo.innerHTML = `
-
-        <div class="empty">
-
-            <h2>
-                ❌ Tournament ID Missing
-            </h2>
-
-            <p>
-                Please open Live Score
-                from Tournament Details.
-            </p>
-
-            <br>
-
-            <a
-                href="my-tournaments.html"
-                class="btn"
-            >
-                🏆 My Tournaments
-            </a>
-
-        </div>
-
-    `;
-
-    matchesList.innerHTML = "";
-
-    throw new Error(
-        "Tournament ID Missing"
-    );
-
-}
 
 
 /* =========================
    SAVE ID
 ========================= */
 
-localStorage.setItem(
-    "tournamentId",
-    tournamentId
-);
+function saveTournamentId(id) {
 
-localStorage.setItem(
-    "selectedTournamentId",
-    tournamentId
-);
+    if (!id) return;
+
+    const cleanId =
+        String(id).trim();
+
+
+    localStorage.setItem(
+        "tournamentId",
+        cleanId
+    );
+
+    localStorage.setItem(
+        "selectedTournamentId",
+        cleanId
+    );
+
+    sessionStorage.setItem(
+        "tournamentId",
+        cleanId
+    );
+
+    sessionStorage.setItem(
+        "selectedTournamentId",
+        cleanId
+    );
+
+}
 
 
 /* =========================
-   NAVIGATION
+   LOAD TOURNAMENT DROPDOWN
 ========================= */
 
-tournamentLink.href =
-    "tournament.html?id=" +
-    encodeURIComponent(
+async function loadTournamentSelector() {
+
+    if (!tournamentSelector) {
+
+        console.warn(
+            "⚠️ tournamentSelector not found in HTML"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        tournamentSelector.innerHTML = `
+            <option value="">
+                ⏳ Loading Tournaments...
+            </option>
+        `;
+
+
+        const tournamentsRef =
+            collection(
+                db,
+                "tournaments"
+            );
+
+
+        const snapshot =
+            await getDocs(
+                tournamentsRef
+            );
+
+
+        tournamentSelector.innerHTML = "";
+
+
+        if (snapshot.empty) {
+
+            tournamentSelector.innerHTML = `
+                <option value="">
+                    No tournaments found
+                </option>
+            `;
+
+            return;
+
+        }
+
+
+        snapshot.forEach(
+            tournamentDoc => {
+
+                const data =
+                    tournamentDoc.data();
+
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    tournamentDoc.id;
+
+
+                option.textContent =
+                    data.tournamentName ||
+                    data.name ||
+                    data.title ||
+                    "Tournament";
+
+
+                if (
+                    tournamentDoc.id ===
+                    tournamentId
+                ) {
+
+                    option.selected =
+                        true;
+
+                }
+
+
+                tournamentSelector.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        console.log(
+            "✅ Tournament dropdown loaded:",
+            snapshot.size
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "❌ Tournament dropdown error:",
+            error
+        );
+
+
+        tournamentSelector.innerHTML = `
+            <option value="">
+                ❌ Unable to load tournaments
+            </option>
+        `;
+
+    }
+
+}
+
+
+/* =========================
+   DROPDOWN CHANGE
+========================= */
+
+if (tournamentSelector) {
+
+    tournamentSelector.addEventListener(
+        "change",
+        function () {
+
+            const selectedId =
+                this.value;
+
+
+            if (!selectedId) {
+
+                return;
+
+            }
+
+
+            console.log(
+                "🏆 Tournament changed:",
+                selectedId
+            );
+
+
+            saveTournamentId(
+                selectedId
+            );
+
+
+            window.location.href =
+                "live-score.html?id=" +
+                encodeURIComponent(
+                    selectedId
+                );
+
+        }
+    );
+
+}
+
+
+/* =========================
+   NO TOURNAMENT
+========================= */
+
+if (!tournamentId) {
+
+    console.error(
+        "❌ Tournament ID Missing"
+    );
+
+
+    if (tournamentInfo) {
+
+        tournamentInfo.innerHTML = `
+
+            <div class="empty">
+
+                <h2>
+                    ❌ Tournament ID Missing
+                </h2>
+
+                <p>
+                    Please select a tournament.
+                </p>
+
+                <br>
+
+                <a
+                    href="my-tournaments.html"
+                    class="btn"
+                >
+                    🏆 My Tournaments
+                </a>
+
+            </div>
+
+        `;
+
+    }
+
+
+    if (matchesList) {
+
+        matchesList.innerHTML = "";
+
+    }
+
+
+} else {
+
+
+    /* SAVE */
+
+    saveTournamentId(
         tournamentId
     );
 
 
-scheduleLink.href =
-    "schedule.html?id=" +
-    encodeURIComponent(
-        tournamentId
-    );
+    /* =========================
+       NAVIGATION
+    ========================= */
+
+    const id =
+        encodeURIComponent(
+            tournamentId
+        );
 
 
-resultsLink.href =
-    "results.html?id=" +
-    encodeURIComponent(
-        tournamentId
-    );
+    if (tournamentLink) {
+
+        tournamentLink.href =
+            `tournament.html?id=${id}`;
+
+    }
 
 
-pointsLink.href =
-    "points.html?id=" +
-    encodeURIComponent(
-        tournamentId
-    );
+    if (scheduleLink) {
+
+        scheduleLink.href =
+            `schedule.html?id=${id}`;
+
+    }
+
+
+    if (resultsLink) {
+
+        resultsLink.href =
+            `results.html?id=${id}`;
+
+    }
+
+
+    if (pointsLink) {
+
+        pointsLink.href =
+            `points.html?id=${id}`;
+
+    }
+
+
+    /* =========================
+       LOAD
+    ========================= */
+
+    loadTournament();
+
+}
 
 
 /* =========================
@@ -209,15 +452,23 @@ async function loadTournament() {
 
     try {
 
+        console.log(
+            "🏆 Loading tournament:",
+            tournamentId
+        );
+
+
+        const tournamentRef =
+            doc(
+                db,
+                "tournaments",
+                tournamentId
+            );
+
+
         const tournamentSnap =
             await getDoc(
-
-                doc(
-                    db,
-                    "tournaments",
-                    tournamentId
-                )
-
+                tournamentRef
             );
 
 
@@ -225,26 +476,33 @@ async function loadTournament() {
             !tournamentSnap.exists()
         ) {
 
-            tournamentInfo.innerHTML = `
+            if (tournamentInfo) {
 
-                <div class="empty">
+                tournamentInfo.innerHTML = `
 
-                    <h2>
-                        ❌ Tournament Not Found
-                    </h2>
+                    <div class="empty">
 
-                    <p>
+                        <h2>
+                            ❌ Tournament Not Found
+                        </h2>
 
-                        Tournament ID:
-                        <b>${tournamentId}</b>
+                        <p>
+                            Tournament ID:
+                            <b>
+                                ${escapeHTML(
+                                    tournamentId
+                                )}
+                            </b>
+                        </p>
 
-                    </p>
+                    </div>
 
-                </div>
+                `;
 
-            `;
+            }
 
-            return false;
+            return;
+
         }
 
 
@@ -252,69 +510,102 @@ async function loadTournament() {
             tournamentSnap.data();
 
 
-        tournamentInfo.innerHTML = `
-
-            <h2>
-
-                🏆
-                ${
-                    tournament.tournamentName ||
-                    "Tournament"
-                }
-
-            </h2>
+        console.log(
+            "✅ Tournament:",
+            tournament
+        );
 
 
-            <div class="tournament-id">
-
-                🆔
-                <b>Tournament ID:</b>
-
-                ${tournamentId}
-
-            </div>
+        const name =
+            tournament.tournamentName ||
+            tournament.name ||
+            tournament.title ||
+            "Tournament";
 
 
-            <p>
-
-                📍
-                <b>Venue:</b>
-
-                ${tournament.venue || "-"}
-
-            </p>
+        const venue =
+            tournament.venue ||
+            tournament.location ||
+            "-";
 
 
-            <span class="live-status">
+        if (tournamentInfo) {
 
-                🔴 LIVE SCORE
+            tournamentInfo.innerHTML = `
 
-            </span>
+                <h2>
+                    🏆
+                    ${escapeHTML(name)}
+                </h2>
 
-        `;
+                <div class="tournament-id">
+
+                    🆔
+                    <b>Tournament ID:</b>
+
+                    ${escapeHTML(
+                        tournamentId
+                    )}
+
+                </div>
+
+                <p>
+
+                    📍
+                    <b>Venue:</b>
+
+                    ${escapeHTML(
+                        venue
+                    )}
+
+                </p>
+
+                <span class="live-status">
+
+                    🔴 LIVE SCORE
+
+                </span>
+
+            `;
+
+        }
 
 
-        return true;
+        await loadMatches();
+
+
+        startAutoRefresh();
+
+
+        console.log(
+            "✅ LIVE SCORE PAGE READY"
+        );
 
 
     } catch (error) {
 
         console.error(
+            "❌ LIVE SCORE ERROR:",
             error
         );
 
 
-        tournamentInfo.innerHTML = `
+        if (tournamentInfo) {
 
-            <div class="empty">
+            tournamentInfo.innerHTML = `
 
-                ❌ ${error.message}
+                <div class="empty">
 
-            </div>
+                    ❌
+                    ${escapeHTML(
+                        error.message
+                    )}
 
-        `;
+                </div>
 
-        return false;
+            `;
+
+        }
 
     }
 
@@ -329,14 +620,17 @@ async function loadMatches() {
 
     try {
 
+        console.log(
+            "🔄 Loading live matches..."
+        );
+
+
         const matchesRef =
             collection(
-
                 db,
                 "tournaments",
                 tournamentId,
                 "matches"
-
             );
 
 
@@ -344,6 +638,13 @@ async function loadMatches() {
             await getDocs(
                 matchesRef
             );
+
+
+        if (!matchesList) {
+
+            return;
+
+        }
 
 
         matchesList.innerHTML = "";
@@ -392,22 +693,24 @@ async function loadMatches() {
         );
 
 
-        /* =========================
-           SORT MATCHES
-        ========================= */
-
         matches.sort(
             (a, b) => {
 
                 const aNumber =
                     Number(
-                        a.matchNumber || 0
+                        a.matchNumber ||
+                        a.matchNo ||
+                        999999
                     );
+
 
                 const bNumber =
                     Number(
-                        b.matchNumber || 0
+                        b.matchNumber ||
+                        b.matchNo ||
+                        999999
                     );
+
 
                 return (
                     aNumber -
@@ -429,23 +732,36 @@ async function loadMatches() {
         );
 
 
+        console.log(
+            "✅ Matches loaded:",
+            matches.length
+        );
+
+
     } catch (error) {
 
         console.error(
-            "Live Score Error:",
+            "❌ MATCH LOAD ERROR:",
             error
         );
 
 
-        matchesList.innerHTML = `
+        if (matchesList) {
 
-            <div class="empty">
+            matchesList.innerHTML = `
 
-                ❌ ${error.message}
+                <div class="empty">
 
-            </div>
+                    ❌
+                    ${escapeHTML(
+                        error.message
+                    )}
 
-        `;
+                </div>
+
+            `;
+
+        }
 
     }
 
@@ -462,21 +778,31 @@ function displayMatch(
 
     const teamA =
         match.teamA ||
+        match.team1Name ||
+        match.team1 ||
+        match.homeTeam ||
         "Team A";
 
 
     const teamB =
         match.teamB ||
+        match.team2Name ||
+        match.team2 ||
+        match.awayTeam ||
         "Team B";
 
 
     const scoreA =
-        match.scoreA ||
+        match.scoreA ??
+        match.teamAScore ??
+        match.score1 ??
         "-";
 
 
     const scoreB =
-        match.scoreB ||
+        match.scoreB ??
+        match.teamBScore ??
+        match.score2 ??
         "-";
 
 
@@ -484,15 +810,20 @@ function displayMatch(
         String(
             match.status ||
             "Scheduled"
-        );
+        ).trim();
+
+
+    const lowerStatus =
+        status.toLowerCase();
 
 
     let badge = "";
 
 
     if (
-        status.toLowerCase()
-            === "live"
+        lowerStatus === "live" ||
+        lowerStatus === "ongoing" ||
+        lowerStatus === "in_progress"
     ) {
 
         badge = `
@@ -508,8 +839,9 @@ function displayMatch(
     }
 
     else if (
-        status.toLowerCase()
-            === "completed"
+        lowerStatus === "completed" ||
+        lowerStatus === "finished" ||
+        lowerStatus === "result"
     ) {
 
         badge = `
@@ -554,7 +886,11 @@ function displayMatch(
         <div class="match-number">
 
             🏏 Match
-            ${match.matchNumber || "-"}
+            ${escapeHTML(
+                match.matchNumber ||
+                match.matchNo ||
+                "-"
+            )}
 
             &nbsp;
 
@@ -570,14 +906,18 @@ function displayMatch(
 
                 <div>
 
-                    ${teamA}
+                    ${escapeHTML(
+                        teamA
+                    )}
 
                 </div>
 
 
                 <div class="score">
 
-                    ${scoreA}
+                    ${escapeHTML(
+                        String(scoreA)
+                    )}
 
                 </div>
 
@@ -595,14 +935,18 @@ function displayMatch(
 
                 <div>
 
-                    ${teamB}
+                    ${escapeHTML(
+                        teamB
+                    )}
 
                 </div>
 
 
                 <div class="score">
 
-                    ${scoreB}
+                    ${escapeHTML(
+                        String(scoreB)
+                    )}
 
                 </div>
 
@@ -615,17 +959,28 @@ function displayMatch(
         <div class="match-info">
 
             📅
-            ${match.date || "-"}
+            ${escapeHTML(
+                match.date ||
+                match.matchDate ||
+                "-"
+            )}
 
             &nbsp;&nbsp;
 
             ⏰
-            ${match.time || "-"}
+            ${escapeHTML(
+                match.time ||
+                match.matchTime ||
+                "-"
+            )}
 
             <br><br>
 
             📍
-            ${match.venue || "-"}
+            ${escapeHTML(
+                match.venue ||
+                "-"
+            )}
 
         </div>
 
@@ -635,20 +990,25 @@ function displayMatch(
             ?
             `
 
-            <div class="result">
+                <div class="result">
 
-                🏆 Winner:
-                ${match.winner}
+                    🏆 Winner:
+                    ${escapeHTML(
+                        match.winner
+                    )}
 
-                ${
-                    match.result
-                    ?
-                    `<br>${match.result}`
-                    :
-                    ""
-                }
+                    ${
+                        match.result
+                        ?
+                        `<br>
+                         ${escapeHTML(
+                             match.result
+                         )}`
+                        :
+                        ""
+                    }
 
-            </div>
+                </div>
 
             `
             :
@@ -675,9 +1035,7 @@ let refreshTimer =
 
 function startAutoRefresh() {
 
-    if (
-        refreshTimer
-    ) {
+    if (refreshTimer) {
 
         clearInterval(
             refreshTimer
@@ -688,7 +1046,7 @@ function startAutoRefresh() {
 
     refreshTimer =
         setInterval(
-            () => {
+            function () {
 
                 loadMatches();
 
@@ -700,36 +1058,36 @@ function startAutoRefresh() {
 
 
 /* =========================
-   LOGIN
+   SAFE HTML
 ========================= */
 
-onAuthStateChanged(
-    auth,
-    async user => {
+function escapeHTML(value) {
 
-        if (!user) {
+    return String(value)
 
-            window.location.href =
-                "login.html";
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
 
-            return;
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
 
-        }
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
 
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
 
-        const tournamentLoaded =
-            await loadTournament();
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
 
-
-        if (
-            tournamentLoaded
-        ) {
-
-            await loadMatches();
-
-            startAutoRefresh();
-
-        }
-
-    }
-);
+}

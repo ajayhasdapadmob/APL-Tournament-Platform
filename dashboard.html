@@ -5,23 +5,33 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
 <title>APL Tournament Platform - Dashboard</title>
 
-<link rel="manifest"
-      href="./manifest.json">
+<link
+    rel="manifest"
+    href="./manifest.json"
+>
 
-<link rel="icon"
-      type="image/png"
-      href="./images/icon-192.png">
+<link
+    rel="icon"
+    type="image/png"
+    href="./images/icon-192.png"
+>
 
-<meta name="theme-color"
-      content="#0f172a">
+<meta
+    name="theme-color"
+    content="#0f172a"
+>
 
-<link rel="stylesheet"
-      href="./css/style.css">
+<link
+    rel="stylesheet"
+    href="./css/style.css"
+>
 
 
 <style>
@@ -31,10 +41,17 @@
 ======================================== */
 
 .dashboard-container {
+
     width: 100%;
     max-width: 700px;
+
     margin: auto;
-    padding: 18px 14px 100px;
+
+    padding:
+        18px
+        14px
+        100px;
+
 }
 
 
@@ -63,7 +80,9 @@
     box-shadow:
         0 8px 25px
         rgba(0,0,0,0.25);
+
 }
+
 
 .tournament-header-card .small-text {
 
@@ -72,7 +91,9 @@
     color: #dbeafe;
 
     margin-bottom: 7px;
+
 }
+
 
 .tournament-header-card h2 {
 
@@ -81,16 +102,73 @@
     margin-bottom: 12px;
 
     line-height: 1.25;
+
 }
+
+
+/* ========================================
+   TOURNAMENT SELECTOR
+======================================== */
+
+.tournament-selector-label {
+
+    display: block;
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+    color: white;
+
+    margin-bottom: 7px;
+
+}
+
+
+#tournamentSelector {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 13px 12px;
+
+    border-radius: 11px;
+
+    border: none;
+
+    outline: none;
+
+    margin-bottom: 18px;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+    color: #0f172a;
+
+    background: white;
+
+    cursor: pointer;
+
+}
+
+
+/* ========================================
+   TOURNAMENT DETAILS
+======================================== */
 
 .tournament-details {
 
-    background: rgba(255,255,255,0.14);
+    background:
+        rgba(255,255,255,0.14);
 
     padding: 12px;
 
     border-radius: 12px;
+
 }
+
 
 .tournament-details p {
 
@@ -99,11 +177,14 @@
     font-size: 13px;
 
     color: #e0e7ff;
+
 }
+
 
 .tournament-details b {
 
     color: white;
+
 }
 
 
@@ -121,7 +202,9 @@
     gap: 10px;
 
     margin-bottom: 24px;
+
 }
+
 
 .stat-card {
 
@@ -138,14 +221,18 @@
     text-align: center;
 
     color: #0f172a;
+
 }
+
 
 .stat-card .stat-icon {
 
     font-size: 25px;
 
     margin-bottom: 6px;
+
 }
+
 
 .stat-card strong {
 
@@ -154,7 +241,9 @@
     font-size: 22px;
 
     color: #1d4ed8;
+
 }
+
 
 .stat-card span {
 
@@ -165,17 +254,20 @@
     color: #64748b;
 
     font-size: 11px;
+
 }
 
 
 /* ========================================
-   SECTION TITLE
+   SECTION
 ======================================== */
 
 .dashboard-section {
 
     margin-bottom: 25px;
+
 }
+
 
 .dashboard-section-title {
 
@@ -188,11 +280,12 @@
     text-shadow:
         0 2px 5px
         rgba(0,0,0,0.7);
+
 }
 
 
 /* ========================================
-   ACTION GRID
+   DASHBOARD GRID
 ======================================== */
 
 .dashboard-grid {
@@ -203,7 +296,9 @@
         repeat(2, 1fr);
 
     gap: 11px;
+
 }
+
 
 .dashboard-card {
 
@@ -233,12 +328,20 @@
 
     transition:
         transform 0.15s ease;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
 }
+
 
 .dashboard-card:active {
 
     transform: scale(0.97);
+
 }
+
 
 .dashboard-card .icon {
 
@@ -259,12 +362,16 @@
     background: #eff6ff;
 
     font-size: 25px;
+
 }
+
 
 .dashboard-card strong {
 
     font-size: 14px;
+
 }
+
 
 .dashboard-card small {
 
@@ -273,11 +380,12 @@
     color: #64748b;
 
     font-size: 10px;
+
 }
 
 
 /* ========================================
-   TEAM REGISTRATION
+   REGISTRATION
 ======================================== */
 
 .registration-card-dashboard {
@@ -299,7 +407,9 @@
     box-shadow:
         0 5px 15px
         rgba(0,0,0,0.18);
+
 }
+
 
 .registration-icon {
 
@@ -320,19 +430,25 @@
     background: #dcfce7;
 
     font-size: 25px;
+
 }
+
 
 .registration-card-dashboard > div {
 
     flex: 1;
+
 }
+
 
 .registration-card-dashboard strong {
 
     display: block;
 
     margin-bottom: 4px;
+
 }
+
 
 .registration-card-dashboard p {
 
@@ -341,7 +457,9 @@
     font-size: 11px;
 
     margin: 0;
+
 }
+
 
 .open-button {
 
@@ -358,6 +476,9 @@
     font-weight: bold;
 
     white-space: nowrap;
+
+    text-decoration: none;
+
 }
 
 
@@ -394,7 +515,9 @@
     box-shadow:
         0 -4px 15px
         rgba(0,0,0,0.15);
+
 }
+
 
 .dashboard-bottom-nav a {
 
@@ -407,7 +530,9 @@
     font-size: 11px;
 
     text-decoration: none;
+
 }
+
 
 .dashboard-bottom-nav span {
 
@@ -416,18 +541,23 @@
     font-size: 20px;
 
     line-height: 25px;
+
 }
+
 
 .dashboard-bottom-nav small {
 
     font-size: 10px;
+
 }
+
 
 .dashboard-bottom-nav .active {
 
     color: #1d4ed8;
 
     font-weight: bold;
+
 }
 
 
@@ -440,41 +570,56 @@
     .dashboard-container {
 
         padding:
-            15px 12px 95px;
+            15px
+            12px
+            95px;
+
     }
+
 
     .tournament-header-card {
 
         padding: 19px;
+
     }
+
 
     .tournament-header-card h2 {
 
         font-size: 21px;
+
     }
+
 
     .dashboard-grid {
 
         gap: 8px;
+
     }
+
 
     .dashboard-card {
 
         min-height: 115px;
+
     }
+
 
     .registration-card-dashboard {
 
         align-items: flex-start;
 
         flex-wrap: wrap;
+
     }
+
 
     .open-button {
 
         width: 100%;
 
         text-align: center;
+
     }
 
 }
@@ -498,7 +643,9 @@
         <img
             src="./images/icon-192.png"
             alt="APL Logo"
-            onerror="this.src='./images/APL.logo.jpg'"
+            onerror="
+                this.src='./images/APL.logo.jpg'
+            "
         >
 
     </div>
@@ -528,7 +675,6 @@
 </header>
 
 
-
 <!-- ========================================
      MAIN
 ======================================== -->
@@ -536,458 +682,521 @@
 <main class="dashboard-container">
 
 
-    <!-- ====================================
-         SELECTED TOURNAMENT
-    ==================================== -->
+<!-- ========================================
+     TOURNAMENT
+======================================== -->
 
-    <section class="tournament-header-card">
+<section class="tournament-header-card">
 
-        <p class="small-text">
-            🏆 Selected Tournament
+
+    <label
+        class="tournament-selector-label"
+        for="tournamentSelector"
+    >
+
+        🏆 Select Tournament
+
+    </label>
+
+
+    <select
+        id="tournamentSelector"
+    >
+
+        <option value="">
+            Loading Tournaments...
+        </option>
+
+    </select>
+
+
+    <p class="small-text">
+
+        🏆 Selected Tournament
+
+    </p>
+
+
+    <h2 id="dashboardTournamentName">
+
+        Select Tournament
+
+    </h2>
+
+
+    <div class="tournament-details">
+
+
+        <p>
+
+            🆔
+
+            <b>
+                Tournament ID:
+            </b>
+
+            <span id="dashboardTournamentId">
+                -
+            </span>
+
         </p>
 
 
-        <h2 id="dashboardTournamentName">
-            Loading Tournament...
-        </h2>
+        <p>
+
+            📍
+
+            <b>
+                Venue:
+            </b>
+
+            <span id="dashboardVenue">
+                -
+            </span>
+
+        </p>
 
 
-        <div class="tournament-details">
+        <p>
 
-            <p>
-                🆔
-                <b>Tournament ID:</b>
-                <span id="dashboardTournamentId">
-                    -
-                </span>
-            </p>
+            👤
 
+            <b>
+                Organizer:
+            </b>
 
-            <p>
-                📍
-                <b>Venue:</b>
-                <span id="dashboardVenue">
-                    -
-                </span>
-            </p>
+            <span id="organizerName">
+                Organizer
+            </span>
+
+        </p>
 
 
-            <p>
-                👤
-                <b>Organizer:</b>
-                <span id="organizerName">
-                    Organizer
-                </span>
-            </p>
+    </div>
 
+
+</section>
+
+
+<!-- ========================================
+     STATS
+======================================== -->
+
+<section class="dashboard-stats">
+
+
+    <div class="stat-card">
+
+        <div class="stat-icon">
+            👥
         </div>
 
-    </section>
+        <strong id="teamCount">
+            0
+        </strong>
+
+        <span>
+            Registered Teams
+        </span>
+
+    </div>
 
 
+    <div class="stat-card">
 
-    <!-- ====================================
-         STATISTICS
-    ==================================== -->
+        <div class="stat-icon">
+            📅
+        </div>
 
-    <section class="dashboard-stats">
+        <strong id="matchCount">
+            0
+        </strong>
+
+        <span>
+            Matches
+        </span>
+
+    </div>
 
 
-        <div class="stat-card">
+    <div class="stat-card">
 
-            <div class="stat-icon">
+        <div class="stat-icon">
+            🔴
+        </div>
+
+        <strong id="liveCount">
+            0
+        </strong>
+
+        <span>
+            Live Matches
+        </span>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-icon">
+            🏆
+        </div>
+
+        <strong id="completedCount">
+            0
+        </strong>
+
+        <span>
+            Completed
+        </span>
+
+    </div>
+
+
+</section>
+
+
+<!-- ========================================
+     TOURNAMENT MANAGEMENT
+======================================== -->
+
+<section class="dashboard-section">
+
+
+    <h2 class="dashboard-section-title">
+
+        Tournament Management
+
+    </h2>
+
+
+    <div class="dashboard-grid">
+
+
+        <!-- TEAMS -->
+
+        <a
+            id="teamsLink"
+            href="#"
+            class="dashboard-card"
+        >
+
+            <div class="icon">
                 👥
             </div>
 
-            <strong id="teamCount">
-                0
+            <strong>
+                Teams
             </strong>
 
-            <span>
+            <small>
                 Registered Teams
-            </span>
+            </small>
 
-        </div>
+        </a>
 
 
-        <div class="stat-card">
+        <!-- REGISTRATION -->
 
-            <div class="stat-icon">
-                📅
-            </div>
+        <a
+            id="registrationLink"
+            href="#"
+            class="dashboard-card"
+        >
 
-            <strong id="matchCount">
-                0
-            </strong>
-
-            <span>
-                Matches
-            </span>
-
-        </div>
-
-
-        <div class="stat-card">
-
-            <div class="stat-icon">
-                🔴
-            </div>
-
-            <strong id="liveCount">
-                0
-            </strong>
-
-            <span>
-                Live Matches
-            </span>
-
-        </div>
-
-
-        <div class="stat-card">
-
-            <div class="stat-icon">
-                🏆
-            </div>
-
-            <strong id="completedCount">
-                0
-            </strong>
-
-            <span>
-                Completed
-            </span>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- ====================================
-         TOURNAMENT MANAGEMENT
-    ==================================== -->
-
-    <section class="dashboard-section">
-
-        <h2 class="dashboard-section-title">
-            Tournament Management
-        </h2>
-
-
-        <div class="dashboard-grid">
-
-
-            <!-- TEAMS -->
-
-            <a
-                id="teamsLink"
-                href="#"
-                class="dashboard-card"
-            >
-
-                <div class="icon">
-                    👥
-                </div>
-
-                <strong>
-                    Teams
-                </strong>
-
-                <small>
-                    Registered Teams
-                </small>
-
-            </a>
-
-
-            <!-- TEAM REGISTRATION -->
-
-            <a
-                id="registrationLink"
-                href="#"
-                class="dashboard-card"
-            >
-
-                <div class="icon">
-                    🏏
-                </div>
-
-                <strong>
-                    Register Team
-                </strong>
-
-                <small>
-                    Add New Team
-                </small>
-
-            </a>
-
-
-            <!-- SCHEDULE -->
-
-            <a
-                id="scheduleLink"
-                href="#"
-                class="dashboard-card"
-            >
-
-                <div class="icon">
-                    📅
-                </div>
-
-                <strong>
-                    Schedule
-                </strong>
-
-                <small>
-                    Manage Matches
-                </small>
-
-            </a>
-
-
-            <!-- LIVE SCORE -->
-
-            <a
-                id="liveLink"
-                href="#"
-                class="dashboard-card"
-            >
-
-                <div class="icon">
-                    🔴
-                </div>
-
-                <strong>
-                    Live Score
-                </strong>
-
-                <small>
-                    Live Scoring
-                </small>
-
-            </a>
-
-
-            <!-- RESULTS -->
-
-            <a
-                id="resultsLink"
-                href="#"
-                class="dashboard-card"
-            >
-
-                <div class="icon">
-                    🏆
-                </div>
-
-                <strong>
-                    Results
-                </strong>
-
-                <small>
-                    Match Results
-                </small>
-
-            </a>
-
-
-            <!-- POINTS -->
-
-            <a
-                id="pointsLink"
-                href="#"
-                class="dashboard-card"
-            >
-
-                <div class="icon">
-                    📊
-                </div>
-
-                <strong>
-                    Points Table
-                </strong>
-
-                <small>
-                    Points & NRR
-                </small>
-
-            </a>
-
-
-            <!-- PLAYER STATS -->
-
-            <a
-                id="statsLink"
-                href="#"
-                class="dashboard-card"
-            >
-
-                <div class="icon">
-                    📈
-                </div>
-
-                <strong>
-                    Player Stats
-                </strong>
-
-                <small>
-                    Runs & Wickets
-                </small>
-
-            </a>
-
-
-            <!-- ADMIN -->
-
-            <a
-                id="adminLink"
-                href="#"
-                class="dashboard-card"
-            >
-
-                <div class="icon">
-                    ⚙️
-                </div>
-
-                <strong>
-                    Admin Panel
-                </strong>
-
-                <small>
-                    Manage Tournament
-                </small>
-
-            </a>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- ====================================
-         EXTRA FEATURES
-    ==================================== -->
-
-    <section class="dashboard-section">
-
-        <h2 class="dashboard-section-title">
-            Player Records
-        </h2>
-
-
-        <div class="dashboard-grid">
-
-
-            <a
-                id="orangeLink"
-                href="#"
-                class="dashboard-card"
-            >
-
-                <div class="icon">
-                    🟠
-                </div>
-
-                <strong>
-                    Orange Cap
-                </strong>
-
-                <small>
-                    Top Run Scorer
-                </small>
-
-            </a>
-
-
-            <a
-                id="purpleLink"
-                href="#"
-                class="dashboard-card"
-            >
-
-                <div class="icon">
-                    🟣
-                </div>
-
-                <strong>
-                    Purple Cap
-                </strong>
-
-                <small>
-                    Top Wicket Taker
-                </small>
-
-            </a>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- ====================================
-         TEAM REGISTRATION
-    ==================================== -->
-
-    <section class="dashboard-section">
-
-        <h2 class="dashboard-section-title">
-            Team Registration
-        </h2>
-
-
-        <div class="registration-card-dashboard">
-
-            <div class="registration-icon">
+            <div class="icon">
                 🏏
             </div>
 
+            <strong>
+                Register Team
+            </strong>
 
-            <div>
+            <small>
+                Add New Team
+            </small>
 
-                <strong>
-                    Register a New Team
-                </strong>
+        </a>
 
-                <p>
-                    Add a team to the selected tournament.
-                </p>
 
+        <!-- SCHEDULE -->
+
+        <a
+            id="scheduleLink"
+            href="#"
+            class="dashboard-card"
+        >
+
+            <div class="icon">
+                📅
             </div>
 
+            <strong>
+                Schedule
+            </strong>
 
-            <a
-                id="registerButton"
-                href="#"
-                class="open-button"
-            >
-                Register
-            </a>
+            <small>
+                Manage Matches
+            </small>
+
+        </a>
+
+
+        <!-- LIVE -->
+
+        <a
+            id="liveLink"
+            href="#"
+            class="dashboard-card"
+        >
+
+            <div class="icon">
+                🔴
+            </div>
+
+            <strong>
+                Live Score
+            </strong>
+
+            <small>
+                Live Scoring
+            </small>
+
+        </a>
+
+
+        <!-- RESULTS -->
+
+        <a
+            id="resultsLink"
+            href="#"
+            class="dashboard-card"
+        >
+
+            <div class="icon">
+                🏆
+            </div>
+
+            <strong>
+                Results
+            </strong>
+
+            <small>
+                Match Results
+            </small>
+
+        </a>
+
+
+        <!-- POINTS -->
+
+        <a
+            id="pointsLink"
+            href="#"
+            class="dashboard-card"
+        >
+
+            <div class="icon">
+                📊
+            </div>
+
+            <strong>
+                Points Table
+            </strong>
+
+            <small>
+                Points & NRR
+            </small>
+
+        </a>
+
+
+        <!-- PLAYER STATS -->
+
+        <a
+            id="statsLink"
+            href="#"
+            class="dashboard-card"
+        >
+
+            <div class="icon">
+                📈
+            </div>
+
+            <strong>
+                Player Stats
+            </strong>
+
+            <small>
+                Runs & Wickets
+            </small>
+
+        </a>
+
+
+        <!-- ADMIN -->
+
+        <a
+            id="adminLink"
+            href="#"
+            class="dashboard-card"
+        >
+
+            <div class="icon">
+                ⚙️
+            </div>
+
+            <strong>
+                Admin Panel
+            </strong>
+
+            <small>
+                Manage Tournament
+            </small>
+
+        </a>
+
+
+    </div>
+
+</section>
+
+
+<!-- ========================================
+     PLAYER RECORDS
+======================================== -->
+
+<section class="dashboard-section">
+
+
+    <h2 class="dashboard-section-title">
+
+        Player Records
+
+    </h2>
+
+
+    <div class="dashboard-grid">
+
+
+        <!-- ORANGE -->
+
+        <a
+            id="orangeLink"
+            href="#"
+            class="dashboard-card"
+        >
+
+            <div class="icon">
+                🟠
+            </div>
+
+            <strong>
+                Orange Cap
+            </strong>
+
+            <small>
+                Top Run Scorer
+            </small>
+
+        </a>
+
+
+        <!-- PURPLE -->
+
+        <a
+            id="purpleLink"
+            href="#"
+            class="dashboard-card"
+        >
+
+            <div class="icon">
+                🟣
+            </div>
+
+            <strong>
+                Purple Cap
+            </strong>
+
+            <small>
+                Top Wicket Taker
+            </small>
+
+        </a>
+
+
+    </div>
+
+</section>
+
+
+<!-- ========================================
+     REGISTER TEAM
+======================================== -->
+
+<section class="dashboard-section">
+
+
+    <h2 class="dashboard-section-title">
+
+        Team Registration
+
+    </h2>
+
+
+    <div class="registration-card-dashboard">
+
+
+        <div class="registration-icon">
+            🏏
+        </div>
+
+
+        <div>
+
+            <strong>
+                Register a New Team
+            </strong>
+
+            <p>
+                Add a team to the selected tournament.
+            </p>
 
         </div>
 
-    </section>
+
+        <a
+            id="registerButton"
+            href="#"
+            class="open-button"
+        >
+
+            Register
+
+        </a>
+
+
+    </div>
+
+
+</section>
 
 
 </main>
 
 
-
 <!-- ========================================
-     BOTTOM NAVIGATION
+     BOTTOM NAV
 ======================================== -->
 
 <nav class="dashboard-bottom-nav">
 
 
-    <a
-        href="index.html"
-    >
+    <a href="index.html">
 
-        <span>🏠</span>
+        <span>
+            🏠
+        </span>
 
         <small>
             Home
@@ -1001,7 +1210,9 @@
         class="active"
     >
 
-        <span>🏆</span>
+        <span>
+            🏆
+        </span>
 
         <small>
             Tournaments
@@ -1015,7 +1226,9 @@
         href="#"
     >
 
-        <span>📅</span>
+        <span>
+            📅
+        </span>
 
         <small>
             Matches
@@ -1029,7 +1242,9 @@
         href="#"
     >
 
-        <span>📊</span>
+        <span>
+            📊
+        </span>
 
         <small>
             Stats
@@ -1038,11 +1253,11 @@
     </a>
 
 
-    <a
-        href="profile.html"
-    >
+    <a href="profile.html">
 
-        <span>👤</span>
+        <span>
+            👤
+        </span>
 
         <small>
             Profile
@@ -1050,17 +1265,17 @@
 
     </a>
 
+
 </nav>
 
 
-
 <!-- ========================================
-     DASHBOARD JS
+     ONLY ONE DASHBOARD JS
 ======================================== -->
 
 <script
     type="module"
-    src="./js/dashboard.js"
+    src="./js/dashboard.js?v=33"
 ></script>
 
 

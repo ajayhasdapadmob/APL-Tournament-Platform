@@ -10,96 +10,356 @@
     content="width=device-width, initial-scale=1.0"
 >
 
-<title>Match Results</title>
+<title>Match Results - APL Tournament Platform</title>
 
 <link
     rel="stylesheet"
-    href="css/style.css"
+    href="./css/style.css"
 >
 
 <style>
 
+/* =================================
+   RESULTS CONTAINER
+================================= */
+
 .results-container {
+
+    width: 100%;
+
     max-width: 1000px;
+
     margin: auto;
+
+    padding: 20px;
+
 }
+
+
+/* =================================
+   TOURNAMENT SELECTOR
+================================= */
+
+.tournament-selector {
+
+    background: white;
+
+    padding: 18px;
+
+    border-radius: 16px;
+
+    margin-bottom: 20px;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0,0,0,0.10);
+
+}
+
+
+.tournament-selector label {
+
+    display: block;
+
+    color: #1e3a8a;
+
+    font-weight: bold;
+
+    margin-bottom: 8px;
+
+}
+
+
+#tournamentSelect {
+
+    width: 100%;
+
+    padding: 13px;
+
+    border: 1px solid #cbd5e1;
+
+    border-radius: 10px;
+
+    background: white;
+
+    font-size: 15px;
+
+    color: #0f172a;
+
+    outline: none;
+
+}
+
+
+#tournamentSelect:focus {
+
+    border-color: #2563eb;
+
+}
+
+
+/* =================================
+   TOURNAMENT HEADER
+================================= */
 
 .result-header {
+
     background: white;
+
     padding: 22px;
+
     border-radius: 15px;
+
     margin-bottom: 20px;
-    box-shadow: 0 5px 18px rgba(0,0,0,0.08);
+
+    box-shadow:
+        0 5px 18px
+        rgba(0,0,0,0.08);
+
 }
+
+
+.result-header h2 {
+
+    color: #1e3a8a;
+
+    margin-bottom: 12px;
+
+}
+
+
+/* =================================
+   RESULTS TITLE
+================================= */
+
+.results-title {
+
+    color: white;
+
+    margin-bottom: 15px;
+
+    text-shadow:
+        0 2px 6px
+        rgba(0,0,0,0.7);
+
+}
+
+
+/* =================================
+   RESULT CARD
+================================= */
 
 .result-card {
+
     background: white;
+
     padding: 20px;
+
     border-radius: 15px;
+
     margin-bottom: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+
+    box-shadow:
+        0 4px 15px
+        rgba(0,0,0,0.08);
+
 }
+
 
 .match-title {
+
     font-weight: bold;
+
     color: #1d4ed8;
+
     margin-bottom: 12px;
+
 }
+
 
 .teams {
+
     font-size: 19px;
+
     font-weight: bold;
+
     margin: 12px 0;
+
+    text-align: center;
+
 }
+
 
 .info {
+
     margin: 7px 0;
+
     color: #4b5563;
+
 }
 
+
+/* =================================
+   RESULT FORM
+================================= */
+
 .result-form {
+
     margin-top: 18px;
+
     padding-top: 15px;
-    border-top: 1px solid #ddd;
+
+    border-top:
+        1px solid #ddd;
+
 }
+
+
+.result-form label {
+
+    display: block;
+
+    font-weight: bold;
+
+    margin-bottom: 5px;
+
+}
+
 
 .result-form select,
 .result-form input {
+
     width: 100%;
+
     box-sizing: border-box;
+
     padding: 11px;
+
     margin: 6px 0;
-    border: 1px solid #ccc;
+
+    border:
+        1px solid #ccc;
+
     border-radius: 8px;
+
+    font-size: 14px;
+
 }
+
+
+/* =================================
+   BUTTONS
+================================= */
 
 .save-result {
+
     margin-top: 10px;
+
 }
+
 
 .delete-result {
+
     background: #991b1b;
+
     color: white;
+
     border: none;
+
     padding: 9px 13px;
+
     border-radius: 7px;
+
     cursor: pointer;
+
     margin-top: 10px;
+
 }
+
+
+/* =================================
+   EMPTY
+================================= */
 
 .empty {
+
     background: white;
+
     padding: 30px;
+
     text-align: center;
+
     border-radius: 15px;
+
+    color: #475569;
+
+    box-shadow:
+        0 4px 15px
+        rgba(0,0,0,0.08);
+
 }
 
+
+/* =================================
+   SUCCESS
+================================= */
+
 .result-success {
+
     background: #dcfce7;
+
+    color: #166534;
+
     padding: 10px;
+
     border-radius: 8px;
+
     margin-top: 10px;
+
     font-weight: bold;
+
+}
+
+
+/* =================================
+   BACK BUTTON
+================================= */
+
+.back-area {
+
+    text-align: center;
+
+    margin-top: 25px;
+
+    margin-bottom: 20px;
+
+}
+
+
+/* =================================
+   MOBILE
+================================= */
+
+@media (max-width: 600px) {
+
+    .results-container {
+
+        padding: 15px;
+
+    }
+
+    .result-card {
+
+        padding: 17px;
+
+    }
+
+    .teams {
+
+        font-size: 17px;
+
+    }
+
 }
 
 </style>
@@ -109,6 +369,10 @@
 
 <body>
 
+
+<!-- =================================
+     HEADER
+================================= -->
 
 <header class="top-header">
 
@@ -131,53 +395,102 @@
 </header>
 
 
+<!-- =================================
+     MAIN
+================================= -->
 
 <main class="home-container">
-
 
 <div class="results-container">
 
 
-<div
-    id="tournamentInfo"
-    class="result-header"
->
+    <!-- =================================
+         TOURNAMENT SELECTOR
+    ================================== -->
 
-    ⏳ Loading Tournament...
+    <div class="tournament-selector">
 
-</div>
+        <label for="tournamentSelect">
 
+            🏆 Select Tournament
 
-
-<h2>
-    🏆 Match Results
-</h2>
+        </label>
 
 
-<div id="resultsList">
+        <select id="tournamentSelect">
 
-    <div class="empty">
-        ⏳ Loading Matches...
+            <option value="">
+
+                ⏳ Loading Tournaments...
+
+            </option>
+
+        </select>
+
     </div>
 
-</div>
 
 
+    <!-- =================================
+         TOURNAMENT INFORMATION
+    ================================== -->
 
-<br>
-
-
-<div style="text-align:center;">
-
-    <a
-        id="backTournament"
-        href="my-tournaments.html"
-        class="btn"
+    <div
+        id="tournamentInfo"
+        class="result-header"
     >
-        ⬅ Back
-    </a>
 
-</div>
+        ⏳ Loading Tournament...
+
+    </div>
+
+
+
+    <!-- =================================
+         RESULTS TITLE
+    ================================== -->
+
+    <h2 class="results-title">
+
+        🏆 Match Results
+
+    </h2>
+
+
+
+    <!-- =================================
+         RESULTS LIST
+    ================================== -->
+
+    <div id="resultsList">
+
+        <div class="empty">
+
+            ⏳ Loading Matches...
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =================================
+         BACK BUTTON
+    ================================== -->
+
+    <div class="back-area">
+
+        <a
+            id="backTournament"
+            href="my-tournaments.html"
+            class="btn"
+        >
+
+            ⬅ Back
+
+        </a>
+
+    </div>
 
 
 </div>
@@ -186,19 +499,29 @@
 
 
 
+<!-- =================================
+     FOOTER
+================================= -->
+
 <footer>
 
-<p>
-🏏 APL Tournament Platform
-</p>
+    <p>
+
+        🏏 APL Tournament Platform
+
+    </p>
 
 </footer>
 
 
 
+<!-- =================================
+     RESULTS JAVASCRIPT
+================================= -->
+
 <script
     type="module"
-    src="js/results.js"
+    src="./js/results.js?v=20"
 ></script>
 
 
