@@ -5,123 +5,22 @@
 
 <meta charset="UTF-8">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
 <title>APL Tournament Platform</title>
 
-<link
-    rel="manifest"
-    href="./manifest.json"
->
+<link rel="manifest" href="./manifest.json">
 
-<link
-    rel="icon"
-    type="image/png"
-    href="./images/icon-192.png"
->
+<link rel="icon"
+      type="image/png"
+      href="./images/icon-192.png">
 
-<meta
-    name="theme-color"
-    content="#0f172a"
->
+<meta name="theme-color"
+      content="#0f172a">
 
-<link
-    rel="stylesheet"
-    href="./css/style.css"
->
-
-
-<style>
-
-.registered-section {
-    margin-top: 25px;
-}
-
-.registered-header {
-    background: white;
-    padding: 18px;
-    border-radius: 15px;
-    margin-bottom: 15px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-}
-
-.registered-header h2 {
-    margin: 0 0 8px 0;
-}
-
-.registered-header p {
-    margin: 0;
-    color: #64748b;
-}
-
-.tournament-box {
-    background: #eff6ff;
-    padding: 15px;
-    border-radius: 12px;
-    margin-top: 12px;
-}
-
-.tournament-box p {
-    margin: 5px 0;
-}
-
-.team-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.team-card-home {
-    background: white;
-    padding: 18px;
-    border-radius: 14px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.07);
-}
-
-.team-card-home h3 {
-    margin-top: 0;
-    margin-bottom: 10px;
-}
-
-.team-card-home p {
-    margin: 6px 0;
-}
-
-.status-badge {
-    display: inline-block;
-    margin-top: 8px;
-    padding: 6px 10px;
-    border-radius: 7px;
-    background: #f3f4f6;
-    font-weight: bold;
-}
-
-.empty-teams {
-    background: white;
-    padding: 25px;
-    border-radius: 14px;
-    text-align: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-}
-
-.loading-teams {
-    background: white;
-    padding: 25px;
-    border-radius: 14px;
-    text-align: center;
-}
-
-.error-teams {
-    background: #fee2e2;
-    color: #991b1b;
-    padding: 20px;
-    border-radius: 14px;
-}
-
-</style>
+<link rel="stylesheet"
+      href="./css/style.css">
 
 </head>
 
@@ -129,31 +28,39 @@
 <body>
 
 
-<!-- =========================
+<!-- ==============================
      HEADER
-========================= -->
+============================== -->
 
 <header class="app-header">
 
     <div class="app-logo">
-        🏏
+
+        <img
+            src="./images/icon-192.png"
+            alt="APL Tournament Platform"
+        >
+
     </div>
+
 
     <div class="app-title">
 
         <h1>
-            APL
+            APL Tournament Platform
         </h1>
 
         <span>
-            Tournament Platform
+            Organizer Dashboard
         </span>
 
     </div>
 
+
     <button
         class="profile-button"
         onclick="location.href='profile.html'"
+        aria-label="Profile"
     >
         👤
     </button>
@@ -162,22 +69,18 @@
 
 
 
-<!-- =========================
+<!-- ==============================
      MAIN
-========================= -->
+============================== -->
 
 <main class="app-container">
 
 
-<!-- =========================
-     WELCOME
-========================= -->
+    <!-- WELCOME -->
 
-<section class="welcome-card">
+    <section class="welcome-card">
 
-    <div>
-
-        <p class="small-text">
+        <p class="welcome-small">
             Welcome Organizer
         </p>
 
@@ -191,390 +94,424 @@
             and points table in one place.
         </p>
 
-    </div>
-
-</section>
+    </section>
 
 
 
-<!-- =========================
-     QUICK ACTIONS
-========================= -->
+    <!-- QUICK ACTIONS -->
 
-<section class="section">
+    <section class="section">
 
-    <h2 class="section-title">
-        Quick Actions
-    </h2>
-
-
-    <div class="quick-grid">
-
-
-        <a
-            href="create-tournament.html"
-            class="quick-card"
-        >
-
-            <span>🏆</span>
-
-            <strong>
-                Create
-            </strong>
-
-            <small>
-                Tournament
-            </small>
-
-        </a>
-
-
-        <a
-            href="my-tournaments.html"
-            class="quick-card"
-        >
-
-            <span>📂</span>
-
-            <strong>
-                My
-            </strong>
-
-            <small>
-                Tournaments
-            </small>
-
-        </a>
-
-
-        <a
-            href="my-tournaments.html"
-            class="quick-card"
-        >
-
-            <span>👥</span>
-
-            <strong>
-                Teams
-            </strong>
-
-            <small>
-                Registration
-            </small>
-
-        </a>
-
-
-        <a
-            href="my-tournaments.html"
-            class="quick-card"
-        >
-
-            <span>🔴</span>
-
-            <strong>
-                Live
-            </strong>
-
-            <small>
-                Score
-            </small>
-
-        </a>
-
-
-    </div>
-
-</section>
-
-
-
-<!-- =========================
-     REGISTERED TEAMS
-========================= -->
-
-<section class="registered-section">
-
-    <div class="registered-header">
-
-        <h2>
-            👥 Registered Teams
+        <h2 class="section-title">
+            Quick Actions
         </h2>
 
-        <p>
-            Teams registered in the selected tournament
-        </p>
 
+        <div class="quick-grid">
+
+
+            <a
+                href="create-tournament.html"
+                class="quick-card"
+            >
+
+                <span>🏆</span>
+
+                <strong>
+                    Create
+                </strong>
+
+                <small>
+                    Tournament
+                </small>
+
+            </a>
+
+
+
+            <a
+                href="my-tournaments.html"
+                class="quick-card"
+            >
+
+                <span>📂</span>
+
+                <strong>
+                    My
+                </strong>
+
+                <small>
+                    Tournaments
+                </small>
+
+            </a>
+
+
+
+            <a
+                href="my-tournaments.html"
+                class="quick-card"
+            >
+
+                <span>👥</span>
+
+                <strong>
+                    Teams
+                </strong>
+
+                <small>
+                    Registration
+                </small>
+
+            </a>
+
+
+
+            <a
+                href="my-tournaments.html"
+                class="quick-card"
+            >
+
+                <span>🔴</span>
+
+                <strong>
+                    Live
+                </strong>
+
+                <small>
+                    Score
+                </small>
+
+            </a>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ==============================
+         SELECTED TOURNAMENT
+    ============================== -->
+
+    <section class="registered-section">
+
+        <div class="registered-header">
+
+            <h2>
+                👥 Registered Teams
+            </h2>
+
+            <p>
+                Teams registered in the selected tournament
+            </p>
+
+
+            <div class="tournament-box">
+
+
+                <p>
+
+                    🏆
+
+                    <b>
+                        Tournament:
+                    </b>
+
+                    <span id="homeTournamentName">
+                        Select Tournament
+                    </span>
+
+                </p>
+
+
+
+                <p>
+
+                    🆔
+
+                    <b>
+                        ID:
+                    </b>
+
+                    <span id="homeTournamentId">
+                        -
+                    </span>
+
+                </p>
+
+
+
+                <p>
+
+                    👥
+
+                    <b>
+                        Total Teams:
+                    </b>
+
+                    <span id="homeTotalTeams">
+                        0
+                    </span>
+
+                </p>
+
+
+            </div>
+
+        </div>
+
+
+        <!-- TEAM LIST -->
 
         <div
-            id="selectedTournamentBox"
-            class="tournament-box"
+            id="homeTeamList"
+            class="team-list"
         >
 
-            <p>
-                🏆
-                <b>Tournament:</b>
-                <span id="homeTournamentName">
-                    Loading...
+            <div class="loading-teams">
+
+                ⏳ Loading registered teams...
+
+            </div>
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- ==============================
+         TOURNAMENT FEATURES
+    ============================== -->
+
+    <section class="section">
+
+        <h2 class="section-title">
+            Tournament Features
+        </h2>
+
+
+        <div class="feature-list">
+
+
+            <a
+                href="schedule.html"
+                class="feature-item"
+            >
+
+                <div class="feature-icon">
+                    📅
+                </div>
+
+                <div>
+
+                    <strong>
+                        Match Schedule
+                    </strong>
+
+                    <p>
+                        View upcoming matches
+                    </p>
+
+                </div>
+
+                <span>
+                    ›
                 </span>
-            </p>
+
+            </a>
+
+
+
+            <a
+                href="results.html"
+                class="feature-item"
+            >
+
+                <div class="feature-icon">
+                    🏆
+                </div>
+
+                <div>
+
+                    <strong>
+                        Results
+                    </strong>
+
+                    <p>
+                        View completed matches
+                    </p>
+
+                </div>
+
+                <span>
+                    ›
+                </span>
+
+            </a>
+
+
+
+            <a
+                href="points.html"
+                class="feature-item"
+            >
+
+                <div class="feature-icon">
+                    📊
+                </div>
+
+                <div>
+
+                    <strong>
+                        Points Table
+                    </strong>
+
+                    <p>
+                        Points and NRR
+                    </p>
+
+                </div>
+
+                <span>
+                    ›
+                </span>
+
+            </a>
+
+
+
+            <a
+                href="player-stats.html"
+                class="feature-item"
+            >
+
+                <div class="feature-icon">
+                    📈
+                </div>
+
+                <div>
+
+                    <strong>
+                        Player Stats
+                    </strong>
+
+                    <p>
+                        Runs, wickets and records
+                    </p>
+
+                </div>
+
+                <span>
+                    ›
+                </span>
+
+            </a>
+
+
+
+            <a
+                href="orange.html"
+                class="feature-item"
+            >
+
+                <div class="feature-icon">
+                    🟠
+                </div>
+
+                <div>
+
+                    <strong>
+                        Orange Cap
+                    </strong>
+
+                    <p>
+                        Top run scorer
+                    </p>
+
+                </div>
+
+                <span>
+                    ›
+                </span>
+
+            </a>
+
+
+
+            <a
+                href="purple.html"
+                class="feature-item"
+            >
+
+                <div class="feature-icon">
+                    🟣
+                </div>
+
+                <div>
+
+                    <strong>
+                        Purple Cap
+                    </strong>
+
+                    <p>
+                        Top wicket taker
+                    </p>
+
+                </div>
+
+                <span>
+                    ›
+                </span>
+
+            </a>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ==============================
+         ORGANIZER CONTROL
+    ============================== -->
+
+    <section class="admin-card">
+
+        <div>
+
+            <h3>
+                ⚙️ Organizer Control
+            </h3>
 
             <p>
-                🆔
-                <b>ID:</b>
-                <span id="homeTournamentId">
-                    -
-                </span>
-            </p>
-
-            <p>
-                👥
-                <b>Total Teams:</b>
-                <span id="homeTotalTeams">
-                    0
-                </span>
+                Manage teams, registrations
+                and tournament settings.
             </p>
 
         </div>
 
-    </div>
-
-
-    <div
-        id="homeTeamList"
-        class="team-list"
-    >
-
-        <div class="loading-teams">
-            ⏳ Loading registered teams...
-        </div>
-
-    </div>
-
-</section>
-
-
-
-<!-- =========================
-     FEATURES
-========================= -->
-
-<section class="section">
-
-    <h2 class="section-title">
-        Tournament Features
-    </h2>
-
-
-    <div class="feature-list">
-
 
         <a
-            href="schedule.html"
-            class="feature-item"
+            href="admin.html"
+            class="admin-button"
         >
-
-            <div class="feature-icon">
-                📅
-            </div>
-
-            <div>
-
-                <strong>
-                    Match Schedule
-                </strong>
-
-                <p>
-                    View upcoming matches
-                </p>
-
-            </div>
-
-            <span>›</span>
-
+            Admin Panel
         </a>
 
-
-
-        <a
-            href="results.html"
-            class="feature-item"
-        >
-
-            <div class="feature-icon">
-                🏆
-            </div>
-
-            <div>
-
-                <strong>
-                    Results
-                </strong>
-
-                <p>
-                    View completed matches
-                </p>
-
-            </div>
-
-            <span>›</span>
-
-        </a>
-
-
-
-        <a
-            href="points.html"
-            class="feature-item"
-        >
-
-            <div class="feature-icon">
-                📊
-            </div>
-
-            <div>
-
-                <strong>
-                    Points Table
-                </strong>
-
-                <p>
-                    Points and NRR
-                </p>
-
-            </div>
-
-            <span>›</span>
-
-        </a>
-
-
-
-        <a
-            href="playerstats.html"
-            class="feature-item"
-        >
-
-            <div class="feature-icon">
-                📈
-            </div>
-
-            <div>
-
-                <strong>
-                    Player Stats
-                </strong>
-
-                <p>
-                    Runs, wickets and records
-                </p>
-
-            </div>
-
-            <span>›</span>
-
-        </a>
-
-
-
-        <a
-            href="orange.html"
-            class="feature-item"
-        >
-
-            <div class="feature-icon">
-                🟠
-            </div>
-
-            <div>
-
-                <strong>
-                    Orange Cap
-                </strong>
-
-                <p>
-                    Top run scorer
-                </p>
-
-            </div>
-
-            <span>›</span>
-
-        </a>
-
-
-
-        <a
-            href="purple.html"
-            class="feature-item"
-        >
-
-            <div class="feature-icon">
-                🟣
-            </div>
-
-            <div>
-
-                <strong>
-                    Purple Cap
-                </strong>
-
-                <p>
-                    Top wicket taker
-                </p>
-
-            </div>
-
-            <span>›</span>
-
-        </a>
-
-
-    </div>
-
-</section>
-
-
-
-<!-- =========================
-     ADMIN
-========================= -->
-
-<section class="admin-card">
-
-    <div>
-
-        <h3>
-            ⚙️ Organizer Control
-        </h3>
-
-        <p>
-            Manage teams, registrations
-            and tournament settings.
-        </p>
-
-    </div>
-
-
-    <a
-        href="admin.html"
-        class="admin-button"
-    >
-
-        Admin Panel
-
-    </a>
-
-</section>
+    </section>
 
 
 </main>
 
 
 
-<!-- =========================
+<!-- ==============================
      BOTTOM NAVIGATION
-========================= -->
+============================== -->
 
 <nav class="bottom-nav">
 
@@ -593,6 +530,7 @@
     </a>
 
 
+
     <a
         href="my-tournaments.html"
         class="nav-item"
@@ -605,6 +543,7 @@
         </small>
 
     </a>
+
 
 
     <a
@@ -621,8 +560,9 @@
     </a>
 
 
+
     <a
-        href="playerstats.html"
+        href="player-stats.html"
         class="nav-item"
     >
 
@@ -633,6 +573,7 @@
         </small>
 
     </a>
+
 
 
     <a
@@ -653,452 +594,11 @@
 
 
 
-<!-- =========================
-     INDEX FIREBASE SCRIPT
-========================= -->
-
-<script type="module">
-
-import { db, auth } from "./firebase.js";
-
-import {
-    collection,
-    getDocs,
-    doc,
-    getDoc
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
-import {
-    onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-
-
-const homeTeamList =
-    document.getElementById(
-        "homeTeamList"
-    );
-
-const homeTournamentName =
-    document.getElementById(
-        "homeTournamentName"
-    );
-
-const homeTournamentId =
-    document.getElementById(
-        "homeTournamentId"
-    );
-
-const homeTotalTeams =
-    document.getElementById(
-        "homeTotalTeams"
-    );
-
-
-/* =========================
-   FIND TOURNAMENT
-========================= */
-
-async function getTournamentId() {
-
-    const params =
-        new URLSearchParams(
-            window.location.search
-        );
-
-    const urlId =
-        params.get("id");
-
-
-    if (urlId) {
-
-        localStorage.setItem(
-            "selectedTournamentId",
-            urlId
-        );
-
-        localStorage.setItem(
-            "tournamentId",
-            urlId
-        );
-
-        return urlId;
-
-    }
-
-
-    const savedId =
-        localStorage.getItem(
-            "selectedTournamentId"
-        ) ||
-        localStorage.getItem(
-            "tournamentId"
-        );
-
-
-    return savedId || null;
-
-}
-
-
-/* =========================
-   LOAD TEAMS
-========================= */
-
-async function loadHomeTeams() {
-
-    try {
-
-        const tournamentId =
-            await getTournamentId();
-
-
-        console.log(
-            "🏆 HOME TOURNAMENT ID:",
-            tournamentId
-        );
-
-
-        if (!tournamentId) {
-
-            homeTournamentName.textContent =
-                "No Tournament Selected";
-
-            homeTournamentId.textContent =
-                "-";
-
-            homeTotalTeams.textContent =
-                "0";
-
-
-            homeTeamList.innerHTML = `
-
-                <div class="empty-teams">
-
-                    🏆 No tournament selected.
-
-                    <br><br>
-
-                    <a
-                        href="my-tournaments.html"
-                        class="btn"
-                    >
-                        Select Tournament
-                    </a>
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        /* =========================
-           LOAD TOURNAMENT
-        ========================= */
-
-        const tournamentRef =
-            doc(
-                db,
-                "tournaments",
-                tournamentId
-            );
-
-
-        const tournamentSnap =
-            await getDoc(
-                tournamentRef
-            );
-
-
-        if (
-            tournamentSnap.exists()
-        ) {
-
-            const tournament =
-                tournamentSnap.data();
-
-
-            homeTournamentName.textContent =
-                tournament.tournamentName ||
-                tournament.name ||
-                "Tournament";
-
-        } else {
-
-            homeTournamentName.textContent =
-                "Tournament Not Found";
-
-        }
-
-
-        homeTournamentId.textContent =
-            tournamentId;
-
-
-        /* =========================
-           LOAD TEAMS
-        ========================= */
-
-        const teamsRef =
-            collection(
-                db,
-                "tournaments",
-                tournamentId,
-                "teams"
-            );
-
-
-        const snapshot =
-            await getDocs(
-                teamsRef
-            );
-
-
-        console.log(
-            "👥 HOME TEAM COUNT:",
-            snapshot.size
-        );
-
-
-        homeTotalTeams.textContent =
-            snapshot.size;
-
-
-        homeTeamList.innerHTML =
-            "";
-
-
-        if (
-            snapshot.empty
-        ) {
-
-            homeTeamList.innerHTML = `
-
-                <div class="empty-teams">
-
-                    👥 No Teams Registered Yet.
-
-                    <br><br>
-
-                    <a
-                        href="team-registration.html?id=${encodeURIComponent(tournamentId)}"
-                        class="btn primary-btn"
-                    >
-                        🏏 Register Team
-                    </a>
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        /* =========================
-           DISPLAY TEAMS
-        ========================= */
-
-        snapshot.forEach(
-            teamDoc => {
-
-                const team =
-                    teamDoc.data();
-
-
-                const players =
-                    Array.isArray(
-                        team.players
-                    )
-                    ? team.players.join(", ")
-                    : (
-                        team.players ||
-                        "-"
-                    );
-
-
-                const card =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                card.className =
-                    "team-card-home";
-
-
-                card.innerHTML = `
-
-                    <h3>
-                        🏏
-                        ${team.teamName || "-"}
-                    </h3>
-
-                    <p>
-                        👤
-                        <b>Captain:</b>
-                        ${team.captainName || "-"}
-                    </p>
-
-                    <p>
-                        📞
-                        <b>Mobile:</b>
-                        ${team.mobile || "-"}
-                    </p>
-
-                    <p>
-                        🏙️
-                        <b>City:</b>
-                        ${team.city || "-"}
-                    </p>
-
-                    <p>
-                        👥
-                        <b>Players:</b>
-                        ${players}
-                    </p>
-
-                    <p>
-                        💰
-                        <b>Payment:</b>
-                        ${team.paymentStatus || "Unpaid"}
-                    </p>
-
-                    <span class="status-badge">
-
-                        📌
-                        ${team.status || "Pending"}
-
-                    </span>
-
-                `;
-
-
-                homeTeamList.appendChild(
-                    card
-                );
-
-            }
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "❌ HOME TEAM ERROR:",
-            error
-        );
-
-
-        homeTeamList.innerHTML = `
-
-            <div class="error-teams">
-
-                ❌ Failed to load teams.
-
-                <br><br>
-
-                ${error.message}
-
-            </div>
-
-        `;
-
-    }
-
-}
-
-
-/* =========================
-   AUTH
-========================= */
-
-onAuthStateChanged(
-    auth,
-    user => {
-
-        if (!user) {
-
-            homeTeamList.innerHTML = `
-
-                <div class="empty-teams">
-
-                    🔐 Please login to view
-                    registered teams.
-
-                    <br><br>
-
-                    <a
-                        href="login.html"
-                        class="btn primary-btn"
-                    >
-                        Login
-                    </a>
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        loadHomeTeams();
-
-    }
-);
-
-</script>
-
-
-
-<!-- =========================
-     SERVICE WORKER
-========================= -->
-
-<script>
-
-if (
-    "serviceWorker"
-    in navigator
-) {
-
-    window.addEventListener(
-        "load",
-        () => {
-
-            navigator.serviceWorker
-                .register(
-                    "./service-worker.js"
-                )
-                .then(() => {
-
-                    console.log(
-                        "✅ APL App Ready"
-                    );
-
-                })
-                .catch(
-                    error => {
-
-                        console.error(
-                            "Service Worker Error:",
-                            error
-                        );
-
-                    }
-                );
-
-        }
-    );
-
-}
-
-</script>
+<!-- ==============================
+     FIREBASE SCRIPT
+============================== -->
+
+<script type="module" src="./js/index.js"></script>
 
 
 </body>

@@ -5,127 +5,472 @@
 
 <meta charset="UTF-8">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
 <title>My Tournaments - APL Tournament Platform</title>
 
-<link
-    rel="stylesheet"
-    href="css/style.css"
->
+<link rel="manifest"
+      href="./manifest.json">
+
+<link rel="icon"
+      type="image/png"
+      href="./images/icon-192.png">
+
+<meta name="theme-color"
+      content="#0f172a">
+
+<link rel="stylesheet"
+      href="./css/style.css">
+
 
 <style>
 
-.tournament-grid {
+/* ========================================
+   MY TOURNAMENTS
+======================================== */
 
-    display: grid;
+.tournaments-container {
 
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(280px, 1fr)
-        );
+    width: 100%;
 
-    gap: 20px;
+    max-width: 700px;
 
+    margin: auto;
+
+    padding: 20px 14px 95px;
 }
 
+
+/* ========================================
+   PAGE HEADER
+======================================== */
+
+.page-header {
+
+    background:
+        linear-gradient(
+            135deg,
+            #1d4ed8,
+            #2563eb,
+            #1e40af
+        );
+
+    color: white;
+
+    padding: 22px;
+
+    border-radius: 20px;
+
+    margin-bottom: 20px;
+
+    box-shadow:
+        0 7px 22px
+        rgba(0,0,0,0.25);
+}
+
+.page-header h2 {
+
+    margin: 0 0 7px;
+
+    font-size: 24px;
+}
+
+.page-header p {
+
+    margin: 0;
+
+    color: #dbeafe;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+}
+
+
+/* ========================================
+   CREATE BUTTON
+======================================== */
+
+.create-area {
+
+    margin-bottom: 20px;
+}
+
+.create-button {
+
+    display: block;
+
+    width: 100%;
+
+    padding: 14px;
+
+    text-align: center;
+
+    background: #16a34a;
+
+    color: white;
+
+    border-radius: 13px;
+
+    font-weight: 700;
+
+    box-shadow:
+        0 5px 15px
+        rgba(0,0,0,0.18);
+}
+
+
+/* ========================================
+   TOURNAMENT LIST
+======================================== */
+
+.tournament-list {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 15px;
+}
+
+
+/* ========================================
+   TOURNAMENT CARD
+======================================== */
 
 .tournament-card {
 
     background: white;
 
-    padding: 22px;
-
-    border-radius: 16px;
-
-    box-shadow:
-        0 5px 20px
-        rgba(0,0,0,0.08);
-
-}
-
-
-.tournament-card h2 {
-
-    margin-top: 0;
-
     color: #0f172a;
 
+    padding: 18px;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 5px 18px
+        rgba(0,0,0,0.18);
 }
 
+.tournament-card h3 {
 
-.tournament-card p {
+    margin: 0 0 10px;
 
-    margin: 9px 0;
+    color: #1d4ed8;
+
+    font-size: 19px;
+}
+
+.tournament-info {
+
+    background: #eff6ff;
+
+    padding: 12px;
+
+    border-radius: 12px;
+
+    margin-bottom: 13px;
+}
+
+.tournament-info p {
+
+    margin: 6px 0;
 
     color: #475569;
 
+    font-size: 13px;
+
+    line-height: 1.4;
+}
+
+.tournament-info b {
+
+    color: #1e293b;
 }
 
 
-.card-buttons {
+/* ========================================
+   TEAM COUNT
+======================================== */
 
-    display: flex;
+.team-count {
 
-    flex-wrap: wrap;
+    display: inline-block;
 
-    gap: 10px;
+    padding: 7px 10px;
 
-    margin-top: 20px;
-
-}
-
-
-.card-buttons .btn {
-
-    text-decoration: none;
-
-}
-
-
-.empty-message {
-
-    background: white;
-
-    padding: 35px 20px;
-
-    border-radius: 16px;
-
-    text-align: center;
-
-    box-shadow:
-        0 5px 20px
-        rgba(0,0,0,0.06);
-
-}
-
-
-.loading {
-
-    font-size: 18px;
-
-}
-
-
-.error {
-
-    color: #991b1b;
-
-    background: #fee2e2;
-
-}
-
-
-.success {
-
-    color: #166534;
+    margin-bottom: 13px;
 
     background: #dcfce7;
 
+    color: #166534;
+
+    border-radius: 8px;
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+
+/* ========================================
+   ACTIONS
+======================================== */
+
+.tournament-actions {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 9px;
+}
+
+.tournament-actions a {
+
+    padding: 11px 7px;
+
+    text-align: center;
+
+    border-radius: 10px;
+
+    color: white;
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+
+/* BUTTON COLORS */
+
+.register-btn {
+
+    background: #16a34a;
+}
+
+.live-btn {
+
+    background: #dc2626;
+}
+
+.schedule-btn {
+
+    background: #0891b2;
+}
+
+.points-btn {
+
+    background: #7c3aed;
+}
+
+.select-btn {
+
+    background: #2563eb;
+}
+
+.admin-btn {
+
+    background: #475569;
+}
+
+
+/* ========================================
+   SELECTED
+======================================== */
+
+.selected-tournament {
+
+    border:
+        2px solid
+        #2563eb;
+}
+
+.selected-label {
+
+    display: inline-block;
+
+    margin-bottom: 10px;
+
+    padding: 5px 9px;
+
+    border-radius: 7px;
+
+    background: #dbeafe;
+
+    color: #1d4ed8;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+/* ========================================
+   LOADING
+======================================== */
+
+.loading {
+
+    padding: 30px;
+
+    text-align: center;
+
+    background: white;
+
+    color: #475569;
+
+    border-radius: 16px;
+}
+
+
+/* ========================================
+   EMPTY
+======================================== */
+
+.empty {
+
+    padding: 30px 20px;
+
+    text-align: center;
+
+    background: white;
+
+    color: #475569;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 5px 18px
+        rgba(0,0,0,0.15);
+}
+
+
+/* ========================================
+   ERROR
+======================================== */
+
+.error {
+
+    padding: 20px;
+
+    background: #fee2e2;
+
+    color: #991b1b;
+
+    border-radius: 15px;
+
+    line-height: 1.5;
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 430px) {
+
+    .tournaments-container {
+
+        padding:
+            18px 12px 95px;
+    }
+
+    .page-header {
+
+        padding: 19px;
+    }
+
+    .page-header h2 {
+
+        font-size: 21px;
+    }
+
+    .tournament-card {
+
+        padding: 16px;
+    }
+
+    .tournament-actions a {
+
+        font-size: 11px;
+
+        padding: 10px 5px;
+    }
+
+}
+
+
+/* ========================================
+   BOTTOM NAV
+======================================== */
+
+.bottom-nav {
+
+    position: fixed;
+
+    left: 0;
+
+    right: 0;
+
+    bottom: 0;
+
+    z-index: 2000;
+
+    height: 68px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-around;
+
+    background: white;
+
+    border-top:
+        1px solid
+        #e2e8f0;
+
+    box-shadow:
+        0 -4px 15px
+        rgba(0,0,0,0.15);
+}
+
+.nav-item {
+
+    width: 20%;
+
+    text-align: center;
+
+    color: #64748b;
+
+    font-size: 11px;
+
+    text-decoration: none;
+}
+
+.nav-item span {
+
+    display: block;
+
+    font-size: 20px;
+
+    line-height: 25px;
+}
+
+.nav-item small {
+
+    font-size: 10px;
+}
+
+.nav-item.active {
+
+    color: #1d4ed8;
+
+    font-weight: 700;
 }
 
 </style>
@@ -136,131 +481,214 @@
 <body>
 
 
-<!-- HEADER -->
+<!-- ========================================
+     HEADER
+======================================== -->
 
-<header class="top-header">
+<header class="app-header">
 
-    <div class="logo">
-        🏏
+    <div class="app-logo">
+
+        <img
+            src="./images/icon-192.png"
+            alt="APL Tournament Platform"
+        >
+
     </div>
 
-    <div>
+
+    <div class="app-title">
 
         <h1>
-            My Tournaments
+            APL Tournament Platform
         </h1>
 
-        <p>
-            APL Tournament Platform
-        </p>
+        <span>
+            My Tournaments
+        </span>
 
     </div>
+
+
+    <button
+        class="profile-button"
+        onclick="location.href='profile.html'"
+        aria-label="Profile"
+    >
+        👤
+    </button>
 
 </header>
 
 
 
-<!-- MAIN -->
+<!-- ========================================
+     MAIN
+======================================== -->
 
-<main class="home-container">
-
-
-<!-- BUTTONS -->
-
-<div
-    style="
-        margin-bottom:20px;
-        display:flex;
-        gap:10px;
-        flex-wrap:wrap;
-    "
->
-
-    <a
-        href="index.html"
-        class="btn"
-    >
-        ⬅ Dashboard
-    </a>
+<main class="tournaments-container">
 
 
-    <a
-        href="create-tournament.html"
-        class="btn primary-btn"
-    >
-        ➕ Create Tournament
-    </a>
+    <!-- PAGE HEADER -->
 
-</div>
+    <section class="page-header">
+
+        <h2>
+            🏆 My Tournaments
+        </h2>
+
+        <p>
+            Manage your tournaments, teams,
+            matches and live scores.
+        </p>
+
+    </section>
 
 
 
-<!-- TOURNAMENT LIST -->
+    <!-- CREATE -->
 
-<div
-    id="tournamentList"
-    class="tournament-grid"
->
+    <section class="create-area">
 
-    <div class="empty-message loading">
+        <a
+            href="create-tournament.html"
+            class="create-button"
+        >
+            ➕ Create New Tournament
+        </a>
 
-        ⏳ Loading Tournaments...
+    </section>
 
-    </div>
 
-</div>
+
+    <!-- TOURNAMENT LIST -->
+
+    <section>
+
+        <div
+            id="tournamentList"
+            class="tournament-list"
+        >
+
+            <div class="loading">
+
+                ⏳ Loading tournaments...
+
+            </div>
+
+        </div>
+
+    </section>
 
 
 </main>
 
 
 
-<footer>
+<!-- ========================================
+     BOTTOM NAVIGATION
+======================================== -->
 
-<p>
-    🏏 APL Tournament Platform
-</p>
-
-</footer>
+<nav class="bottom-nav">
 
 
+    <a
+        href="index.html"
+        class="nav-item"
+    >
 
-<!-- ==================================================
-     FIREBASE + MY TOURNAMENTS JAVASCRIPT
-================================================== -->
+        <span>🏠</span>
+
+        <small>
+            Home
+        </small>
+
+    </a>
+
+
+    <a
+        href="my-tournaments.html"
+        class="nav-item active"
+    >
+
+        <span>🏆</span>
+
+        <small>
+            Tournaments
+        </small>
+
+    </a>
+
+
+    <a
+        href="schedule.html"
+        class="nav-item"
+    >
+
+        <span>📅</span>
+
+        <small>
+            Matches
+        </small>
+
+    </a>
+
+
+    <a
+        href="player-stats.html"
+        class="nav-item"
+    >
+
+        <span>📊</span>
+
+        <small>
+            Stats
+        </small>
+
+    </a>
+
+
+    <a
+        href="profile.html"
+        class="nav-item"
+    >
+
+        <span>👤</span>
+
+        <small>
+            Profile
+        </small>
+
+    </a>
+
+
+</nav>
+
+
+
+<!-- ========================================
+     FIREBASE
+======================================== -->
 
 <script type="module">
 
-console.log("🔥 MY TOURNAMENTS PAGE STARTED");
-
-
-/* =========================
-   FIREBASE
-========================= */
+import { db, auth } from "./firebase.js";
 
 import {
-    auth,
-    db
-} from "./firebase.js";
 
-
-import {
-    onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-
-
-import {
     collection,
-    getDocs,
-    query,
-    where
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    getDocs
 
+} from
+"https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
+import {
 
-/* =========================
-   ELEMENT
-========================= */
+    onAuthStateChanged
+
+} from
+"https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
 
 const tournamentList =
     document.getElementById(
@@ -268,251 +696,21 @@ const tournamentList =
     );
 
 
-console.log(
-    "🔥 tournamentList:",
-    tournamentList
-);
-
-
-
-/* =========================
-   MESSAGE
-========================= */
-
-function showMessage(
-    html,
-    className = ""
-) {
-
-    tournamentList.innerHTML = `
-
-        <div
-            class="empty-message ${className}"
-        >
-
-            ${html}
-
-        </div>
-
-    `;
-
-}
-
-
-
-/* =========================
-   CREATE CARD
-========================= */
-
-function createTournamentCard(
-    tournamentId,
-    tournament
-) {
-
-
-    console.log(
-        "🏆 Creating card:",
-        tournamentId,
-        tournament
-    );
-
-
-    const card =
-        document.createElement(
-            "div"
-        );
-
-
-    card.className =
-        "tournament-card";
-
-
-    const name =
-        tournament.tournamentName ||
-        tournament.name ||
-        "APL Tournament";
-
-
-    const venue =
-        tournament.venue ||
-        tournament.location ||
-        "Venue not available";
-
-
-    const startDate =
-        tournament.startDate ||
-        "-";
-
-
-    const endDate =
-        tournament.endDate ||
-        "-";
-
-
-    const totalTeams =
-        tournament.totalTeams ||
-        0;
-
-
-    const entryFee =
-        tournament.entryFee ||
-        0;
-
-
-    const winnerPrize =
-        tournament.winnerPrize ||
-        0;
-
-
-    const runnerPrize =
-        tournament.runnerPrize ||
-        0;
-
-
-    card.innerHTML = `
-
-        <h2>
-            🏆 ${name}
-        </h2>
-
-
-        <p>
-            🆔
-            <b>Tournament ID:</b>
-            ${tournamentId}
-        </p>
-
-
-        <p>
-            📍
-            <b>Venue:</b>
-            ${venue}
-        </p>
-
-
-        <p>
-            📅
-            <b>Start:</b>
-            ${startDate}
-        </p>
-
-
-        <p>
-            📅
-            <b>End:</b>
-            ${endDate}
-        </p>
-
-
-        <p>
-            👥
-            <b>Total Teams:</b>
-            ${totalTeams}
-        </p>
-
-
-        <p>
-            💰
-            <b>Entry Fee:</b>
-            ₹${entryFee}
-        </p>
-
-
-        <p>
-            🥇
-            <b>Winner:</b>
-            ₹${winnerPrize}
-        </p>
-
-
-        <p>
-            🥈
-            <b>Runner-up:</b>
-            ₹${runnerPrize}
-        </p>
-
-
-        <div class="card-buttons">
-
-
-            <a
-                href="tournament.html?id=${encodeURIComponent(tournamentId)}"
-                class="btn primary-btn"
-            >
-                🏆 Open Tournament
-            </a>
-
-
-            <a
-                href="registration.html?id=${encodeURIComponent(tournamentId)}"
-                class="btn"
-            >
-                👥 Team Registration
-            </a>
-
-
-            <a
-                href="schedule.html?id=${encodeURIComponent(tournamentId)}"
-                class="btn"
-            >
-                📅 Schedule
-            </a>
-
-
-            <a
-                href="live-score.html?id=${encodeURIComponent(tournamentId)}"
-                class="btn"
-            >
-                🔴 Live Score
-            </a>
-
-
-            <a
-                href="points.html?id=${encodeURIComponent(tournamentId)}"
-                class="btn"
-            >
-                📊 Points Table
-            </a>
-
-        </div>
-
-    `;
-
-
-    tournamentList.appendChild(
-        card
-    );
-
-}
-
-
-
-/* =========================
+/* ========================================
    LOAD TOURNAMENTS
-========================= */
+======================================== */
 
-async function loadTournaments(
-    user
-) {
-
-
-    console.log(
-        "🔥 LOAD TOURNAMENTS"
-    );
-
-
-    console.log(
-        "👤 USER UID:",
-        user.uid
-    );
-
-
-    showMessage(
-        "⏳ Loading Tournaments..."
-    );
-
+async function loadTournaments(user) {
 
     try {
+
+        tournamentList.innerHTML = `
+
+            <div class="loading">
+                ⏳ Loading tournaments...
+            </div>
+
+        `;
 
 
         const tournamentsRef =
@@ -522,245 +720,402 @@ async function loadTournaments(
             );
 
 
-        console.log(
-            "🔥 Reading tournaments collection..."
-        );
-
-
-        /*
-         * IMPORTANT:
-         * Tournament create code saves
-         * ownerId = currentUser.uid
-         */
-
-        const q =
-            query(
-                tournamentsRef,
-                where(
-                    "ownerId",
-                    "==",
-                    user.uid
-                )
-            );
-
-
         const snapshot =
-            await getDocs(q);
-
-
-        console.log(
-            "🔥 FIRESTORE RESULT:",
-            snapshot.size
-        );
-
-
-        /*
-         * NO TOURNAMENT
-         */
-
-        if (
-            snapshot.empty
-        ) {
-
-
-            console.log(
-                "❌ No tournaments found"
+            await getDocs(
+                tournamentsRef
             );
 
 
-            showMessage(`
+        if (snapshot.empty) {
 
-                <h2>
-                    🏆 No Tournament Found
-                </h2>
+            tournamentList.innerHTML = `
 
-                <p>
-                    इस account से अभी कोई tournament create नहीं हुआ है।
-                </p>
+                <div class="empty">
 
-                <br>
+                    🏆 No tournaments found.
 
-                <a
-                    href="create-tournament.html"
-                    class="btn primary-btn"
-                >
-                    ➕ Create Tournament
-                </a>
+                    <br><br>
 
-            `);
+                    <a
+                        href="create-tournament.html"
+                        class="create-button"
+                    >
+                        ➕ Create Tournament
+                    </a>
 
+                </div>
+
+            `;
 
             return;
-
         }
 
 
-        /*
-         * CLEAR LOADING
-         */
+        let tournaments = [];
 
-        tournamentList.innerHTML =
-            "";
-
-
-        /*
-         * SHOW ALL
-         */
 
         snapshot.forEach(
             tournamentDoc => {
 
-
-                const tournamentId =
-                    tournamentDoc.id;
-
-
-                const tournament =
+                const data =
                     tournamentDoc.data();
 
 
-                console.log(
-                    "🏆 FOUND TOURNAMENT:",
-                    tournamentId,
-                    tournament
-                );
+                const ownerId =
+                    data.ownerId ||
+                    data.createdBy ||
+                    data.organizerId ||
+                    data.userId ||
+                    "";
 
 
                 /*
-                 * SAVE CURRENT ID
+                 * If logged in, show user's
+                 * tournaments where owner
+                 * matches.
                  */
 
-                localStorage.setItem(
-                    "tournamentId",
-                    tournamentId
-                );
+                if (
+                    user &&
+                    ownerId &&
+                    ownerId !== user.uid
+                ) {
+
+                    return;
+                }
 
 
-                localStorage.setItem(
-                    "selectedTournamentId",
-                    tournamentId
-                );
+                tournaments.push({
 
+                    id:
+                        tournamentDoc.id,
 
-                /*
-                 * CREATE CARD
-                 */
+                    ...data
 
-                createTournamentCard(
-                    tournamentId,
-                    tournament
-                );
+                });
 
             }
         );
 
 
-        console.log(
-            "✅ TOURNAMENTS DISPLAYED"
-        );
+        if (tournaments.length === 0) {
+
+            tournamentList.innerHTML = `
+
+                <div class="empty">
+
+                    🏆 You have no tournaments yet.
+
+                    <br><br>
+
+                    <a
+                        href="create-tournament.html"
+                        class="create-button"
+                    >
+                        ➕ Create Tournament
+                    </a>
+
+                </div>
+
+            `;
+
+            return;
+        }
+
+
+        tournamentList.innerHTML = "";
+
+
+        /* =================================
+           DISPLAY
+        ================================= */
+
+        for (
+            const tournament
+            of tournaments
+        ) {
+
+
+            const tournamentId =
+                tournament.id;
+
+
+            const name =
+                tournament.tournamentName ||
+                tournament.name ||
+                tournament.title ||
+                "Unnamed Tournament";
+
+
+            const venue =
+                tournament.venue ||
+                tournament.location ||
+                "Not specified";
+
+
+            const format =
+                tournament.format ||
+                tournament.tournamentFormat ||
+                "Not specified";
+
+
+            const status =
+                tournament.status ||
+                "Active";
+
+
+            /*
+             * Get teams count
+             */
+
+            let teamCount = 0;
+
+
+            try {
+
+                const teamsRef =
+                    collection(
+                        db,
+                        "tournaments",
+                        tournamentId,
+                        "teams"
+                    );
+
+
+                const teamsSnapshot =
+                    await getDocs(
+                        teamsRef
+                    );
+
+
+                teamCount =
+                    teamsSnapshot.size;
+
+            } catch (teamError) {
+
+                console.log(
+                    "Team count error:",
+                    teamError
+                );
+
+            }
+
+
+            const selectedId =
+                localStorage.getItem(
+                    "selectedTournamentId"
+                );
+
+
+            const isSelected =
+                selectedId === tournamentId;
+
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            card.className =
+                "tournament-card" +
+                (
+                    isSelected
+                    ? " selected-tournament"
+                    : ""
+                );
+
+
+            card.innerHTML = `
+
+                ${
+                    isSelected
+                    ? `
+                        <div class="selected-label">
+                            ✓ SELECTED TOURNAMENT
+                        </div>
+                    `
+                    : ""
+                }
+
+
+                <h3>
+                    🏆 ${name}
+                </h3>
+
+
+                <div class="tournament-info">
+
+                    <p>
+                        🆔
+                        <b>Tournament ID:</b>
+                        ${tournamentId}
+                    </p>
+
+                    <p>
+                        📍
+                        <b>Venue:</b>
+                        ${venue}
+                    </p>
+
+                    <p>
+                        🏏
+                        <b>Format:</b>
+                        ${format}
+                    </p>
+
+                    <p>
+                        📌
+                        <b>Status:</b>
+                        ${status}
+                    </p>
+
+                </div>
+
+
+                <div class="team-count">
+
+                    👥
+                    ${teamCount}
+                    Registered Team${teamCount === 1 ? "" : "s"}
+
+                </div>
+
+
+                <div class="tournament-actions">
+
+
+                    <a
+                        href="team-registration.html?id=${encodeURIComponent(tournamentId)}"
+                        class="register-btn"
+                    >
+                        👥 Register Team
+                    </a>
+
+
+                    <a
+                        href="live-score.html?id=${encodeURIComponent(tournamentId)}"
+                        class="live-btn"
+                    >
+                        🔴 Live Score
+                    </a>
+
+
+                    <a
+                        href="schedule.html?id=${encodeURIComponent(tournamentId)}"
+                        class="schedule-btn"
+                    >
+                        📅 Schedule
+                    </a>
+
+
+                    <a
+                        href="points.html?id=${encodeURIComponent(tournamentId)}"
+                        class="points-btn"
+                    >
+                        📊 Points Table
+                    </a>
+
+
+                    <a
+                        href="javascript:void(0)"
+                        class="select-btn"
+                        data-id="${tournamentId}"
+                    >
+                        ✓ Select Tournament
+                    </a>
+
+
+                    <a
+                        href="admin.html?id=${encodeURIComponent(tournamentId)}"
+                        class="admin-btn"
+                    >
+                        ⚙️ Manage
+                    </a>
+
+                </div>
+
+            `;
+
+
+            /* =============================
+               SELECT BUTTON
+            ============================= */
+
+            const selectButton =
+                card.querySelector(
+                    ".select-btn"
+                );
+
+
+            selectButton.addEventListener(
+                "click",
+                () => {
+
+                    localStorage.setItem(
+                        "selectedTournamentId",
+                        tournamentId
+                    );
+
+                    localStorage.setItem(
+                        "tournamentId",
+                        tournamentId
+                    );
+
+
+                    window.location.href =
+                        "index.html?id=" +
+                        encodeURIComponent(
+                            tournamentId
+                        );
+
+                }
+            );
+
+
+            tournamentList.appendChild(
+                card
+            );
+
+        }
 
 
     } catch (error) {
 
-
         console.error(
-            "❌ FIRESTORE ERROR:",
+            "❌ TOURNAMENT LOAD ERROR:",
             error
         );
 
 
-        showMessage(`
+        tournamentList.innerHTML = `
 
-            <h2>
-                ❌ Tournament Load Error
-            </h2>
+            <div class="error">
 
-            <p>
+                ❌ Unable to load tournaments.
+
+                <br><br>
+
                 ${error.message}
-            </p>
 
-            <br>
+            </div>
 
-            <p>
-                Console में error देखें।
-            </p>
-
-        `);
-
+        `;
 
     }
 
 }
 
 
-
-/* =========================
-   AUTH STATE
-========================= */
-
-console.log(
-    "🔥 Checking Firebase Login..."
-);
-
+/* ========================================
+   AUTH
+======================================== */
 
 onAuthStateChanged(
     auth,
-    user => {
+    async (user) => {
 
-
-        console.log(
-            "🔥 AUTH STATE:",
-            user
-        );
-
-
-        if (!user) {
-
-
-            console.log(
-                "❌ USER NOT LOGGED IN"
-            );
-
-
-            showMessage(`
-
-                <h2>
-                    🔐 Login Required
-                </h2>
-
-                <p>
-                    Tournament देखने के लिए पहले login करें।
-                </p>
-
-                <br>
-
-                <a
-                    href="login.html"
-                    class="btn primary-btn"
-                >
-                    🔐 Login
-                </a>
-
-            `);
-
-
-            return;
-
-        }
-
-
-        console.log(
-            "✅ USER LOGGED IN"
-        );
-
-
-        console.log(
-            "👤 UID:",
-            user.uid
-        );
-
-
-        loadTournaments(
+        await loadTournaments(
             user
         );
 

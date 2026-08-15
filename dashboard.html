@@ -5,17 +5,481 @@
 
 <meta charset="UTF-8">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-<title>Organizer Dashboard</title>
+<title>APL Tournament Platform - Dashboard</title>
 
-<link
-    rel="stylesheet"
-    href="css/style.css"
->
+<link rel="manifest"
+      href="./manifest.json">
+
+<link rel="icon"
+      type="image/png"
+      href="./images/icon-192.png">
+
+<meta name="theme-color"
+      content="#0f172a">
+
+<link rel="stylesheet"
+      href="./css/style.css">
+
+
+<style>
+
+/* ========================================
+   DASHBOARD
+======================================== */
+
+.dashboard-container {
+    width: 100%;
+    max-width: 700px;
+    margin: auto;
+    padding: 18px 14px 100px;
+}
+
+
+/* ========================================
+   TOURNAMENT HEADER
+======================================== */
+
+.tournament-header-card {
+
+    background:
+        linear-gradient(
+            135deg,
+            #1d4ed8,
+            #2563eb,
+            #1e40af
+        );
+
+    color: white;
+
+    padding: 22px;
+
+    border-radius: 20px;
+
+    margin-bottom: 22px;
+
+    box-shadow:
+        0 8px 25px
+        rgba(0,0,0,0.25);
+}
+
+.tournament-header-card .small-text {
+
+    font-size: 12px;
+
+    color: #dbeafe;
+
+    margin-bottom: 7px;
+}
+
+.tournament-header-card h2 {
+
+    font-size: 24px;
+
+    margin-bottom: 12px;
+
+    line-height: 1.25;
+}
+
+.tournament-details {
+
+    background: rgba(255,255,255,0.14);
+
+    padding: 12px;
+
+    border-radius: 12px;
+}
+
+.tournament-details p {
+
+    margin: 6px 0;
+
+    font-size: 13px;
+
+    color: #e0e7ff;
+}
+
+.tournament-details b {
+
+    color: white;
+}
+
+
+/* ========================================
+   STATS
+======================================== */
+
+.dashboard-stats {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 10px;
+
+    margin-bottom: 24px;
+}
+
+.stat-card {
+
+    background: white;
+
+    padding: 17px;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 5px 15px
+        rgba(0,0,0,0.16);
+
+    text-align: center;
+
+    color: #0f172a;
+}
+
+.stat-card .stat-icon {
+
+    font-size: 25px;
+
+    margin-bottom: 6px;
+}
+
+.stat-card strong {
+
+    display: block;
+
+    font-size: 22px;
+
+    color: #1d4ed8;
+}
+
+.stat-card span {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color: #64748b;
+
+    font-size: 11px;
+}
+
+
+/* ========================================
+   SECTION TITLE
+======================================== */
+
+.dashboard-section {
+
+    margin-bottom: 25px;
+}
+
+.dashboard-section-title {
+
+    color: white;
+
+    font-size: 20px;
+
+    margin-bottom: 13px;
+
+    text-shadow:
+        0 2px 5px
+        rgba(0,0,0,0.7);
+}
+
+
+/* ========================================
+   ACTION GRID
+======================================== */
+
+.dashboard-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 11px;
+}
+
+.dashboard-card {
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    min-height: 125px;
+
+    padding: 15px;
+
+    background: white;
+
+    color: #0f172a;
+
+    border-radius: 17px;
+
+    text-align: center;
+
+    box-shadow:
+        0 5px 15px
+        rgba(0,0,0,0.18);
+
+    transition:
+        transform 0.15s ease;
+}
+
+.dashboard-card:active {
+
+    transform: scale(0.97);
+}
+
+.dashboard-card .icon {
+
+    width: 48px;
+
+    height: 48px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    margin-bottom: 9px;
+
+    border-radius: 14px;
+
+    background: #eff6ff;
+
+    font-size: 25px;
+}
+
+.dashboard-card strong {
+
+    font-size: 14px;
+}
+
+.dashboard-card small {
+
+    margin-top: 4px;
+
+    color: #64748b;
+
+    font-size: 10px;
+}
+
+
+/* ========================================
+   TEAM REGISTRATION
+======================================== */
+
+.registration-card-dashboard {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    padding: 17px;
+
+    background: white;
+
+    color: #0f172a;
+
+    border-radius: 17px;
+
+    box-shadow:
+        0 5px 15px
+        rgba(0,0,0,0.18);
+}
+
+.registration-icon {
+
+    width: 48px;
+
+    height: 48px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 13px;
+
+    background: #dcfce7;
+
+    font-size: 25px;
+}
+
+.registration-card-dashboard > div {
+
+    flex: 1;
+}
+
+.registration-card-dashboard strong {
+
+    display: block;
+
+    margin-bottom: 4px;
+}
+
+.registration-card-dashboard p {
+
+    color: #64748b;
+
+    font-size: 11px;
+
+    margin: 0;
+}
+
+.open-button {
+
+    padding: 10px 12px;
+
+    border-radius: 10px;
+
+    background: #1d4ed8;
+
+    color: white;
+
+    font-size: 11px;
+
+    font-weight: bold;
+
+    white-space: nowrap;
+}
+
+
+/* ========================================
+   BOTTOM NAV
+======================================== */
+
+.dashboard-bottom-nav {
+
+    position: fixed;
+
+    left: 0;
+
+    right: 0;
+
+    bottom: 0;
+
+    z-index: 2000;
+
+    height: 68px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-around;
+
+    background: white;
+
+    border-top:
+        1px solid
+        #e2e8f0;
+
+    box-shadow:
+        0 -4px 15px
+        rgba(0,0,0,0.15);
+}
+
+.dashboard-bottom-nav a {
+
+    width: 20%;
+
+    text-align: center;
+
+    color: #64748b;
+
+    font-size: 11px;
+
+    text-decoration: none;
+}
+
+.dashboard-bottom-nav span {
+
+    display: block;
+
+    font-size: 20px;
+
+    line-height: 25px;
+}
+
+.dashboard-bottom-nav small {
+
+    font-size: 10px;
+}
+
+.dashboard-bottom-nav .active {
+
+    color: #1d4ed8;
+
+    font-weight: bold;
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 430px) {
+
+    .dashboard-container {
+
+        padding:
+            15px 12px 95px;
+    }
+
+    .tournament-header-card {
+
+        padding: 19px;
+    }
+
+    .tournament-header-card h2 {
+
+        font-size: 21px;
+    }
+
+    .dashboard-grid {
+
+        gap: 8px;
+    }
+
+    .dashboard-card {
+
+        min-height: 115px;
+    }
+
+    .registration-card-dashboard {
+
+        align-items: flex-start;
+
+        flex-wrap: wrap;
+    }
+
+    .open-button {
+
+        width: 100%;
+
+        text-align: center;
+    }
+
+}
+
+</style>
 
 </head>
 
@@ -23,342 +487,580 @@
 <body>
 
 
-<header class="top-header">
+<!-- ========================================
+     HEADER
+======================================== -->
 
-    <div class="logo">
-        🏏
+<header class="app-header">
+
+    <div class="app-logo">
+
+        <img
+            src="./images/icon-192.png"
+            alt="APL Logo"
+            onerror="this.src='./images/APL.logo.jpg'"
+        >
+
     </div>
 
-    <div>
+
+    <div class="app-title">
 
         <h1>
-            Organizer Dashboard
+            APL Tournament Platform
         </h1>
 
-        <p>
-            APL Tournament Platform
-        </p>
+        <span>
+            Organizer Dashboard
+        </span>
 
     </div>
+
+
+    <button
+        class="profile-button"
+        onclick="location.href='profile.html'"
+        aria-label="Profile"
+    >
+        👤
+    </button>
 
 </header>
 
 
 
-<main class="home-container">
+<!-- ========================================
+     MAIN
+======================================== -->
+
+<main class="dashboard-container">
 
 
-<!-- =========================
-     WELCOME
-========================= -->
+    <!-- ====================================
+         SELECTED TOURNAMENT
+    ==================================== -->
 
-<section class="hero">
+    <section class="tournament-header-card">
 
-    <h2>
-
-        🏆 Welcome,
-
-        <span id="organizerName">
-            Organizer
-        </span>
-
-    </h2>
-
-
-    <p>
-        Manage your cricket tournaments
-        from one place.
-    </p>
-
-</section>
-
-
-
-<!-- =========================
-     FEATURES
-========================= -->
-
-<section class="features">
-
-
-    <!-- PROFILE -->
-
-    <div class="feature-card">
-
-        <div class="feature-icon">
-            👤
-        </div>
-
-        <h3>
-            My Profile
-        </h3>
-
-        <p>
-            Manage your organizer profile.
+        <p class="small-text">
+            🏆 Selected Tournament
         </p>
 
-        <br>
 
-        <a
-            href="profile.html"
-            class="btn profile-btn"
-        >
-            Open Profile
-        </a>
-
-    </div>
+        <h2 id="dashboardTournamentName">
+            Loading Tournament...
+        </h2>
 
 
+        <div class="tournament-details">
 
-    <!-- CREATE TOURNAMENT -->
+            <p>
+                🆔
+                <b>Tournament ID:</b>
+                <span id="dashboardTournamentId">
+                    -
+                </span>
+            </p>
 
-    <div class="feature-card">
 
-        <div class="feature-icon">
-            🏆
+            <p>
+                📍
+                <b>Venue:</b>
+                <span id="dashboardVenue">
+                    -
+                </span>
+            </p>
+
+
+            <p>
+                👤
+                <b>Organizer:</b>
+                <span id="organizerName">
+                    Organizer
+                </span>
+            </p>
+
         </div>
 
-        <h3>
-            Create Tournament
-        </h3>
-
-        <p>
-            Create a new cricket tournament.
-        </p>
-
-        <br>
-
-        <a
-            href="create-tournament.html"
-            class="btn create-btn"
-        >
-            Create Tournament
-        </a>
-
-    </div>
+    </section>
 
 
 
-    <!-- MY TOURNAMENTS -->
+    <!-- ====================================
+         STATISTICS
+    ==================================== -->
 
-    <div class="feature-card">
+    <section class="dashboard-stats">
 
-        <div class="feature-icon">
-            📂
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                👥
+            </div>
+
+            <strong id="teamCount">
+                0
+            </strong>
+
+            <span>
+                Registered Teams
+            </span>
+
         </div>
 
-        <h3>
-            My Tournaments
-        </h3>
 
-        <p>
-            View and manage your tournaments.
-        </p>
+        <div class="stat-card">
 
-        <br>
+            <div class="stat-icon">
+                📅
+            </div>
 
-        <a
-            href="my-tournaments.html"
-            class="btn primary-btn"
-        >
-            Open My Tournaments
-        </a>
+            <strong id="matchCount">
+                0
+            </strong>
 
-    </div>
+            <span>
+                Matches
+            </span>
 
-
-
-    <!-- ADMIN PANEL -->
-
-    <div class="feature-card">
-
-        <div class="feature-icon">
-            ⚙️
         </div>
 
-        <h3>
-            Admin Panel
-        </h3>
 
-        <p>
-            Manage registered teams
-            and tournament status.
-        </p>
+        <div class="stat-card">
 
-        <br>
+            <div class="stat-icon">
+                🔴
+            </div>
 
-        <a
-            href="my-tournaments.html"
-            class="btn"
-        >
-            Select Tournament
-        </a>
+            <strong id="liveCount">
+                0
+            </strong>
 
-    </div>
+            <span>
+                Live Matches
+            </span>
 
-
-
-    <!-- SCHEDULE -->
-
-    <div class="feature-card">
-
-        <div class="feature-icon">
-            📅
         </div>
 
-        <h3>
-            Schedule
-        </h3>
 
-        <p>
-            Manage tournament matches.
-        </p>
+        <div class="stat-card">
 
-        <br>
+            <div class="stat-icon">
+                🏆
+            </div>
 
-        <a
-            href="my-tournaments.html"
-            class="btn schedule-btn"
-        >
-            Select Tournament
-        </a>
+            <strong id="completedCount">
+                0
+            </strong>
 
-    </div>
+            <span>
+                Completed
+            </span>
 
-
-
-    <!-- RESULTS -->
-
-    <div class="feature-card">
-
-        <div class="feature-icon">
-            🏆
         </div>
 
-        <h3>
-            Results
-        </h3>
-
-        <p>
-            Manage completed match results.
-        </p>
-
-        <br>
-
-        <a
-            href="my-tournaments.html"
-            class="btn"
-        >
-            Select Tournament
-        </a>
-
-    </div>
+    </section>
 
 
 
-    <!-- POINTS TABLE -->
+    <!-- ====================================
+         TOURNAMENT MANAGEMENT
+    ==================================== -->
 
-    <div class="feature-card">
+    <section class="dashboard-section">
 
-        <div class="feature-icon">
-            📈
+        <h2 class="dashboard-section-title">
+            Tournament Management
+        </h2>
+
+
+        <div class="dashboard-grid">
+
+
+            <!-- TEAMS -->
+
+            <a
+                id="teamsLink"
+                href="#"
+                class="dashboard-card"
+            >
+
+                <div class="icon">
+                    👥
+                </div>
+
+                <strong>
+                    Teams
+                </strong>
+
+                <small>
+                    Registered Teams
+                </small>
+
+            </a>
+
+
+            <!-- TEAM REGISTRATION -->
+
+            <a
+                id="registrationLink"
+                href="#"
+                class="dashboard-card"
+            >
+
+                <div class="icon">
+                    🏏
+                </div>
+
+                <strong>
+                    Register Team
+                </strong>
+
+                <small>
+                    Add New Team
+                </small>
+
+            </a>
+
+
+            <!-- SCHEDULE -->
+
+            <a
+                id="scheduleLink"
+                href="#"
+                class="dashboard-card"
+            >
+
+                <div class="icon">
+                    📅
+                </div>
+
+                <strong>
+                    Schedule
+                </strong>
+
+                <small>
+                    Manage Matches
+                </small>
+
+            </a>
+
+
+            <!-- LIVE SCORE -->
+
+            <a
+                id="liveLink"
+                href="#"
+                class="dashboard-card"
+            >
+
+                <div class="icon">
+                    🔴
+                </div>
+
+                <strong>
+                    Live Score
+                </strong>
+
+                <small>
+                    Live Scoring
+                </small>
+
+            </a>
+
+
+            <!-- RESULTS -->
+
+            <a
+                id="resultsLink"
+                href="#"
+                class="dashboard-card"
+            >
+
+                <div class="icon">
+                    🏆
+                </div>
+
+                <strong>
+                    Results
+                </strong>
+
+                <small>
+                    Match Results
+                </small>
+
+            </a>
+
+
+            <!-- POINTS -->
+
+            <a
+                id="pointsLink"
+                href="#"
+                class="dashboard-card"
+            >
+
+                <div class="icon">
+                    📊
+                </div>
+
+                <strong>
+                    Points Table
+                </strong>
+
+                <small>
+                    Points & NRR
+                </small>
+
+            </a>
+
+
+            <!-- PLAYER STATS -->
+
+            <a
+                id="statsLink"
+                href="#"
+                class="dashboard-card"
+            >
+
+                <div class="icon">
+                    📈
+                </div>
+
+                <strong>
+                    Player Stats
+                </strong>
+
+                <small>
+                    Runs & Wickets
+                </small>
+
+            </a>
+
+
+            <!-- ADMIN -->
+
+            <a
+                id="adminLink"
+                href="#"
+                class="dashboard-card"
+            >
+
+                <div class="icon">
+                    ⚙️
+                </div>
+
+                <strong>
+                    Admin Panel
+                </strong>
+
+                <small>
+                    Manage Tournament
+                </small>
+
+            </a>
+
         </div>
 
-        <h3>
-            Points Table
-        </h3>
-
-        <p>
-            View tournament standings.
-        </p>
-
-        <br>
-
-        <a
-            href="my-tournaments.html"
-            class="btn"
-        >
-            Select Tournament
-        </a>
-
-    </div>
+    </section>
 
 
 
-    <!-- LIVE SCORE -->
+    <!-- ====================================
+         EXTRA FEATURES
+    ==================================== -->
 
-    <div class="feature-card">
+    <section class="dashboard-section">
 
-        <div class="feature-icon">
-            🔴
+        <h2 class="dashboard-section-title">
+            Player Records
+        </h2>
+
+
+        <div class="dashboard-grid">
+
+
+            <a
+                id="orangeLink"
+                href="#"
+                class="dashboard-card"
+            >
+
+                <div class="icon">
+                    🟠
+                </div>
+
+                <strong>
+                    Orange Cap
+                </strong>
+
+                <small>
+                    Top Run Scorer
+                </small>
+
+            </a>
+
+
+            <a
+                id="purpleLink"
+                href="#"
+                class="dashboard-card"
+            >
+
+                <div class="icon">
+                    🟣
+                </div>
+
+                <strong>
+                    Purple Cap
+                </strong>
+
+                <small>
+                    Top Wicket Taker
+                </small>
+
+            </a>
+
         </div>
 
-        <h3>
-            Live Score
-        </h3>
-
-        <p>
-            Manage live cricket scoring.
-        </p>
-
-        <br>
-
-        <a
-            href="my-tournaments.html"
-            class="btn live-btn"
-        >
-            Select Tournament
-        </a>
-
-    </div>
-
-
-</section>
+    </section>
 
 
 
-<br>
-<br>
+    <!-- ====================================
+         TEAM REGISTRATION
+    ==================================== -->
+
+    <section class="dashboard-section">
+
+        <h2 class="dashboard-section-title">
+            Team Registration
+        </h2>
 
 
+        <div class="registration-card-dashboard">
 
-<!-- =========================
-     LOGOUT
-========================= -->
+            <div class="registration-icon">
+                🏏
+            </div>
 
-<div style="text-align:center;">
 
-    <button
-        id="logoutBtn"
-        class="btn"
-    >
-        🚪 Logout
-    </button>
+            <div>
 
-</div>
+                <strong>
+                    Register a New Team
+                </strong>
+
+                <p>
+                    Add a team to the selected tournament.
+                </p>
+
+            </div>
+
+
+            <a
+                id="registerButton"
+                href="#"
+                class="open-button"
+            >
+                Register
+            </a>
+
+        </div>
+
+    </section>
 
 
 </main>
 
 
 
-<!-- =========================
-     FOOTER
-========================= -->
+<!-- ========================================
+     BOTTOM NAVIGATION
+======================================== -->
 
-<footer>
-
-    <p>
-        🏏 APL Tournament Platform
-    </p>
-
-</footer>
+<nav class="dashboard-bottom-nav">
 
 
+    <a
+        href="index.html"
+    >
+
+        <span>🏠</span>
+
+        <small>
+            Home
+        </small>
+
+    </a>
+
+
+    <a
+        href="my-tournaments.html"
+        class="active"
+    >
+
+        <span>🏆</span>
+
+        <small>
+            Tournaments
+        </small>
+
+    </a>
+
+
+    <a
+        id="bottomScheduleLink"
+        href="#"
+    >
+
+        <span>📅</span>
+
+        <small>
+            Matches
+        </small>
+
+    </a>
+
+
+    <a
+        id="bottomStatsLink"
+        href="#"
+    >
+
+        <span>📊</span>
+
+        <small>
+            Stats
+        </small>
+
+    </a>
+
+
+    <a
+        href="profile.html"
+    >
+
+        <span>👤</span>
+
+        <small>
+            Profile
+        </small>
+
+    </a>
+
+</nav>
+
+
+
+<!-- ========================================
+     DASHBOARD JS
+======================================== -->
 
 <script
     type="module"
-    src="js/dashboard.js"
+    src="./js/dashboard.js"
 ></script>
 
 

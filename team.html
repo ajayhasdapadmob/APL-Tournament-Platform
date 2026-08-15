@@ -5,189 +5,98 @@
 
 <meta charset="UTF-8">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-<title>Team Details</title>
+<title>Teams - APL Tournament Platform</title>
 
 <link
     rel="stylesheet"
-    href="css/style.css"
+    href="./css/style.css"
 >
 
 <style>
 
-.team-container {
-
+.teams-container {
     max-width: 900px;
-
     margin: auto;
-
+    padding: 20px 14px 100px;
 }
 
-
-.team-header {
-
+.tournament-box {
     background: white;
-
-    padding: 22px;
-
+    padding: 20px;
     border-radius: 16px;
-
     margin-bottom: 20px;
-
-    box-shadow:
-        0 5px 20px
-        rgba(0,0,0,0.08);
-
+    box-shadow: 0 5px 20px rgba(0,0,0,0.10);
 }
 
-
-.team-header h2 {
-
+.tournament-box h2 {
+    margin: 0 0 12px;
     color: #1e3a8a;
-
 }
 
+.tournament-box p {
+    margin: 7px 0;
+}
 
-.tournament-id {
-
+.team-count {
     background: #eff6ff;
-
-    padding: 12px;
-
-    border-radius: 8px;
-
-    margin-top: 12px;
-
-    word-break: break-all;
-
+    padding: 14px;
+    border-radius: 10px;
+    margin-top: 15px;
+    font-weight: bold;
 }
 
+#teamList {
+    display: grid;
+    gap: 14px;
+}
 
 .team-card {
-
     background: white;
-
-    padding: 25px;
-
-    border-radius: 16px;
-
-    box-shadow:
-        0 5px 20px
-        rgba(0,0,0,0.08);
-
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.10);
 }
 
-
-.team-name {
-
-    font-size: 26px;
-
-    font-weight: bold;
-
+.team-card h3 {
     color: #1e3a8a;
-
-    margin-bottom: 20px;
-
+    margin-top: 0;
 }
 
-
-.info-grid {
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(220px, 1fr)
-        );
-
-    gap: 12px;
-
+.team-card p {
+    margin: 8px 0;
+    color: #334155;
 }
-
-
-.info-item {
-
-    background: #f8fafc;
-
-    padding: 14px;
-
-    border-radius: 9px;
-
-}
-
-
-.info-item b {
-
-    display: block;
-
-    margin-bottom: 5px;
-
-}
-
-
-.players {
-
-    margin-top: 22px;
-
-}
-
-
-.player {
-
-    background: #f8fafc;
-
-    padding: 12px;
-
-    border-radius: 8px;
-
-    margin-bottom: 8px;
-
-}
-
 
 .status {
-
     display: inline-block;
-
+    margin-top: 10px;
     padding: 6px 10px;
-
     border-radius: 7px;
-
+    background: #dcfce7;
+    color: #166534;
     font-weight: bold;
-
 }
 
+.message {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.10);
+}
 
 .navigation {
-
     display: flex;
-
-    justify-content: center;
-
-    flex-wrap: wrap;
-
     gap: 10px;
-
+    flex-wrap: wrap;
     margin-top: 20px;
-
 }
 
-
-.error-box {
-
-    background: white;
-
-    padding: 30px;
-
-    border-radius: 15px;
-
-    text-align: center;
-
+.navigation a {
+    text-decoration: none;
 }
 
 </style>
@@ -207,7 +116,7 @@
     <div>
 
         <h1>
-            Team Details
+            Teams
         </h1>
 
         <p>
@@ -219,56 +128,81 @@
 </header>
 
 
-<main class="home-container">
+<main class="teams-container">
 
 
-<div class="team-container">
+    <!-- TOURNAMENT -->
+
+    <section class="tournament-box">
+
+        <h2 id="tournamentName">
+            Loading Tournament...
+        </h2>
+
+        <p>
+            🆔
+            <b>Tournament ID:</b>
+            <span id="tournamentId">
+                -
+            </span>
+        </p>
+
+        <p>
+            📍
+            <b>Venue:</b>
+            <span id="venue">
+                -
+            </span>
+        </p>
+
+        <div class="team-count">
+
+            👥 Registered Teams:
+            <span id="totalTeams">
+                0
+            </span>
+
+        </div>
+
+    </section>
 
 
-    <div
-        id="tournamentInfo"
-        class="team-header"
-    >
+    <!-- TEAM LIST -->
 
-        ⏳ Loading Tournament...
+    <section>
 
-    </div>
+        <div id="teamList">
 
+            <div class="message">
 
+                ⏳ Loading Teams...
 
-    <div
-        id="teamDetails"
-        class="team-card"
-    >
+            </div>
 
-        ⏳ Loading Team...
+        </div>
 
-    </div>
+    </section>
 
 
+    <!-- NAVIGATION -->
 
     <div class="navigation">
-
 
         <a
             id="tournamentLink"
             href="#"
             class="btn"
         >
-
             🏆 Tournament
-
         </a>
 
 
         <a
-            id="adminLink"
+            id="registrationLink"
             href="#"
             class="btn"
         >
-
-            ⚙️ Manage Teams
-
+            🏏 Register Team
         </a>
 
 
@@ -277,20 +211,7 @@
             href="#"
             class="btn"
         >
-
             📅 Schedule
-
-        </a>
-
-
-        <a
-            id="resultsLink"
-            href="#"
-            class="btn"
-        >
-
-            🏆 Results
-
         </a>
 
 
@@ -299,16 +220,10 @@
             href="#"
             class="btn"
         >
-
-            📈 Points Table
-
+            📊 Points Table
         </a>
 
-
     </div>
-
-
-</div>
 
 
 </main>
@@ -325,7 +240,7 @@
 
 <script
     type="module"
-    src="js/team.js"
+    src="./js/team.js?v=2"
 ></script>
 
 
