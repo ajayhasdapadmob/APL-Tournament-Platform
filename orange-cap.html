@@ -5,17 +5,12 @@
 
 <meta charset="UTF-8">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
 <title>Orange Cap - APL Tournament</title>
 
-<link
-    rel="stylesheet"
-    href="css/style.css"
->
+<link rel="stylesheet" href="css/style.css">
 
 <style>
 
@@ -24,58 +19,125 @@
     margin: auto;
 }
 
-.page-header {
+.page-header,
+.tournament-selector,
+.orange-card {
     background: white;
-    padding: 25px;
     border-radius: 16px;
-    text-align: center;
-    margin-bottom: 20px;
     box-shadow: 0 5px 18px rgba(0,0,0,0.08);
 }
 
-.orange-icon {
-    font-size: 55px;
+.page-header {
+    padding: 25px;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-.player-card {
-    background: white;
+.orange-icon {
+    font-size: 65px;
+}
+
+.tournament-selector {
     padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.tournament-selector label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+#tournamentSelect {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #2563eb;
+    border-radius: 10px;
+    font-size: 16px;
+    background: white;
+}
+
+.orange-card {
+    padding: 30px;
+    text-align: center;
+    border-top: 6px solid #f97316;
+    margin-bottom: 20px;
+}
+
+.player-avatar {
+    width: 80px;
+    height: 80px;
+    margin: auto;
+    border-radius: 50%;
+    background: #fff7ed;
     display: flex;
     align-items: center;
-    gap: 18px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    justify-content: center;
+    font-size: 45px;
 }
 
-.rank {
-    font-size: 25px;
+.player-name {
+    font-size: 28px;
     font-weight: bold;
-    min-width: 45px;
+    margin-top: 15px;
 }
 
-.player-info {
-    flex: 1;
-}
-
-.player-info h3 {
-    margin: 0 0 7px 0;
-}
-
-.player-info p {
-    margin: 5px 0;
+.team-name {
+    color: #64748b;
+    font-size: 17px;
+    margin-top: 5px;
 }
 
 .runs {
-    font-size: 25px;
+    font-size: 48px;
     font-weight: bold;
+    color: #f97316;
+    margin-top: 20px;
 }
 
-.empty {
-    background: white;
-    padding: 30px;
-    border-radius: 15px;
+.runs-label {
+    color: #64748b;
+    font-size: 16px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.stat-box {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.stat-box strong {
+    display: block;
+    font-size: 22px;
+}
+
+.stat-box span {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.status {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 10px;
     text-align: center;
+    margin-top: 20px;
+}
+
+.navigation {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
 }
 
 </style>
@@ -107,30 +169,33 @@
 </header>
 
 
-
 <main class="home-container">
-
 
 <div class="orange-container">
 
 
-<div class="page-header">
+<!-- TOURNAMENT SELECTOR -->
 
-    <div class="orange-icon">
-        🟠
-    </div>
+<div class="tournament-selector">
 
-    <h2>
-        Orange Cap
-    </h2>
+    <label for="tournamentSelect">
 
-    <p>
-        Top Run Scorers
-    </p>
+        🏆 Select Tournament
+
+    </label>
+
+    <select id="tournamentSelect">
+
+        <option value="">
+            ⏳ Loading Tournaments...
+        </option>
+
+    </select>
 
 </div>
 
 
+<!-- TOURNAMENT INFORMATION -->
 
 <div
     id="tournamentInfo"
@@ -142,30 +207,125 @@
 </div>
 
 
+<!-- ORANGE CAP -->
 
-<div id="playersList">
+<div class="orange-card">
 
-    <div class="empty">
+    <div class="orange-icon">
+        🟠
+    </div>
 
-        ⏳ Loading Player Statistics...
+    <h2>
+        Orange Cap
+    </h2>
+
+    <p>
+        🏏 Highest Run Scorer
+    </p>
+
+
+    <div class="player-avatar">
+        👤
+    </div>
+
+
+    <div
+        id="playerName"
+        class="player-name"
+    >
+        Loading...
+    </div>
+
+
+    <div
+        id="teamName"
+        class="team-name"
+    >
+        -
+    </div>
+
+
+    <div
+        id="runs"
+        class="runs"
+    >
+        0
+    </div>
+
+
+    <div class="runs-label">
+        TOTAL RUNS
+    </div>
+
+
+    <div class="stats">
+
+        <div class="stat-box">
+
+            <strong id="matches">
+                0
+            </strong>
+
+            <span>
+                Matches
+            </span>
+
+        </div>
+
+
+        <div class="stat-box">
+
+            <strong id="wickets">
+                0
+            </strong>
+
+            <span>
+                Wickets
+            </span>
+
+        </div>
+
 
     </div>
 
 </div>
 
 
+<div
+    id="statusMessage"
+    class="status"
+>
 
-<br>
+    ⏳ Loading Player Statistics...
+
+</div>
 
 
-<div style="text-align:center;">
+<!-- NAVIGATION -->
+
+<div class="navigation">
 
     <a
-        id="backBtn"
+        id="pointsLink"
+        href="#"
+        class="btn"
+    >
+        📈 Points Table
+    </a>
+
+    <a
+        id="purpleLink"
+        href="#"
+        class="btn"
+    >
+        🟣 Purple Cap
+    </a>
+
+    <a
         href="my-tournaments.html"
         class="btn"
     >
-        ⬅ Back
+        ⬅ My Tournaments
     </a>
 
 </div>
@@ -174,7 +334,6 @@
 </div>
 
 </main>
-
 
 
 <footer>
@@ -186,10 +345,9 @@
 </footer>
 
 
-
 <script
     type="module"
-    src="js/orange.js"
+    src="./js/orange-cap.js"
 ></script>
 
 

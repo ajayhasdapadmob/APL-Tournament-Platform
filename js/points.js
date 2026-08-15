@@ -1,20 +1,27 @@
-import { auth, db } from "./firebase.js";
+// ========================================
+// POINTS TABLE
+// APL TOURNAMENT PLATFORM
+// ========================================
 
-import {
-    onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { db } from "../firebase.js";
 
 import {
     collection,
     getDocs,
-    getDoc,
-    doc
+    doc,
+    getDoc
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 
-/* =========================
-   ELEMENTS
-========================= */
+console.log("🔥 POINTS.JS STARTED");
+
+
+// ========================================
+// ELEMENTS
+// ========================================
+
+const tournamentSelect =
+    document.getElementById("tournamentSelect");
 
 const pointsHeader =
     document.getElementById("pointsHeader");
@@ -38,305 +45,514 @@ const liveScoreLink =
     document.getElementById("liveScoreLink");
 
 
-/* =========================
-   GET TOURNAMENT ID
-========================= */
+// ========================================
+// GET TOURNAMENT ID
+// ========================================
 
-const params =
-    new URLSearchParams(
-        window.location.search
+function getTournamentId() {
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    let id =
+        params.get("id");
+
+    if (!id) {
+        id =
+            params.get("tournamentId");
+    }
+
+    if (!id) {
+        id =
+            localStorage.getItem(
+                "selectedTournamentId"
+            );
+    }
+
+    if (!id) {
+        id =
+            localStorage.getItem(
+                "tournamentId"
+            );
+    }
+
+    return id
+        ? String(id).trim()
+        : null;
+}
+
+
+// ========================================
+// SAVE TOURNAMENT
+// ========================================
+
+function saveTournamentId(id) {
+
+    if (!id) return;
+
+    localStorage.setItem(
+        "selectedTournamentId",
+        id
     );
 
-let tournamentId =
-    params.get("id");
-
-if (!tournamentId) {
-    tournamentId =
-        params.get("tournamentId");
-}
-
-if (!tournamentId) {
-    tournamentId =
-        localStorage.getItem(
-            "selectedTournamentId"
-        );
-}
-
-if (!tournamentId) {
-    tournamentId =
-        localStorage.getItem(
-            "tournamentId"
-        );
-}
-
-
-/* =========================
-   CHECK ID
-========================= */
-
-if (!tournamentId) {
-
-    pointsHeader.innerHTML = `
-
-        <div class="empty">
-
-            <h2>
-                ❌ Tournament ID Missing
-            </h2>
-
-            <p>
-                Please open Points Table
-                from a tournament.
-            </p>
-
-            <br>
-
-            <a
-                href="my-tournaments.html"
-                class="btn"
-            >
-                🏆 My Tournaments
-            </a>
-
-        </div>
-
-    `;
-
-    pointsBody.innerHTML = "";
-
-    throw new Error(
-        "Tournament ID Missing"
+    localStorage.setItem(
+        "tournamentId",
+        id
     );
+
 }
 
 
-/* =========================
-   SAVE ID
-========================= */
+// ========================================
+// LOAD ALL TOURNAMENTS
+// ========================================
 
-localStorage.setItem(
-    "tournamentId",
-    tournamentId
-);
+async function loadTournaments() {
 
-localStorage.setItem(
-    "selectedTournamentId",
-    tournamentId
-);
+    console.log(
+        "🏆 Loading ALL tournaments..."
+    );
 
+    try {
 
-/* =========================
-   NAVIGATION
-========================= */
+        const tournamentsRef =
+            collection(
+                db,
+                "tournaments"
+            );
 
-tournamentLink.href =
-    "tournament.html?id=" +
-    encodeURIComponent(tournamentId);
+        const snapshot =
+            await getDocs(
+                tournamentsRef
+            );
 
-teamsLink.href =
-    "teams.html?id=" +
-    encodeURIComponent(tournamentId);
-
-scheduleLink.href =
-    "schedule.html?id=" +
-    encodeURIComponent(tournamentId);
-
-resultsLink.href =
-    "results.html?id=" +
-    encodeURIComponent(tournamentId);
-
-liveScoreLink.href =
-    "live-score.html?id=" +
-    encodeURIComponent(tournamentId);
+        console.log(
+            "🏆 TOURNAMENT COUNT:",
+            snapshot.size
+        );
 
 
-/* =========================
-   LOAD TOURNAMENT
-========================= */
+        tournamentSelect.innerHTML = "";
 
-async function loadTournament() {
 
-    const tournamentSnap =
-        await getDoc(
+        if (snapshot.empty) {
+
+            tournamentSelect.innerHTML = `
+                <option value="">
+                    ❌ No Tournament Found
+                </option>
+            `;
+
+            pointsHeader.innerHTML = `
+                <h2>
+                    ❌ No Tournament Found
+                </h2>
+            `;
+
+            return;
+        }
+
+
+        // ========================================
+        // ADD EVERY TOURNAMENT
+        // ========================================
+
+        snapshot.forEach(
+            tournamentDoc => {
+
+                const data =
+                    tournamentDoc.data();
+
+
+                console.log(
+                    "🏆 TOURNAMENT:",
+                    tournamentDoc.id,
+                    data
+                );
+
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    tournamentDoc.id;
+
+
+                option.textContent =
+                    data.tournamentName ||
+                    data.name ||
+                    data.title ||
+                    tournamentDoc.id;
+
+
+                tournamentSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        console.log(
+            "✅ ALL TOURNAMENTS ADDED TO DROPDOWN"
+        );
+
+
+        // ========================================
+        // SELECT SAVED TOURNAMENT
+        // ========================================
+
+        let selectedId =
+            getTournamentId();
+
+
+        const exists =
+            Array.from(
+                tournamentSelect.options
+            ).some(
+                option =>
+                    option.value === selectedId
+            );
+
+
+        if (!exists) {
+
+            selectedId =
+                tournamentSelect.options[0].value;
+
+        }
+
+
+        tournamentSelect.value =
+            selectedId;
+
+
+        saveTournamentId(
+            selectedId
+        );
+
+
+        console.log(
+            "🏆 SELECTED:",
+            selectedId
+        );
+
+
+        await loadTournament(
+            selectedId
+        );
+
+    } catch (error) {
+
+        console.error(
+            "❌ TOURNAMENT LOAD ERROR:",
+            error
+        );
+
+
+        tournamentSelect.innerHTML = `
+            <option value="">
+                ❌ Loading Error
+            </option>
+        `;
+
+        pointsHeader.innerHTML = `
+            <h2>❌ Error</h2>
+            <p>${escapeHTML(error.message)}</p>
+        `;
+
+    }
+
+}
+
+
+// ========================================
+// LOAD SELECTED TOURNAMENT
+// ========================================
+
+async function loadTournament(id) {
+
+    if (!id) return;
+
+
+    console.log(
+        "🏆 Loading tournament:",
+        id
+    );
+
+
+    try {
+
+        const tournamentRef =
             doc(
                 db,
                 "tournaments",
-                tournamentId
-            )
-        );
+                id
+            );
 
-    if (!tournamentSnap.exists()) {
 
-        pointsHeader.innerHTML = `
+        const tournamentSnap =
+            await getDoc(
+                tournamentRef
+            );
 
-            <div class="empty">
 
+        if (!tournamentSnap.exists()) {
+
+            pointsHeader.innerHTML = `
                 <h2>
                     ❌ Tournament Not Found
                 </h2>
+            `;
 
-                <p>
+            return;
+        }
 
-                    Tournament ID:
-                    <b>${tournamentId}</b>
 
-                </p>
+        const tournament =
+            tournamentSnap.data();
+
+
+        const name =
+            tournament.tournamentName ||
+            tournament.name ||
+            tournament.title ||
+            "Tournament";
+
+
+        const venue =
+            tournament.venue ||
+            tournament.location ||
+            "-";
+
+
+        const teams =
+            tournament.totalTeams ||
+            tournament.teamCount ||
+            0;
+
+
+        pointsHeader.innerHTML = `
+
+            <h2>
+                🏆 ${escapeHTML(name)}
+            </h2>
+
+            <p>
+                📍 <b>Venue:</b>
+                ${escapeHTML(venue)}
+            </p>
+
+            <p>
+                👥 <b>Teams:</b>
+                ${escapeHTML(teams)}
+            </p>
+
+            <div class="id-box">
+
+                🆔
+                <b>Tournament ID:</b>
+                ${escapeHTML(id)}
 
             </div>
 
         `;
 
-        return false;
-    }
 
-    const tournament =
-        tournamentSnap.data();
-
-    pointsHeader.innerHTML = `
-
-        <h2>
-
-            🏆
-            ${
-                tournament.tournamentName ||
-                "Tournament"
-            }
-
-        </h2>
-
-        <p>
-
-            📍
-            <b>Venue:</b>
-
-            ${
-                tournament.venue ||
-                "-"
-            }
-
-        </p>
-
-        <div class="id-box">
-
-            🆔
-            <b>Tournament ID:</b>
-
-            ${tournamentId}
-
-        </div>
-
-    `;
-
-    return true;
-}
+        saveTournamentId(id);
 
 
-/* =========================
-   LOAD TEAMS
-========================= */
+        // ========================================
+        // UPDATE LINKS
+        // ========================================
 
-async function loadTeams() {
+        const query =
+            "?id=" +
+            encodeURIComponent(id);
 
-    const teamsSnapshot =
-        await getDocs(
-            collection(
-                db,
-                "tournaments",
-                tournamentId,
-                "teams"
-            )
-        );
 
-    const teams = {};
+        if (tournamentLink) {
 
-    teamsSnapshot.forEach(
-        teamDoc => {
-
-            const data =
-                teamDoc.data();
-
-            const name =
-                data.teamName ||
-                data.name ||
-                teamDoc.id;
-
-            teams[name] = {
-
-                teamName:
-                    name,
-
-                played: 0,
-
-                won: 0,
-
-                lost: 0,
-
-                noResult: 0,
-
-                points: 0,
-
-                runsFor: 0,
-
-                runsAgainst: 0
-
-            };
+            tournamentLink.href =
+                "tournament.html" + query;
 
         }
-    );
-
-    return teams;
-}
 
 
-/* =========================
-   NUMBER HELPER
-========================= */
+        if (teamsLink) {
 
-function getRuns(score) {
+            teamsLink.href =
+                "teams.html" + query;
 
-    if (!score) {
-        return 0;
-    }
+        }
 
-    const text =
-        String(score);
 
-    const match =
-        text.match(
-            /(\d+)\s*(?:\/\s*\d+)?/
+        if (scheduleLink) {
+
+            scheduleLink.href =
+                "schedule.html" + query;
+
+        }
+
+
+        if (resultsLink) {
+
+            resultsLink.href =
+                "results.html" + query;
+
+        }
+
+
+        if (liveScoreLink) {
+
+            liveScoreLink.href =
+                "live-score.html" + query;
+
+        }
+
+
+        // ========================================
+        // LOAD POINTS
+        // ========================================
+
+        await loadPointsTable(id);
+
+
+    } catch (error) {
+
+        console.error(
+            "❌ TOURNAMENT ERROR:",
+            error
         );
 
-    if (!match) {
-        return 0;
+        pointsHeader.innerHTML = `
+            <h2>❌ Error</h2>
+            <p>${escapeHTML(error.message)}</p>
+        `;
+
     }
 
-    return Number(
-        match[1]
-    ) || 0;
 }
 
 
-/* =========================
-   LOAD MATCHES
-========================= */
+// ========================================
+// LOAD POINTS TABLE
+// ========================================
 
-async function loadPoints() {
+async function loadPointsTable(id) {
+
+    console.log(
+        "📊 Loading points table:",
+        id
+    );
+
+
+    pointsBody.innerHTML = `
+        <tr>
+            <td colspan="8">
+                ⏳ Loading...
+            </td>
+        </tr>
+    `;
+
 
     try {
 
-        const teams =
-            await loadTeams();
+        // ========================================
+        // LOAD TEAMS
+        // ========================================
+
+        const teamsRef =
+            collection(
+                db,
+                "tournaments",
+                id,
+                "teams"
+            );
+
+
+        const teamsSnapshot =
+            await getDocs(
+                teamsRef
+            );
+
+
+        console.log(
+            "👥 TEAM COUNT:",
+            teamsSnapshot.size
+        );
+
+
+        const teamMap = new Map();
+
+
+        teamsSnapshot.forEach(
+            teamDoc => {
+
+                const team =
+                    teamDoc.data();
+
+
+                const teamName =
+                    team.teamName ||
+                    team.name ||
+                    team.team ||
+                    teamDoc.id;
+
+
+                teamMap.set(
+                    teamDoc.id,
+                    {
+                        id: teamDoc.id,
+                        name: teamName,
+                        played: 0,
+                        won: 0,
+                        lost: 0,
+                        nr: 0,
+                        points: 0,
+                        nrr: Number(
+                            team.nrr || 0
+                        )
+                    }
+                );
+
+            }
+        );
+
+
+        // ========================================
+        // LOAD MATCHES
+        // ========================================
+
+        const matchesRef =
+            collection(
+                db,
+                "tournaments",
+                id,
+                "matches"
+            );
+
 
         const matchesSnapshot =
             await getDocs(
-                collection(
-                    db,
-                    "tournaments",
-                    tournamentId,
-                    "matches"
-                )
+                matchesRef
             );
 
+
+        console.log(
+            "🏏 MATCH COUNT:",
+            matchesSnapshot.size
+        );
+
+
+        // ========================================
+        // PROCESS MATCHES
+        // ========================================
 
         matchesSnapshot.forEach(
             matchDoc => {
@@ -344,175 +560,135 @@ async function loadPoints() {
                 const match =
                     matchDoc.data();
 
+
                 const teamA =
-                    match.teamA;
-
-                const teamB =
-                    match.teamB;
-
-                if (
-                    !teamA ||
-                    !teamB
-                ) {
-                    return;
-                }
-
-
-                /* =====================
-                   CREATE TEAM IF MISSING
-                ===================== */
-
-                if (!teams[teamA]) {
-
-                    teams[teamA] = {
-
-                        teamName:
-                            teamA,
-
-                        played: 0,
-
-                        won: 0,
-
-                        lost: 0,
-
-                        noResult: 0,
-
-                        points: 0,
-
-                        runsFor: 0,
-
-                        runsAgainst: 0
-
-                    };
-
-                }
-
-
-                if (!teams[teamB]) {
-
-                    teams[teamB] = {
-
-                        teamName:
-                            teamB,
-
-                        played: 0,
-
-                        won: 0,
-
-                        lost: 0,
-
-                        noResult: 0,
-
-                        points: 0,
-
-                        runsFor: 0,
-
-                        runsAgainst: 0
-
-                    };
-
-                }
-
-
-                const status =
-                    String(
-                        match.status ||
-                        ""
-                    ).toLowerCase();
-
-
-                const winner =
-                    match.winner ||
+                    match.teamA ||
+                    match.team1 ||
+                    match.team1Name ||
+                    match.homeTeam ||
                     "";
 
 
-                /* =====================
-                   ONLY COMPLETED MATCH
-                ===================== */
-
-                if (
-                    status !==
-                    "completed"
-                ) {
-                    return;
-                }
+                const teamB =
+                    match.teamB ||
+                    match.team2 ||
+                    match.team2Name ||
+                    match.awayTeam ||
+                    "";
 
 
-                teams[teamA].played++;
-
-                teams[teamB].played++;
-
-
-                const scoreA =
-                    getRuns(
-                        match.scoreA
-                    );
-
-                const scoreB =
-                    getRuns(
-                        match.scoreB
-                    );
+                const result =
+                    String(
+                        match.result || ""
+                    ).trim();
 
 
-                teams[teamA].runsFor +=
-                    scoreA;
-
-                teams[teamA].runsAgainst +=
-                    scoreB;
-
-                teams[teamB].runsFor +=
-                    scoreB;
-
-                teams[teamB].runsAgainst +=
-                    scoreA;
-
-
-                /* =====================
-                   DRAW
-                ===================== */
-
-                if (
-                    winner === "Draw"
-                ) {
-
-                    teams[teamA].noResult++;
-
-                    teams[teamB].noResult++;
-
-                    teams[teamA].points += 1;
-
-                    teams[teamB].points += 1;
+                if (!result) {
 
                     return;
+
                 }
 
 
-                /* =====================
-                   WINNER
-                ===================== */
+                // Find teams by name
+
+                let teamAData =
+                    findTeam(
+                        teamMap,
+                        teamA
+                    );
+
+
+                let teamBData =
+                    findTeam(
+                        teamMap,
+                        teamB
+                    );
+
+
+                if (!teamAData || !teamBData) {
+
+                    return;
+
+                }
+
+
+                teamAData.played++;
+                teamBData.played++;
+
+
+                const resultLower =
+                    result.toLowerCase();
+
+
+                // ==================================
+                // NO RESULT
+                // ==================================
 
                 if (
-                    winner === teamA
+                    resultLower.includes(
+                        "no result"
+                    ) ||
+                    resultLower === "nr"
                 ) {
 
-                    teams[teamA].won++;
+                    teamAData.nr++;
+                    teamBData.nr++;
 
-                    teams[teamA].points += 2;
+                    teamAData.points += 1;
+                    teamBData.points += 1;
 
-                    teams[teamB].lost++;
+                    return;
 
                 }
 
+
+                // ==================================
+                // DRAW / TIE
+                // ==================================
+
+                if (
+                    resultLower.includes(
+                        "tie"
+                    ) ||
+                    resultLower.includes(
+                        "draw"
+                    )
+                ) {
+
+                    teamAData.points += 1;
+                    teamBData.points += 1;
+
+                    return;
+
+                }
+
+
+                // ==================================
+                // WINNER
+                // ==================================
+
+                if (
+                    resultLower.includes(
+                        String(teamA).toLowerCase()
+                    )
+                ) {
+
+                    teamAData.won++;
+                    teamAData.points += 2;
+                    teamBData.lost++;
+
+                }
 
                 else if (
-                    winner === teamB
+                    resultLower.includes(
+                        String(teamB).toLowerCase()
+                    )
                 ) {
 
-                    teams[teamB].won++;
-
-                    teams[teamB].points += 2;
-
-                    teams[teamA].lost++;
+                    teamBData.won++;
+                    teamBData.points += 2;
+                    teamAData.lost++;
 
                 }
 
@@ -520,50 +696,47 @@ async function loadPoints() {
         );
 
 
-        /* =========================
-           CALCULATE NRR
-        ========================= */
+        // ========================================
+        // NO TEAMS
+        // ========================================
 
-        Object.values(
-            teams
-        ).forEach(
-            team => {
+        if (teamMap.size === 0) {
 
-                const forRuns =
-                    team.runsFor;
+            pointsBody.innerHTML = `
 
-                const againstRuns =
-                    team.runsAgainst;
+                <tr>
 
-                if (
-                    forRuns === 0 &&
-                    againstRuns === 0
-                ) {
+                    <td colspan="8">
 
-                    team.nrr = 0;
+                        👥 No teams found.
 
-                    return;
+                        <br><br>
 
-                }
+                        Please add teams
+                        to this tournament.
 
-                team.nrr =
-                    forRuns -
-                    againstRuns;
+                    </td>
 
-            }
-        );
+                </tr>
+
+            `;
+
+            return;
+
+        }
 
 
-        /* =========================
-           SORT
-        ========================= */
+        // ========================================
+        // SORT
+        // ========================================
 
-        const teamArray =
-            Object.values(
-                teams
+        const teams =
+            Array.from(
+                teamMap.values()
             );
 
-        teamArray.sort(
+
+        teams.sort(
             (a, b) => {
 
                 if (
@@ -580,58 +753,35 @@ async function loadPoints() {
 
 
                 if (
-                    b.nrr !==
-                    a.nrr
+                    b.won !==
+                    a.won
                 ) {
 
                     return (
-                        b.nrr -
-                        a.nrr
+                        b.won -
+                        a.won
                     );
 
                 }
 
 
                 return (
-                    b.won -
-                    a.won
+                    b.nrr -
+                    a.nrr
                 );
 
             }
         );
 
 
-        /* =========================
-           DISPLAY
-        ========================= */
+        // ========================================
+        // DISPLAY
+        // ========================================
 
         pointsBody.innerHTML = "";
 
 
-        if (
-            teamArray.length === 0
-        ) {
-
-            pointsBody.innerHTML = `
-
-                <tr>
-
-                    <td colspan="8">
-
-                        👥 No teams found.
-
-                    </td>
-
-                </tr>
-
-            `;
-
-            return;
-
-        }
-
-
-        teamArray.forEach(
+        teams.forEach(
             (team, index) => {
 
                 const row =
@@ -643,12 +793,16 @@ async function loadPoints() {
                 row.innerHTML = `
 
                     <td>
-                        ${index + 1}
+                        <b>
+                            ${index + 1}
+                        </b>
                     </td>
 
                     <td>
                         <b>
-                            ${team.teamName}
+                            ${escapeHTML(
+                                team.name
+                            )}
                         </b>
                     </td>
 
@@ -665,7 +819,7 @@ async function loadPoints() {
                     </td>
 
                     <td>
-                        ${team.noResult}
+                        ${team.nr}
                     </td>
 
                     <td>
@@ -675,7 +829,7 @@ async function loadPoints() {
                     </td>
 
                     <td>
-                        ${team.nrr.toFixed(2)}
+                        ${team.nrr.toFixed(3)}
                     </td>
 
                 `;
@@ -689,10 +843,14 @@ async function loadPoints() {
         );
 
 
+        console.log(
+            "✅ POINTS TABLE DISPLAYED"
+        );
+
     } catch (error) {
 
         console.error(
-            "Points Error:",
+            "❌ POINTS TABLE ERROR:",
             error
         );
 
@@ -703,8 +861,13 @@ async function loadPoints() {
 
                 <td colspan="8">
 
-                    ❌
-                    ${error.message}
+                    ❌ Unable to load points table.
+
+                    <br><br>
+
+                    ${escapeHTML(
+                        error.message
+                    )}
 
                 </td>
 
@@ -713,45 +876,125 @@ async function loadPoints() {
         `;
 
     }
+
 }
 
 
-/* =========================
-   LOGIN
-========================= */
+// ========================================
+// FIND TEAM
+// ========================================
 
-onAuthStateChanged(
-    auth,
-    async user => {
+function findTeam(
+    teamMap,
+    name
+) {
 
-        if (!user) {
-
-            window.location.href =
-                "login.html";
-
-            return;
-
-        }
+    if (!name) return null;
 
 
-        try {
+    const search =
+        String(name)
+        .trim()
+        .toLowerCase();
 
-            const loaded =
-                await loadTournament();
 
-            if (loaded) {
+    for (
+        const team of teamMap.values()
+    ) {
 
-                await loadPoints();
+        if (
+            team.name
+                .trim()
+                .toLowerCase()
+            === search
+        ) {
 
-            }
-
-        } catch (error) {
-
-            console.error(
-                error
-            );
+            return team;
 
         }
 
     }
+
+
+    return null;
+
+}
+
+
+// ========================================
+// DROPDOWN CHANGE
+// ========================================
+
+if (tournamentSelect) {
+
+    tournamentSelect.addEventListener(
+        "change",
+        async function() {
+
+            const id =
+                this.value;
+
+
+            if (!id) return;
+
+
+            console.log(
+                "🔄 TOURNAMENT CHANGED:",
+                id
+            );
+
+
+            saveTournamentId(id);
+
+
+            await loadTournament(
+                id
+            );
+
+        }
+    );
+
+}
+
+
+// ========================================
+// SAFE HTML
+// ========================================
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
+
+
+// ========================================
+// START
+// ========================================
+
+loadTournaments();
+
+
+console.log(
+    "🚀 POINTS TABLE READY"
 );

@@ -1,3 +1,8 @@
+// ======================================================
+// APL TOURNAMENT PLATFORM
+// PROFILE.JS
+// ======================================================
+
 import { auth, db } from "../firebase.js";
 
 import {
@@ -13,9 +18,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 
-// =========================
+console.log("👤 PROFILE JAVASCRIPT LOADED SUCCESSFULLY");
+
+
+// ======================================================
 // ELEMENTS
-// =========================
+// ======================================================
 
 const profileName =
     document.getElementById("profileName");
@@ -44,6 +52,9 @@ const saveProfileBtn =
 const message =
     document.getElementById("message");
 
+const accountStatus =
+    document.getElementById("accountStatus");
+
 const userId =
     document.getElementById("userId");
 
@@ -51,123 +62,300 @@ const logoutBtn =
     document.getElementById("logoutBtn");
 
 
-// =========================
-// SHOW MESSAGE
-// =========================
+// ======================================================
+// CURRENT USER
+// ======================================================
 
-function showMessage(text, success = true) {
+let currentUser = null;
+
+
+// ======================================================
+// MESSAGE
+// ======================================================
+
+function showMessage(text, type = "success") {
 
     if (!message) return;
 
     message.textContent = text;
 
-    message.style.color =
-        success ? "#059669" : "#dc2626";
+    message.style.marginTop = "15px";
+    message.style.fontWeight = "bold";
 
-}
-
-
-// =========================
-// LOAD PROFILE
-// =========================
-
-async function loadProfile(user) {
-
-    try {
-
-        const profileRef =
-            doc(
-                db,
-                "users",
-                user.uid
-            );
-
-
-        const profileSnap =
-            await getDoc(profileRef);
-
-
-        // Firebase account information
-
-        const firebaseName =
-            user.displayName || "Organizer";
-
-        const firebaseEmail =
-            user.email || "";
-
-
-        profileName.textContent =
-            firebaseName;
-
-        profileEmail.textContent =
-            firebaseEmail;
-
-
-        emailInput.value =
-            firebaseEmail;
-
-
-        userId.textContent =
-            user.uid;
-
-
-        // Firestore profile
-
-        if (profileSnap.exists()) {
-
-            const data =
-                profileSnap.data();
-
-
-            nameInput.value =
-                data.name ||
-                firebaseName;
-
-
-            mobileInput.value =
-                data.mobile ||
-                "";
-
-
-            cityInput.value =
-                data.city ||
-                "";
-
-
-            organizationInput.value =
-                data.organization ||
-                "";
-
-
-            profileName.textContent =
-                data.name ||
-                firebaseName;
-
-        } else {
-
-            nameInput.value =
-                firebaseName;
-
-        }
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        showMessage(
-            "❌ " + error.message,
-            false
-        );
-
+    if (type === "error") {
+        message.style.color = "#dc2626";
+    } else {
+        message.style.color = "#16a34a";
     }
 
 }
 
 
-// =========================
+// ======================================================
+// AUTH STATE
+// ======================================================
+
+onAuthStateChanged(
+    auth,
+    async (user) => {
+
+        console.log(
+            "PROFILE AUTH:",
+            user
+        );
+
+
+        // ==============================================
+        // NOT LOGGED IN
+        // ==============================================
+
+        if (!user) {
+
+            currentUser = null;
+
+            window.location.href =
+                "./login.html";
+
+            return;
+        }
+
+
+        // ==============================================
+        // LOGGED IN
+        // ==============================================
+
+        currentUser = user;
+
+
+        const uid =
+            user.uid;
+
+        const email =
+            user.email || "";
+
+
+        // ==============================================
+        // BASIC AUTH DATA
+        // ==============================================
+
+        if (profileEmail) {
+
+            profileEmail.textContent =
+                email || "No email";
+
+        }
+
+
+        if (emailInput) {
+
+            emailInput.value =
+                email;
+
+        }
+
+
+        if (userId) {
+
+            userId.textContent =
+                uid;
+
+        }
+
+
+        if (accountStatus) {
+
+            accountStatus.textContent =
+                "Active";
+
+        }
+
+
+        // ==============================================
+        // FIRESTORE PROFILE
+        // ==============================================
+
+        try {
+
+            const profileRef =
+                doc(
+                    db,
+                    "users",
+                    uid
+                );
+
+
+            const profileSnap =
+                await getDoc(
+                    profileRef
+                );
+
+
+            // ==========================================
+            // PROFILE EXISTS
+            // ==========================================
+
+            if (profileSnap.exists()) {
+
+                const data =
+                    profileSnap.data();
+
+
+                console.log(
+                    "✅ Firestore profile found:",
+                    data
+                );
+
+
+                const fullName =
+                    data.name ||
+                    user.displayName ||
+                    email.split("@")[0] ||
+                    "Organizer";
+
+
+                if (profileName) {
+
+                    profileName.textContent =
+                        fullName;
+
+                }
+
+
+                if (nameInput) {
+
+                    nameInput.value =
+                        data.name || "";
+
+                }
+
+
+                if (mobileInput) {
+
+                    mobileInput.value =
+                        data.mobile || "";
+
+                }
+
+
+                if (cityInput) {
+
+                    cityInput.value =
+                        data.city || "";
+
+                }
+
+
+                if (organizationInput) {
+
+                    organizationInput.value =
+                        data.organization || "";
+
+                }
+
+
+            }
+
+            // ==========================================
+            // PROFILE DOES NOT EXIST
+            // ==========================================
+
+            else {
+
+                console.log(
+                    "No Firestore profile found. Creating profile..."
+                );
+
+
+                const defaultName =
+                    user.displayName ||
+                    email.split("@")[0] ||
+                    "Organizer";
+
+
+                await setDoc(
+                    profileRef,
+                    {
+
+                        uid:
+                            uid,
+
+                        name:
+                            defaultName,
+
+                        email:
+                            email,
+
+                        mobile:
+                            "",
+
+                        city:
+                            "",
+
+                        organization:
+                            "",
+
+                        accountStatus:
+                            "Active",
+
+                        createdAt:
+                            serverTimestamp(),
+
+                        updatedAt:
+                            serverTimestamp()
+
+                    },
+                    {
+                        merge: true
+                    }
+                );
+
+
+                console.log(
+                    "✅ New Firestore profile created"
+                );
+
+
+                if (profileName) {
+
+                    profileName.textContent =
+                        defaultName;
+
+                }
+
+
+                if (nameInput) {
+
+                    nameInput.value =
+                        defaultName;
+
+                }
+
+            }
+
+
+        } catch (error) {
+
+            console.error(
+                "❌ PROFILE FIRESTORE ERROR:",
+                error
+            );
+
+
+            showMessage(
+                "Profile loading failed: " +
+                error.message,
+                "error"
+            );
+
+        }
+
+    }
+);
+
+
+// ======================================================
 // SAVE PROFILE
-// =========================
+// ======================================================
 
 if (saveProfileBtn) {
 
@@ -175,46 +363,41 @@ if (saveProfileBtn) {
         "click",
         async () => {
 
-            const user =
-                auth.currentUser;
+            if (!currentUser) {
 
-
-            if (!user) {
-
-                alert(
-                    "❌ Please login first."
+                showMessage(
+                    "Please login first.",
+                    "error"
                 );
 
-                window.location.href =
-                    "login.html";
-
                 return;
-
             }
 
 
             const name =
-                nameInput.value.trim();
+                nameInput?.value.trim() || "";
+
 
             const mobile =
-                mobileInput.value.trim();
+                mobileInput?.value.trim() || "";
+
 
             const city =
-                cityInput.value.trim();
+                cityInput?.value.trim() || "";
+
 
             const organization =
-                organizationInput.value.trim();
+                organizationInput?.value.trim() || "";
 
 
             if (!name) {
 
                 showMessage(
-                    "⚠️ Please enter your name.",
-                    false
+                    "Please enter your full name.",
+                    "error"
                 );
 
                 return;
-
             }
 
 
@@ -224,27 +407,29 @@ if (saveProfileBtn) {
                     true;
 
                 saveProfileBtn.textContent =
-                    "⏳ Saving...";
+                    "Saving...";
 
 
-                await setDoc(
-
+                const profileRef =
                     doc(
                         db,
                         "users",
-                        user.uid
-                    ),
+                        currentUser.uid
+                    );
 
+
+                await setDoc(
+                    profileRef,
                     {
 
                         uid:
-                            user.uid,
+                            currentUser.uid,
 
                         name:
                             name,
 
                         email:
-                            user.email || "",
+                            currentUser.email || "",
 
                         mobile:
                             mobile,
@@ -255,38 +440,50 @@ if (saveProfileBtn) {
                         organization:
                             organization,
 
+                        accountStatus:
+                            "Active",
+
                         updatedAt:
                             serverTimestamp()
 
                     },
-
                     {
                         merge: true
                     }
-
                 );
 
 
-                profileName.textContent =
-                    name;
+                if (profileName) {
 
+                    profileName.textContent =
+                        name;
 
-                profileEmail.textContent =
-                    user.email || "";
+                }
 
 
                 showMessage(
-                    "✅ Profile Saved Successfully!"
+                    "✅ Profile saved successfully!",
+                    "success"
+                );
+
+
+                console.log(
+                    "✅ Profile saved successfully"
                 );
 
 
             } catch (error) {
 
-                console.error(error);
+                console.error(
+                    "❌ PROFILE SAVE ERROR:",
+                    error
+                );
+
 
                 showMessage(
-                    "❌ " + error.message,
-                    false
+                    "Profile save failed: " +
+                    error.message,
+                    "error"
                 );
 
 
@@ -306,9 +503,9 @@ if (saveProfileBtn) {
 }
 
 
-// =========================
+// ======================================================
 // LOGOUT
-// =========================
+// ======================================================
 
 if (logoutBtn) {
 
@@ -320,16 +517,39 @@ if (logoutBtn) {
 
                 await signOut(auth);
 
+                localStorage.removeItem(
+                    "selectedTournamentId"
+                );
+
+                localStorage.removeItem(
+                    "tournamentId"
+                );
+
+                sessionStorage.removeItem(
+                    "selectedTournamentId"
+                );
+
+                sessionStorage.removeItem(
+                    "tournamentId"
+                );
+
+
                 window.location.href =
-                    "login.html";
+                    "./login.html";
+
 
             } catch (error) {
 
-                console.error(error);
+                console.error(
+                    "❌ LOGOUT ERROR:",
+                    error
+                );
 
-                alert(
-                    "❌ Logout Error: " +
-                    error.message
+
+                showMessage(
+                    "Logout failed: " +
+                    error.message,
+                    "error"
                 );
 
             }
@@ -338,27 +558,3 @@ if (logoutBtn) {
     );
 
 }
-
-
-// =========================
-// AUTH STATE
-// =========================
-
-onAuthStateChanged(
-    auth,
-    (user) => {
-
-        if (!user) {
-
-            window.location.href =
-                "login.html";
-
-            return;
-
-        }
-
-
-        loadProfile(user);
-
-    }
-);

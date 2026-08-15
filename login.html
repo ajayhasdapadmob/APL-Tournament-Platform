@@ -10,12 +10,387 @@
     content="width=device-width, initial-scale=1.0"
 >
 
-<title>Organizer Login</title>
+<title>Organizer Login - APL Tournament Platform</title>
+
+<link
+    rel="manifest"
+    href="./manifest.json"
+>
+
+<link
+    rel="icon"
+    type="image/png"
+    href="./images/icon-192.png"
+>
+
+<meta
+    name="theme-color"
+    content="#0f172a"
+>
 
 <link
     rel="stylesheet"
-    href="css/style.css"
+    href="./css/style.css"
 >
+
+
+<style>
+
+/* ========================================
+   LOGIN PAGE
+======================================== */
+
+.login-container {
+
+    width: 100%;
+    max-width: 520px;
+
+    margin: auto;
+
+    padding:
+        30px 20px
+        110px;
+
+}
+
+
+/* ========================================
+   LOGIN CARD
+======================================== */
+
+.login-card {
+
+    background: white;
+
+    border-radius: 26px;
+
+    padding: 28px 22px;
+
+    box-shadow:
+        0 10px 30px
+        rgba(0,0,0,0.25);
+
+}
+
+
+.login-icon {
+
+    width: 70px;
+    height: 70px;
+
+    margin: 0 auto 15px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 20px;
+
+    background: #eff6ff;
+
+    font-size: 38px;
+
+}
+
+
+.login-card h2 {
+
+    text-align: center;
+
+    color: #0f172a;
+
+    font-size: 25px;
+
+    margin-bottom: 8px;
+
+}
+
+
+.login-card > p {
+
+    text-align: center;
+
+    color: #64748b;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
+    margin-bottom: 22px;
+
+}
+
+
+/* ========================================
+   MODE BUTTONS
+======================================== */
+
+.mode-buttons {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 8px;
+
+    margin-bottom: 20px;
+
+}
+
+
+.mode-btn {
+
+    padding: 12px;
+
+    border: none;
+
+    border-radius: 11px;
+
+    background: #e2e8f0;
+
+    color: #475569;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+}
+
+
+.mode-btn.active {
+
+    background: #1d4ed8;
+
+    color: white;
+
+}
+
+
+/* ========================================
+   FORM
+======================================== */
+
+.form-group {
+
+    margin-bottom: 14px;
+
+}
+
+
+.form-group label {
+
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #334155;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+}
+
+
+.form-group input {
+
+    width: 100%;
+
+    padding: 13px;
+
+    border:
+
+        1px solid
+        #cbd5e1;
+
+    border-radius: 11px;
+
+    outline: none;
+
+    background: white;
+
+    color: #0f172a;
+
+    font-size: 14px;
+
+}
+
+
+.form-group input:focus {
+
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(37,99,235,0.10);
+
+}
+
+
+/* ========================================
+   SUBMIT
+======================================== */
+
+.submit-btn {
+
+    width: 100%;
+
+    padding: 14px;
+
+    margin-top: 5px;
+
+    border: none;
+
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #1d4ed8
+        );
+
+    color: white;
+
+    font-size: 15px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 5px 15px
+        rgba(29,78,216,0.30);
+
+}
+
+
+.submit-btn:disabled {
+
+    opacity: 0.65;
+
+    cursor: not-allowed;
+
+}
+
+
+/* ========================================
+   MESSAGE
+======================================== */
+
+#message {
+
+    margin-top: 15px;
+
+    padding: 11px;
+
+    border-radius: 10px;
+
+    text-align: center;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
+    display: none;
+
+}
+
+
+#message.success {
+
+    display: block;
+
+    background: #dcfce7;
+
+    color: #166534;
+
+}
+
+
+#message.error {
+
+    display: block;
+
+    background: #fee2e2;
+
+    color: #991b1b;
+
+}
+
+
+/* ========================================
+   BACK
+======================================== */
+
+.back-home {
+
+    display: block;
+
+    margin-top: 18px;
+
+    text-align: center;
+
+    color: #1d4ed8;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    text-decoration: none;
+
+}
+
+
+/* ========================================
+   HIDE
+======================================== */
+
+.hidden {
+
+    display: none !important;
+
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 430px) {
+
+    .login-container {
+
+        padding:
+            22px 14px
+            100px;
+
+    }
+
+
+    .login-card {
+
+        padding:
+            25px 18px;
+
+        border-radius: 23px;
+
+    }
+
+
+    .login-card h2 {
+
+        font-size: 23px;
+
+    }
+
+}
+
+</style>
 
 </head>
 
@@ -23,108 +398,218 @@
 <body>
 
 
-<header class="top-header">
+<!-- ========================================
+     HEADER
+======================================== -->
 
-    <div class="logo">
-        🏏
+<header class="app-header">
+
+    <div class="app-logo">
+
+        <img
+            src="./images/icon-192.png"
+            alt="APL Logo"
+            onerror="
+                this.src='./images/APL.logo.jpg'
+            "
+        >
+
     </div>
 
-    <div>
-        <h1>APL Tournament Platform</h1>
-        <p>Organizer Login</p>
+
+    <div class="app-title">
+
+        <h1>
+            APL Tournament Platform
+        </h1>
+
+        <span>
+            Organizer Account
+        </span>
+
     </div>
 
 </header>
 
 
-<main class="home-container">
+
+<!-- ========================================
+     MAIN
+======================================== -->
+
+<main class="login-container">
 
 
-<section class="hero">
+<section class="login-card">
 
 
-<h2>
-🔐 Organizer Login
-</h2>
+    <div class="login-icon">
+        🏏
+    </div>
 
 
-<p>
-Login to create and manage your
-cricket tournaments.
-</p>
+    <h2 id="pageTitle">
+        Organizer Login
+    </h2>
 
 
-<br>
+    <p id="pageDescription">
+
+        Login to create and manage
+        your tournaments.
+
+    </p>
 
 
-<form id="loginForm">
+
+    <!-- ====================================
+         LOGIN / CREATE ACCOUNT
+    ===================================== -->
+
+    <div class="mode-buttons">
+
+        <button
+            type="button"
+            id="loginModeBtn"
+            class="mode-btn active"
+        >
+            🔐 Login
+        </button>
 
 
-<input
-    type="email"
-    id="email"
-    placeholder="Email Address"
-    required
-    style="
-        width:100%;
-        max-width:450px;
-        padding:13px;
-        margin:8px auto;
-        border:1px solid #d1d5db;
-        border-radius:8px;
-        display:block;
-    "
->
+        <button
+            type="button"
+            id="registerModeBtn"
+            class="mode-btn"
+        >
+            📝 Create Account
+        </button>
+
+    </div>
 
 
-<input
-    type="password"
-    id="password"
-    placeholder="Password"
-    required
-    style="
-        width:100%;
-        max-width:450px;
-        padding:13px;
-        margin:8px auto;
-        border:1px solid #d1d5db;
-        border-radius:8px;
-        display:block;
-    "
->
+
+    <!-- ====================================
+         FORM
+    ===================================== -->
+
+    <form id="loginForm">
 
 
-<button
-    type="submit"
-    class="btn primary-btn"
->
-    🔐 Login
-</button>
+        <!-- NAME -->
+
+        <div
+            class="form-group hidden"
+            id="nameGroup"
+        >
+
+            <label for="name">
+                Full Name
+            </label>
+
+            <input
+                type="text"
+                id="name"
+                placeholder="Enter your full name"
+            >
+
+        </div>
 
 
-</form>
+
+        <!-- EMAIL -->
+
+        <div class="form-group">
+
+            <label for="email">
+                Email Address
+            </label>
+
+            <input
+                type="email"
+                id="email"
+                placeholder="Enter email address"
+                autocomplete="email"
+                required
+            >
+
+        </div>
 
 
-<p
-    id="message"
-    style="margin-top:15px;"
-></p>
+
+        <!-- PASSWORD -->
+
+        <div class="form-group">
+
+            <label for="password">
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="password"
+                placeholder="Enter password"
+                autocomplete="current-password"
+                required
+            >
+
+        </div>
 
 
-<br>
+
+        <!-- CONFIRM PASSWORD -->
+
+        <div
+            class="form-group hidden"
+            id="confirmPasswordGroup"
+        >
+
+            <label for="confirmPassword">
+                Confirm Password
+            </label>
+
+            <input
+                type="password"
+                id="confirmPassword"
+                placeholder="Re-enter password"
+                autocomplete="new-password"
+            >
+
+        </div>
 
 
-<p>
-Don't have an account?
-</p>
+
+        <!-- SUBMIT -->
+
+        <button
+            type="submit"
+            id="submitBtn"
+            class="submit-btn"
+        >
+
+            🔐 Login
+
+        </button>
 
 
-<a
-    href="register.html"
-    class="btn"
->
-    📝 Create Account
-</a>
+    </form>
+
+
+
+    <!-- MESSAGE -->
+
+    <p id="message"></p>
+
+
+
+    <a
+        href="index.html"
+        class="back-home"
+    >
+
+        ⬅ Back to Home
+
+    </a>
 
 
 </section>
@@ -133,9 +618,80 @@ Don't have an account?
 </main>
 
 
+
+<!-- ========================================
+     BOTTOM NAV
+======================================== -->
+
+<nav class="bottom-nav">
+
+
+    <a
+        href="index.html"
+        class="nav-item"
+    >
+
+        <span>🏠</span>
+
+        <small>
+            Home
+        </small>
+
+    </a>
+
+
+    <a
+        href="login.html"
+        class="nav-item active"
+    >
+
+        <span>👤</span>
+
+        <small>
+            Account
+        </small>
+
+    </a>
+
+
+    <a
+        href="my-tournaments.html"
+        class="nav-item"
+    >
+
+        <span>🏆</span>
+
+        <small>
+            Tournaments
+        </small>
+
+    </a>
+
+
+    <a
+        href="profile.html"
+        class="nav-item"
+    >
+
+        <span>⚙️</span>
+
+        <small>
+            Profile
+        </small>
+
+    </a>
+
+</nav>
+
+
+
+<!-- ========================================
+     LOGIN JS
+======================================== -->
+
 <script
     type="module"
-    src="js/login.js"
+    src="./js/login.js?v=50"
 ></script>
 
 

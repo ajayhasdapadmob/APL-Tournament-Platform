@@ -1,0 +1,596 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+
+    background:
+        linear-gradient(
+            rgba(5, 20, 50, 0.58),
+            rgba(5, 20, 50, 0.58)
+        ),
+        url("../images/apl-background.jpg");
+
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+
+    color: #0f172a;
+
+    padding-bottom: 40px;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.profile-header {
+
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 10px 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0f172a,
+            #172554
+        );
+
+    color: white;
+
+    box-shadow:
+        0 4px 15px rgba(0,0,0,0.35);
+}
+
+
+.profile-logo {
+
+    width: 52px;
+    height: 52px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background: white;
+
+    font-size: 28px;
+
+    box-shadow:
+        0 3px 10px rgba(0,0,0,0.35);
+}
+
+
+.profile-header h1 {
+
+    font-size: 20px;
+
+    font-weight: 800;
+
+    line-height: 1.2;
+}
+
+
+.profile-header p {
+
+    margin-top: 4px;
+
+    color: #cbd5e1;
+
+    font-size: 11px;
+}
+
+
+/* =========================================
+   MAIN
+========================================= */
+
+.profile-container {
+
+    width: 100%;
+
+    max-width: 700px;
+
+    margin: auto;
+
+    padding:
+        28px 24px
+        80px;
+}
+
+
+/* =========================================
+   PROFILE CARD
+========================================= */
+
+.profile-card {
+
+    padding: 30px 25px;
+
+    margin-bottom: 25px;
+
+    text-align: center;
+
+    border-radius: 28px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0878f9,
+            #155eef,
+            #1244c7
+        );
+
+    color: white;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.30);
+}
+
+
+.avatar {
+
+    width: 85px;
+    height: 85px;
+
+    margin: 0 auto 15px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: white;
+
+    font-size: 42px;
+
+    box-shadow:
+        0 5px 15px rgba(0,0,0,0.25);
+}
+
+
+.profile-card h2 {
+
+    margin-bottom: 7px;
+
+    font-size: 25px;
+}
+
+
+.profile-card p {
+
+    color: #dbeafe;
+
+    font-size: 14px;
+}
+
+
+/* =========================================
+   INFORMATION CARD
+========================================= */
+
+.info-card {
+
+    padding: 24px;
+
+    margin-bottom: 20px;
+
+    background: white;
+
+    border-radius: 24px;
+
+    box-shadow:
+        0 7px 22px rgba(0,0,0,0.22);
+}
+
+
+.info-card h2 {
+
+    margin-bottom: 20px;
+
+    color: #0f172a;
+
+    font-size: 21px;
+}
+
+
+/* =========================================
+   LABEL
+========================================= */
+
+.info-card label {
+
+    display: block;
+
+    margin-top: 15px;
+    margin-bottom: 7px;
+
+    color: #334155;
+
+    font-size: 14px;
+
+    font-weight: 700;
+}
+
+
+/* =========================================
+   INPUT
+========================================= */
+
+.info-card input {
+
+    width: 100%;
+
+    padding: 14px;
+
+    border: 1px solid #cbd5e1;
+
+    border-radius: 12px;
+
+    background: #f8fafc;
+
+    color: #0f172a;
+
+    font-size: 15px;
+
+    outline: none;
+}
+
+
+.info-card input:focus {
+
+    border-color: #2563eb;
+
+    background: white;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(37,99,235,0.10);
+}
+
+
+.info-card input:read-only {
+
+    background: #e2e8f0;
+
+    color: #64748b;
+}
+
+
+/* =========================================
+   SAVE BUTTON
+========================================= */
+
+.save-btn {
+
+    width: 100%;
+
+    margin-top: 22px;
+
+    padding: 14px;
+
+    border: none;
+
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #1d4ed8
+        );
+
+    color: white;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 5px 15px rgba(29,78,216,0.25);
+}
+
+
+.save-btn:active {
+
+    transform: scale(0.98);
+}
+
+
+.save-btn:disabled {
+
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================
+   MESSAGE
+========================================= */
+
+#message {
+
+    margin-top: 14px;
+
+    text-align: center;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    min-height: 20px;
+}
+
+
+/* =========================================
+   ACCOUNT
+========================================= */
+
+.info-card p {
+
+    margin: 12px 0;
+
+    color: #475569;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+}
+
+
+.info-card p b {
+
+    color: #0f172a;
+}
+
+
+#accountStatus {
+
+    display: inline-block;
+
+    padding: 5px 9px;
+
+    margin-left: 4px;
+
+    border-radius: 8px;
+
+    background: #dcfce7;
+
+    color: #166534;
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+
+#userId {
+
+    display: block;
+
+    margin-top: 7px;
+
+    padding: 10px;
+
+    background: #eff6ff;
+
+    color: #475569;
+
+    border-radius: 9px;
+
+    word-break: break-all;
+
+    font-size: 12px;
+}
+
+
+/* =========================================
+   ACTIONS
+========================================= */
+
+.actions {
+
+    display: flex;
+
+    gap: 12px;
+
+    margin-top: 10px;
+}
+
+
+.back-btn,
+.logout-btn {
+
+    flex: 1;
+
+    padding: 14px;
+
+    border: none;
+
+    border-radius: 13px;
+
+    text-align: center;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+
+.back-btn {
+
+    background: white;
+
+    color: #1d4ed8;
+
+    box-shadow:
+        0 5px 16px rgba(0,0,0,0.18);
+}
+
+
+.logout-btn {
+
+    background: #0f172a;
+
+    color: white;
+
+    box-shadow:
+        0 5px 16px rgba(0,0,0,0.25);
+}
+
+
+/* =========================================
+   FOOTER
+========================================= */
+
+footer {
+
+    text-align: center;
+
+    padding: 20px;
+
+    color: white;
+
+    font-size: 12px;
+
+    text-shadow:
+        0 2px 5px rgba(0,0,0,0.7);
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 430px) {
+
+    .profile-container {
+
+        padding:
+            24px 20px
+            70px;
+    }
+
+
+    .profile-header {
+
+        padding: 10px 14px;
+    }
+
+
+    .profile-logo {
+
+        width: 52px;
+        height: 52px;
+    }
+
+
+    .profile-header h1 {
+
+        font-size: 18px;
+    }
+
+
+    .profile-card {
+
+        padding: 27px 20px;
+
+        border-radius: 27px;
+    }
+
+
+    .avatar {
+
+        width: 78px;
+        height: 78px;
+
+        font-size: 38px;
+    }
+
+
+    .profile-card h2 {
+
+        font-size: 23px;
+    }
+
+
+    .info-card {
+
+        padding: 21px;
+
+        border-radius: 22px;
+    }
+
+
+    .info-card h2 {
+
+        font-size: 19px;
+    }
+
+
+    .actions {
+
+        flex-direction: column;
+    }
+
+
+    .back-btn,
+    .logout-btn {
+
+        width: 100%;
+    }
+
+}
+
+
+/* =========================================
+   SMALL PHONES
+========================================= */
+
+@media (max-width: 360px) {
+
+    .profile-container {
+
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+
+    .profile-card {
+
+        padding: 24px 17px;
+    }
+
+
+    .info-card {
+
+        padding: 18px;
+    }
+
+}

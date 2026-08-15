@@ -3,82 +3,15 @@
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-<title>Purple Cap - APL Tournament</title>
+    <title>Purple Cap - APL Tournament Platform</title>
 
-<link
-    rel="stylesheet"
-    href="css/style.css"
->
-
-<style>
-
-.purple-container {
-    max-width: 1000px;
-    margin: auto;
-}
-
-.page-header {
-    background: white;
-    padding: 25px;
-    border-radius: 16px;
-    text-align: center;
-    margin-bottom: 20px;
-    box-shadow: 0 5px 18px rgba(0,0,0,0.08);
-}
-
-.purple-icon {
-    font-size: 55px;
-}
-
-.player-card {
-    background: white;
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-}
-
-.rank {
-    font-size: 25px;
-    font-weight: bold;
-    min-width: 45px;
-}
-
-.player-info {
-    flex: 1;
-}
-
-.player-info h3 {
-    margin: 0 0 7px 0;
-}
-
-.player-info p {
-    margin: 5px 0;
-}
-
-.wickets {
-    font-size: 25px;
-    font-weight: bold;
-}
-
-.empty {
-    background: white;
-    padding: 30px;
-    border-radius: 15px;
-    text-align: center;
-}
-
-</style>
+    <link rel="stylesheet"
+          href="./css/style.css">
 
 </head>
 
@@ -86,109 +19,354 @@
 <body>
 
 
-<header class="top-header">
+<!-- =========================================
+     HEADER
+========================================= -->
 
-    <div class="logo">
-        🏏
-    </div>
+<header class="app-header">
 
-    <div>
+    <a href="index.html"
+       class="app-logo">
+
+        <img
+            src="./images/apl-logo.jpg"
+            alt="APL Logo"
+        >
+
+    </a>
+
+
+    <div class="app-title">
 
         <h1>
-            Purple Cap
+            APL Tournament Platform
         </h1>
 
-        <p>
-            APL Tournament Platform
-        </p>
+        <span>
+            Purple Cap
+        </span>
 
     </div>
+
+
+    <button
+        id="profileBtn"
+        class="profile-button">
+
+        👤
+
+    </button>
 
 </header>
 
 
 
-<main class="home-container">
+<!-- =========================================
+     MAIN
+========================================= -->
+
+<main class="app-container">
 
 
-<div class="purple-container">
+    <!-- =====================================
+         WELCOME
+    ====================================== -->
 
+    <section class="welcome-card">
 
-<div class="page-header">
+        <p class="welcome-small">
+            🏏 APL Cricket
+        </p>
 
-    <div class="purple-icon">
-        🟣
-    </div>
+        <h2>
+            Purple Cap
+        </h2>
 
-    <h2>
-        Purple Cap
-    </h2>
+        <p>
+            Tournament ke highest
+            wicket-takers yahan dekhiye.
+        </p>
 
-    <p>
-        Top Wicket Takers
-    </p>
-
-</div>
-
-
-
-<div id="tournamentInfo"
-     class="page-header">
-
-    ⏳ Loading Tournament...
-
-</div>
+    </section>
 
 
 
-<div id="playersList">
+    <!-- =====================================
+         TOURNAMENT SELECTOR
+    ====================================== -->
 
-    <div class="empty">
+    <section class="section">
 
-        ⏳ Loading Player Statistics...
+        <div class="tournament-selector">
 
-    </div>
+            <label for="tournamentSelect">
 
-</div>
+                Select Tournament
 
-
-
-<br>
-
-
-<div style="text-align:center;">
-
-    <a
-        id="backBtn"
-        href="my-tournaments.html"
-        class="btn"
-    >
-        ⬅ Back
-    </a>
-
-</div>
+            </label>
 
 
-</div>
+            <select
+                id="tournamentSelect">
+
+                <option value="">
+                    Loading tournaments...
+                </option>
+
+            </select>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================
+         PURPLE CAP LEADER
+    ====================================== -->
+
+    <section class="section">
+
+        <h2 class="section-title">
+
+            🟣 Purple Cap Leader
+
+        </h2>
+
+
+        <div
+            id="purpleLeader"
+            class="team-card-home">
+
+            <div class="loading-teams">
+
+                Loading Purple Cap...
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================
+         WICKET TABLE
+    ====================================== -->
+
+    <section class="section">
+
+        <h2 class="section-title">
+
+            🏆 Wicket Takers
+
+        </h2>
+
+
+        <div
+            id="purpleCapList"
+            class="team-list">
+
+            <div class="loading-teams">
+
+                Loading players...
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================
+         INFORMATION
+    ====================================== -->
+
+    <section class="section">
+
+        <h2 class="section-title">
+
+            Purple Cap
+
+        </h2>
+
+
+        <div class="feature-list">
+
+
+            <div class="feature-item">
+
+                <div class="feature-icon">
+                    🟣
+                </div>
+
+                <div>
+
+                    <strong>
+                        Most Wickets
+                    </strong>
+
+                    <p>
+                        Sabse zyada wickets lene
+                        wale player ko Purple Cap
+                        leaderboard mein top par
+                        rakha jayega.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="feature-item">
+
+                <div class="feature-icon">
+                    📊
+                </div>
+
+                <div>
+
+                    <strong>
+                        Automatic Ranking
+                    </strong>
+
+                    <p>
+                        Wickets ke according
+                        players automatically
+                        rank honge.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="feature-item">
+
+                <div class="feature-icon">
+                    🏏
+                </div>
+
+                <div>
+
+                    <strong>
+                        Live Tournament Data
+                    </strong>
+
+                    <p>
+                        Match data Firebase se
+                        load kiya jayega.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
 
 </main>
 
 
 
-<footer>
+<!-- =========================================
+     BOTTOM NAVIGATION
+========================================= -->
 
-<p>
-🏏 APL Tournament Platform
-</p>
-
-</footer>
+<nav class="bottom-nav">
 
 
+    <a
+        href="index.html"
+        class="nav-item">
+
+        <span>
+            🏠
+        </span>
+
+        <small>
+            Home
+        </small>
+
+    </a>
+
+
+    <a
+        href="dashboard.html"
+        class="nav-item">
+
+        <span>
+            📊
+        </span>
+
+        <small>
+            Dashboard
+        </small>
+
+    </a>
+
+
+    <a
+        href="teams.html"
+        class="nav-item">
+
+        <span>
+            👥
+        </span>
+
+        <small>
+            Teams
+        </small>
+
+    </a>
+
+
+    <a
+        href="matches.html"
+        class="nav-item">
+
+        <span>
+            🏏
+        </span>
+
+        <small>
+            Matches
+        </small>
+
+    </a>
+
+
+    <a
+        href="purple-cap.html"
+        class="nav-item active">
+
+        <span>
+            🟣
+        </span>
+
+        <small>
+            Purple Cap
+        </small>
+
+    </a>
+
+
+</nav>
+
+
+
+<!-- =========================================
+     JAVASCRIPT
+========================================= -->
 
 <script
     type="module"
-    src="js/purple.js"
-></script>
+    src="./js/purple-cap.js">
+</script>
 
 
 </body>

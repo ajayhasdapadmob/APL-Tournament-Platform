@@ -389,22 +389,13 @@ function setupLinks(id) {
 async function loadTournamentList() {
 
     if (!tournamentSelector) {
-
-        console.error(
-            "❌ tournamentSelector not found in HTML"
-        );
-
+        console.error("❌ tournamentSelector not found");
         return;
-
     }
-
 
     try {
 
-        console.log(
-            "🏆 Loading tournament list..."
-        );
-
+        console.log("🏆 Loading ALL tournaments...");
 
         tournamentSelector.innerHTML = `
             <option value="">
@@ -412,28 +403,18 @@ async function loadTournamentList() {
             </option>
         `;
 
-
         const tournamentsRef =
-            collection(
-                db,
-                "tournaments"
-            );
-
+            collection(db, "tournaments");
 
         const snapshot =
-            await getDocs(
-                tournamentsRef
-            );
-
+            await getDocs(tournamentsRef);
 
         console.log(
-            "🏆 Total tournaments:",
+            "🏆 TOTAL TOURNAMENTS FOUND:",
             snapshot.size
         );
 
-
         tournamentSelector.innerHTML = "";
-
 
         if (snapshot.empty) {
 
@@ -444,111 +425,83 @@ async function loadTournamentList() {
             `;
 
             return;
-
         }
-
 
         const currentId =
             getTournamentId();
 
+        let firstTournamentId = null;
 
-        snapshot.forEach(
-            tournamentDoc => {
+        snapshot.forEach((tournamentDoc) => {
 
-                const data =
-                    tournamentDoc.data();
+            const data =
+                tournamentDoc.data();
 
+            const id =
+                tournamentDoc.id;
 
-                const id =
-                    tournamentDoc.id;
+            const name =
+                data.tournamentName ||
+                data.name ||
+                data.title ||
+                "Unnamed Tournament";
 
+            const status =
+                data.status || "";
 
-                const name =
-                    data.tournamentName ||
-                    data.name ||
-                    data.title ||
-                    "Unnamed Tournament";
-
-
-                const status =
-                    data.status ||
-                    "";
-
-
-                const option =
-                    document.createElement(
-                        "option"
-                    );
-
-
-                option.value =
-                    id;
-
-
-                option.textContent =
-                    status
-                        ? `${name} (${status})`
-                        : name;
-
-
-                if (
-                    currentId &&
-                    currentId === id
-                ) {
-
-                    option.selected =
-                        true;
-
-                }
-
-
-                tournamentSelector.appendChild(
-                    option
-                );
-
+            if (!firstTournamentId) {
+                firstTournamentId = id;
             }
-        );
 
+            const option =
+                document.createElement("option");
 
-        // If current ID does not exist,
-        // select first tournament
+            option.value = id;
+
+            option.textContent =
+                status
+                    ? `${name} (${status})`
+                    : name;
+
+            if (
+                currentId &&
+                currentId === id
+            ) {
+                option.selected = true;
+            }
+
+            tournamentSelector.appendChild(
+                option
+            );
+
+        });
 
         let selectedId =
             tournamentSelector.value;
 
-
         if (!selectedId) {
-
             selectedId =
-                tournamentSelector
-                    .options[0]
-                    ?.value || "";
-
+                firstTournamentId;
         }
-
 
         if (selectedId) {
 
             tournamentSelector.value =
                 selectedId;
 
-
             saveTournamentId(
                 selectedId
             );
 
-
             await loadTournament(
                 selectedId
             );
-
         }
 
-
         console.log(
-            "✅ Tournament dropdown ready"
+            "✅ DASHBOARD TOURNAMENTS:",
+            tournamentSelector.options.length
         );
-
 
     } catch (error) {
 
@@ -557,15 +510,12 @@ async function loadTournamentList() {
             error
         );
 
-
         tournamentSelector.innerHTML = `
             <option value="">
                 Error loading tournaments
             </option>
         `;
-
     }
-
 }
 
 

@@ -3,25 +3,29 @@
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<title>My Profile - APL Tournament Platform</title>
+    <title>My Profile - APL Tournament Platform</title>
 
-<link
-    rel="stylesheet"
-    href="css/profile.css"
->
+    <link
+        rel="stylesheet"
+        href="./css/profile.css"
+    >
 
 </head>
 
 
 <body>
 
+
+<!-- =========================================
+     HEADER
+========================================= -->
 
 <header class="profile-header">
 
@@ -45,181 +49,229 @@
 
 
 
+<!-- =========================================
+     MAIN
+========================================= -->
+
 <main class="profile-container">
 
 
-<!-- PROFILE CARD -->
+    <!-- =====================================
+         PROFILE CARD
+    ====================================== -->
 
-<section class="profile-card">
-
-
-    <div class="avatar">
-        👤
-    </div>
+    <section class="profile-card">
 
 
-    <h2 id="profileName">
-        Organizer
-    </h2>
+        <div class="avatar">
+            👤
+        </div>
 
 
-    <p id="profileEmail">
-        Loading email...
-    </p>
+        <h2 id="profileName">
+            Organizer
+        </h2>
 
 
-</section>
+        <p id="profileEmail">
+            Loading email...
+        </p>
 
 
-
-<!-- PROFILE INFORMATION -->
-
-<section class="info-card">
-
-    <h2>
-        👤 Personal Information
-    </h2>
-
-
-    <label>
-        Full Name
-    </label>
-
-    <input
-        type="text"
-        id="name"
-        placeholder="Enter your name"
-    >
-
-
-    <label>
-        Email
-    </label>
-
-    <input
-        type="email"
-        id="email"
-        placeholder="Email"
-        readonly
-    >
-
-
-    <label>
-        Mobile Number
-    </label>
-
-    <input
-        type="tel"
-        id="mobile"
-        placeholder="Enter mobile number"
-    >
-
-
-    <label>
-        City
-    </label>
-
-    <input
-        type="text"
-        id="city"
-        placeholder="Enter city"
-    >
-
-
-    <label>
-        Organization / Club
-    </label>
-
-    <input
-        type="text"
-        id="organization"
-        placeholder="Enter organization or club"
-    >
-
-
-    <button
-        id="saveProfileBtn"
-        class="save-btn"
-    >
-        💾 Save Profile
-    </button>
-
-
-    <p id="message"></p>
-
-</section>
+    </section>
 
 
 
-<!-- ACCOUNT INFORMATION -->
+    <!-- =====================================
+         PERSONAL INFORMATION
+    ====================================== -->
 
-<section class="info-card">
-
-    <h2>
-        🔐 Account
-    </h2>
+    <section class="info-card">
 
 
-    <p>
-        <b>Account Status:</b>
-        <span id="accountStatus">
-            Active
-        </span>
-    </p>
+        <h2>
+            👤 Personal Information
+        </h2>
 
 
-    <p>
-        <b>User ID:</b>
-        <span id="userId">
-            Loading...
-        </span>
-    </p>
+        <label for="name">
+            Full Name
+        </label>
 
-
-</section>
+        <input
+            type="text"
+            id="name"
+            placeholder="Enter your name"
+        >
 
 
 
-<!-- ACTION BUTTONS -->
+        <label for="email">
+            Email
+        </label>
 
-<section class="actions">
-
-    <a
-        href="dashboard.html"
-        class="back-btn"
-    >
-        ⬅ Dashboard
-    </a>
+        <input
+            type="email"
+            id="email"
+            placeholder="Email"
+            readonly
+        >
 
 
-    <button
-        id="logoutBtn"
-        class="logout-btn"
-    >
-        🚪 Logout
-    </button>
 
-</section>
+        <label for="mobile">
+            Mobile Number
+        </label>
+
+        <input
+            type="tel"
+            id="mobile"
+            placeholder="Enter mobile number"
+        >
+
+
+
+        <label for="city">
+            City
+        </label>
+
+        <input
+            type="text"
+            id="city"
+            placeholder="Enter city"
+        >
+
+
+
+        <label for="organization">
+            Organization / Club
+        </label>
+
+        <input
+            type="text"
+            id="organization"
+            placeholder="Enter organization or club"
+        >
+
+
+
+        <button
+            type="button"
+            id="saveProfileBtn"
+            class="save-btn"
+        >
+
+            💾 Save Profile
+
+        </button>
+
+
+        <p id="message"></p>
+
+
+    </section>
+
+
+
+    <!-- =====================================
+         ACCOUNT INFORMATION
+    ====================================== -->
+
+    <section class="info-card">
+
+
+        <h2>
+            🔐 Account
+        </h2>
+
+
+        <p>
+
+            <b>
+                Account Status:
+            </b>
+
+            <span id="accountStatus">
+                Active
+            </span>
+
+        </p>
+
+
+        <p>
+
+            <b>
+                User ID:
+            </b>
+
+            <span id="userId">
+                Loading...
+            </span>
+
+        </p>
+
+
+    </section>
+
+
+
+    <!-- =====================================
+         ACTIONS
+    ====================================== -->
+
+    <section class="actions">
+
+
+        <a
+            href="./dashboard.html"
+            class="back-btn"
+        >
+
+            ⬅ Dashboard
+
+        </a>
+
+
+        <button
+            type="button"
+            id="logoutBtn"
+            class="logout-btn"
+        >
+
+            🚪 Logout
+
+        </button>
+
+
+    </section>
 
 
 </main>
 
 
 
+<!-- =========================================
+     FOOTER
+========================================= -->
+
 <footer>
 
-<p>
-🏏 APL Tournament Platform
-</p>
+    <p>
+        🏏 APL Tournament Platform
+    </p>
 
 </footer>
 
 
 
+<!-- =========================================
+     JAVASCRIPT
+========================================= -->
+
 <script
     type="module"
-    src="js/profile.js"
-></script>
+    src="./js/profile.js">
+</script>
 
 
 </body>
