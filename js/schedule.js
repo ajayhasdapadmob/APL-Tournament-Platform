@@ -13,11 +13,11 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 
-console.log("🔥 SCHEDULE JS LOADED");
+console.log("🔥 SCHEDULE JS STARTED");
 
 
 // ========================================
-// ELEMENTS
+// HTML ELEMENTS
 // ========================================
 
 const tournamentSelect =
@@ -47,12 +47,9 @@ const pointsLink =
 const liveLink =
     document.getElementById("liveLink");
 
-const teamsLink =
-    document.getElementById("teamsLink");
-
 
 // ========================================
-// GET INITIAL TOURNAMENT ID
+// GET TOURNAMENT ID
 // ========================================
 
 function getTournamentId() {
@@ -64,6 +61,14 @@ function getTournamentId() {
 
     let id =
         params.get("id");
+
+
+    if (!id) {
+
+        id =
+            params.get("tournamentId");
+
+    }
 
 
     if (!id) {
@@ -120,7 +125,7 @@ function getTournamentId() {
     );
 
     console.log(
-        "🏆 FINAL SCHEDULE TOURNAMENT ID:",
+        "🏆 FINAL TOURNAMENT ID:",
         id
     );
 
@@ -165,7 +170,7 @@ function saveTournamentId(id) {
 
 
     console.log(
-        "💾 Schedule Tournament ID saved:",
+        "💾 Tournament ID saved:",
         cleanId
     );
 
@@ -173,7 +178,7 @@ function saveTournamentId(id) {
 
 
 // ========================================
-// INITIAL ID
+// GLOBAL TOURNAMENT ID
 // ========================================
 
 let tournamentId =
@@ -181,20 +186,28 @@ let tournamentId =
 
 
 // ========================================
-// LOAD ALL TOURNAMENTS
+// LOAD TOURNAMENT DROPDOWN
 // ========================================
 
 async function loadTournamentDropdown() {
 
-    try {
+    console.log(
+        "🏆 Loading tournament dropdown..."
+    );
 
-        console.log(
-            "🏆 Loading tournaments for dropdown..."
+
+    if (!tournamentSelect) {
+
+        console.warn(
+            "⚠️ tournamentSelect not found"
         );
 
+        return;
 
-        if (!tournamentSelect) return;
+    }
 
+
+    try {
 
         tournamentSelect.innerHTML = `
             <option value="">
@@ -217,7 +230,7 @@ async function loadTournamentDropdown() {
 
 
         console.log(
-            "🏆 Total tournaments:",
+            "📦 Tournaments found:",
             snapshot.size
         );
 
@@ -240,18 +253,20 @@ async function loadTournamentDropdown() {
 
         const tournaments =
             snapshot.docs.map(
-                tournamentDoc => ({
+                tournamentDoc => {
 
-                    id:
-                        tournamentDoc.id,
+                    return {
 
-                    ...tournamentDoc.data()
+                        id:
+                            tournamentDoc.id,
 
-                })
+                        ...tournamentDoc.data()
+
+                    };
+
+                }
             );
 
-
-        // Sort newest first if createdAt exists
 
         tournaments.sort(
             (a, b) => {
@@ -271,13 +286,6 @@ async function loadTournamentDropdown() {
         tournaments.forEach(
             tournament => {
 
-                const name =
-                    tournament.tournamentName ||
-                    tournament.name ||
-                    tournament.title ||
-                    "Unnamed Tournament";
-
-
                 const option =
                     document.createElement(
                         "option"
@@ -289,7 +297,10 @@ async function loadTournamentDropdown() {
 
 
                 option.textContent =
-                    name;
+                    tournament.tournamentName ||
+                    tournament.name ||
+                    tournament.title ||
+                    "Unnamed Tournament";
 
 
                 tournamentSelect.appendChild(
@@ -300,16 +311,13 @@ async function loadTournamentDropdown() {
         );
 
 
-        // =================================
-        // SELECT CURRENT TOURNAMENT
-        // =================================
-
         if (tournamentId) {
 
             const exists =
                 tournaments.some(
                     tournament =>
-                        tournament.id === tournamentId
+                        tournament.id ===
+                        tournamentId
                 );
 
 
@@ -322,8 +330,6 @@ async function loadTournamentDropdown() {
 
         }
 
-
-        // If no current ID, select first
 
         if (
             !tournamentId &&
@@ -358,20 +364,16 @@ async function loadTournamentDropdown() {
     } catch (error) {
 
         console.error(
-            "❌ Tournament dropdown error:",
+            "❌ TOURNAMENT DROPDOWN ERROR:",
             error
         );
 
 
-        if (tournamentSelect) {
-
-            tournamentSelect.innerHTML = `
-                <option value="">
-                    ❌ Unable to load tournaments
-                </option>
-            `;
-
-        }
+        tournamentSelect.innerHTML = `
+            <option value="">
+                ❌ Unable to load tournaments
+            </option>
+        `;
 
     }
 
@@ -392,7 +394,11 @@ if (tournamentSelect) {
                 this.value;
 
 
-            if (!selectedId) return;
+            if (!selectedId) {
+
+                return;
+
+            }
 
 
             console.log(
@@ -474,6 +480,11 @@ async function loadSchedule() {
         );
 
 
+        saveTournamentId(
+            tournamentId
+        );
+
+
         const tournamentRef =
             doc(
                 db,
@@ -491,7 +502,8 @@ async function loadSchedule() {
         if (!tournamentSnap.exists()) {
 
             throw new Error(
-                "Tournament not found."
+                "Tournament not found: " +
+                tournamentId
             );
 
         }
@@ -502,7 +514,7 @@ async function loadSchedule() {
 
 
         console.log(
-            "✅ Tournament:",
+            "✅ Tournament loaded:",
             tournament
         );
 
@@ -544,15 +556,10 @@ async function loadSchedule() {
         }
 
 
-        saveTournamentId(
-            tournamentId
-        );
+        setupLinks();
 
 
         await loadMatches();
-
-
-        setupLinks();
 
 
         console.log(
@@ -581,10 +588,17 @@ async function loadSchedule() {
             matchListElement.className =
                 "empty";
 
+
             matchListElement.innerHTML = `
-                ❌ Unable to load schedule.
+
+                ❌ Unable to load tournament.
+
                 <br><br>
-                ${escapeHTML(error.message)}
+
+                ${escapeHTML(
+                    error.message
+                )}
+
             `;
 
         }
@@ -600,10 +614,21 @@ async function loadSchedule() {
 
 async function loadMatches() {
 
+    if (!tournamentId) {
+
+        return;
+
+    }
+
+
     try {
 
         console.log(
-            "📅 Loading matches for:",
+            "🔥 LOAD MATCHES STARTED"
+        );
+
+        console.log(
+            "🏆 Tournament:",
             tournamentId
         );
 
@@ -617,6 +642,12 @@ async function loadMatches() {
             );
 
 
+        console.log(
+            "📂 Firebase path:",
+            `tournaments/${tournamentId}/matches`
+        );
+
+
         const snapshot =
             await getDocs(
                 matchesRef
@@ -624,12 +655,20 @@ async function loadMatches() {
 
 
         console.log(
-            "📅 Matches:",
+            "📦 Matches found:",
             snapshot.size
         );
 
 
-        if (!matchListElement) return;
+        if (!matchListElement) {
+
+            return;
+
+        }
+
+
+        matchListElement.innerHTML =
+            "";
 
 
         if (snapshot.empty) {
@@ -637,9 +676,47 @@ async function loadMatches() {
             matchListElement.className =
                 "empty";
 
+
             matchListElement.innerHTML = `
-                📅 No matches scheduled yet.
+
+                <h3>
+                    📅 No Matches Found
+                </h3>
+
+                <p>
+                    Is tournament ke andar
+                    abhi koi match create nahi hua.
+                </p>
+
+                <br>
+
+                <b>
+                    Tournament ID:
+                </b>
+
+                <br>
+
+                ${escapeHTML(
+                    tournamentId
+                )}
+
+                <br><br>
+
+                <small>
+                    Firestore path:
+                    <br>
+                    tournaments /
+                    ${escapeHTML(tournamentId)} /
+                    matches
+                </small>
+
             `;
+
+
+            console.warn(
+                "⚠️ NO MATCHES FOUND"
+            );
+
 
             return;
 
@@ -649,20 +726,21 @@ async function loadMatches() {
         matchListElement.className =
             "match-list";
 
-        matchListElement.innerHTML =
-            "";
-
 
         const matches =
             snapshot.docs.map(
-                matchDoc => ({
+                matchDoc => {
 
-                    id:
-                        matchDoc.id,
+                    return {
 
-                    ...matchDoc.data()
+                        id:
+                            matchDoc.id,
 
-                })
+                        ...matchDoc.data()
+
+                    };
+
+                }
             );
 
 
@@ -671,18 +749,18 @@ async function loadMatches() {
 
                 const aNo =
                     Number(
-                        a.matchNumber ||
-                        a.matchNo ||
-                        a.number ||
+                        a.matchNumber ??
+                        a.matchNo ??
+                        a.number ??
                         999999
                     );
 
 
                 const bNo =
                     Number(
-                        b.matchNumber ||
-                        b.matchNo ||
-                        b.number ||
+                        b.matchNumber ??
+                        b.matchNo ??
+                        b.number ??
                         999999
                     );
 
@@ -696,123 +774,19 @@ async function loadMatches() {
         matches.forEach(
             (match, index) => {
 
-                const team1 =
-                    match.team1Name ||
-                    match.team1 ||
-                    match.homeTeam ||
-                    "Team 1";
-
-
-                const team2 =
-                    match.team2Name ||
-                    match.team2 ||
-                    match.awayTeam ||
-                    "Team 2";
-
-
-                const date =
-                    match.date ||
-                    match.matchDate ||
-                    "Date not set";
-
-
-                const time =
-                    match.time ||
-                    match.matchTime ||
-                    "Time not set";
-
-
-                const status =
-                    match.status ||
-                    "Scheduled";
-
-
-                const matchNumber =
-                    match.matchNumber ||
-                    match.matchNo ||
-                    index + 1;
-
-
-                const card =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                card.className =
-                    "match-card";
-
-
-                card.innerHTML = `
-
-                    <h3>
-                        🏏 Match
-                        ${escapeHTML(matchNumber)}
-                    </h3>
-
-                    <p>
-
-                        🏏
-
-                        <b>
-                            ${escapeHTML(team1)}
-                        </b>
-
-                        VS
-
-                        <b>
-                            ${escapeHTML(team2)}
-                        </b>
-
-                    </p>
-
-                    <p>
-
-                        📅
-                        <b>Date:</b>
-
-                        ${escapeHTML(date)}
-
-                    </p>
-
-                    <p>
-
-                        ⏰
-                        <b>Time:</b>
-
-                        ${escapeHTML(time)}
-
-                    </p>
-
-                    <p>
-
-                        📍
-                        <b>Venue:</b>
-
-                        ${escapeHTML(
-                            match.venue ||
-                            venueElement?.textContent ||
-                            "-"
-                        )}
-
-                    </p>
-
-                    <span class="match-status">
-
-                        ${escapeHTML(status)}
-
-                    </span>
-
-                `;
-
-
-                matchListElement.appendChild(
-                    card
+                displayMatch(
+                    match,
+                    index
                 );
 
             }
         );
 
+
+        console.log(
+            "✅ ALL MATCHES DISPLAYED:",
+            matches.length
+        );
 
     } catch (error) {
 
@@ -827,10 +801,17 @@ async function loadMatches() {
             matchListElement.className =
                 "empty";
 
+
             matchListElement.innerHTML = `
+
                 ❌ Unable to load matches.
+
                 <br><br>
-                ${escapeHTML(error.message)}
+
+                ${escapeHTML(
+                    error.message
+                )}
+
             `;
 
         }
@@ -841,12 +822,194 @@ async function loadMatches() {
 
 
 // ========================================
-// LINKS
+// DISPLAY MATCH
+// ========================================
+
+function displayMatch(
+    match,
+    index
+) {
+
+    const matchNumber =
+        match.matchNumber ??
+        match.matchNo ??
+        match.number ??
+        index + 1;
+
+
+    const team1 =
+        match.team1Name ||
+        match.team1 ||
+        match.homeTeam ||
+        match.teamA ||
+        "Team 1";
+
+
+    const team2 =
+        match.team2Name ||
+        match.team2 ||
+        match.awayTeam ||
+        match.teamB ||
+        "Team 2";
+
+
+    const date =
+        match.date ||
+        match.matchDate ||
+        "-";
+
+
+    const time =
+        match.time ||
+        match.matchTime ||
+        "-";
+
+
+    const venue =
+        match.venue ||
+        "-";
+
+
+    const status =
+        match.status ||
+        "Scheduled";
+
+
+    const card =
+        document.createElement(
+            "div"
+        );
+
+
+    card.className =
+        "match-card";
+
+
+    const scorecardURL =
+        `scorecard.html?tournamentId=${encodeURIComponent(tournamentId)}&matchId=${encodeURIComponent(match.id)}`;
+
+
+    const liveURL =
+        `live-score.html?id=${encodeURIComponent(tournamentId)}&matchId=${encodeURIComponent(match.id)}`;
+
+
+    card.innerHTML = `
+
+        <h3>
+            🏏 Match
+            ${escapeHTML(
+                matchNumber
+            )}
+        </h3>
+
+
+        <p>
+
+            🏏
+
+            <b>
+                ${escapeHTML(team1)}
+            </b>
+
+            VS
+
+            <b>
+                ${escapeHTML(team2)}
+            </b>
+
+        </p>
+
+
+        <p>
+
+            📅
+            <b>Date:</b>
+
+            ${escapeHTML(date)}
+
+        </p>
+
+
+        <p>
+
+            ⏰
+            <b>Time:</b>
+
+            ${escapeHTML(time)}
+
+        </p>
+
+
+        <p>
+
+            📍
+            <b>Venue:</b>
+
+            ${escapeHTML(venue)}
+
+        </p>
+
+
+        <span class="match-status">
+
+            ${escapeHTML(status)}
+
+        </span>
+
+
+        <div
+            style="
+                margin-top:15px;
+                display:flex;
+                gap:10px;
+                flex-wrap:wrap;
+            "
+        >
+
+            <a
+                href="${scorecardURL}"
+                class="btn"
+            >
+                📊 Scorecard
+            </a>
+
+
+            <a
+                href="${liveURL}"
+                class="btn"
+            >
+                🔴 Live Score
+            </a>
+
+        </div>
+
+    `;
+
+
+    matchListElement.appendChild(
+        card
+    );
+
+
+    console.log(
+        "🔗 Scorecard:",
+        scorecardURL
+    );
+
+}
+
+
+// ========================================
+// NAVIGATION LINKS
 // ========================================
 
 function setupLinks() {
 
-    if (!tournamentId) return;
+    if (!tournamentId) {
+
+        return;
+
+    }
 
 
     const id =
@@ -887,16 +1050,8 @@ function setupLinks() {
     }
 
 
-    if (teamsLink) {
-
-        teamsLink.href =
-            `teams.html?id=${id}`;
-
-    }
-
-
     console.log(
-        "🔗 Schedule links ready"
+        "🔗 Navigation links ready"
     );
 
 }
@@ -907,6 +1062,11 @@ function setupLinks() {
 // ========================================
 
 function showNoTournament() {
+
+    console.error(
+        "❌ NO TOURNAMENT SELECTED"
+    );
+
 
     if (tournamentNameElement) {
 
@@ -937,8 +1097,16 @@ function showNoTournament() {
         matchListElement.className =
             "empty";
 
+
         matchListElement.innerHTML = `
+
             ❌ No tournament selected.
+
+            <br><br>
+
+            Please select a tournament
+            from the dropdown.
+
         `;
 
     }
@@ -989,20 +1157,43 @@ function escapeHTML(value) {
 async function init() {
 
     console.log(
-        "🚀 Starting Schedule..."
+        "🚀 Starting SCHEDULE..."
     );
 
 
-    await loadTournamentDropdown();
+    try {
+
+        console.log(
+            "🔥 Firebase DB:",
+            db
+        );
 
 
-    if (tournamentId) {
+        await loadTournamentDropdown();
 
-        await loadSchedule();
 
-    } else {
+        if (tournamentId) {
 
-        showNoTournament();
+            await loadSchedule();
+
+        } else {
+
+            showNoTournament();
+
+        }
+
+
+        console.log(
+            "🏁 SCHEDULE START FINISHED"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "❌ SCHEDULE START ERROR:",
+            error
+        );
 
     }
 

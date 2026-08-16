@@ -1,3 +1,8 @@
+// ========================================
+// LIVE-SCORE.JS
+// APL TOURNAMENT PLATFORM
+// ========================================
+
 import { db } from "./firebase.js";
 
 import {
@@ -11,115 +16,103 @@ import {
 console.log("🔥 LIVE SCORE JS LOADED");
 
 
-/* =========================
-   ELEMENTS
-========================= */
+// ========================================
+// ELEMENTS
+// ========================================
 
 const tournamentInfo =
-    document.getElementById(
-        "tournamentInfo"
-    );
+    document.getElementById("tournamentInfo");
 
 const matchesList =
-    document.getElementById(
-        "matchesList"
-    );
+    document.getElementById("matchesList");
 
 const tournamentLink =
-    document.getElementById(
-        "tournamentLink"
-    );
+    document.getElementById("tournamentLink");
 
 const scheduleLink =
-    document.getElementById(
-        "scheduleLink"
-    );
+    document.getElementById("scheduleLink");
 
 const resultsLink =
-    document.getElementById(
-        "resultsLink"
-    );
+    document.getElementById("resultsLink");
 
 const pointsLink =
-    document.getElementById(
-        "pointsLink"
-    );
+    document.getElementById("pointsLink");
 
 const tournamentSelector =
-    document.getElementById(
-        "tournamentSelector"
-    );
+    document.getElementById("tournamentSelector");
 
 
-/* =========================
-   GET TOURNAMENT ID
-========================= */
+// ========================================
+// GET TOURNAMENT ID
+// ========================================
 
-const params =
-    new URLSearchParams(
-        window.location.search
-    );
+function getTournamentId() {
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    let id =
+        params.get("id");
+
+    if (!id) {
+
+        id =
+            params.get("tournamentId");
+
+    }
+
+    if (!id) {
+
+        id =
+            localStorage.getItem(
+                "selectedTournamentId"
+            );
+
+    }
+
+    if (!id) {
+
+        id =
+            localStorage.getItem(
+                "tournamentId"
+            );
+
+    }
+
+    if (!id) {
+
+        id =
+            sessionStorage.getItem(
+                "selectedTournamentId"
+            );
+
+    }
+
+    if (!id) {
+
+        id =
+            sessionStorage.getItem(
+                "tournamentId"
+            );
+
+    }
+
+    if (id) {
+
+        id =
+            String(id).trim();
+
+    }
+
+    return id || null;
+
+}
+
 
 let tournamentId =
-    params.get("id");
-
-
-if (!tournamentId) {
-
-    tournamentId =
-        params.get("tournamentId");
-
-}
-
-
-if (!tournamentId) {
-
-    tournamentId =
-        localStorage.getItem(
-            "selectedTournamentId"
-        );
-
-}
-
-
-if (!tournamentId) {
-
-    tournamentId =
-        localStorage.getItem(
-            "tournamentId"
-        );
-
-}
-
-
-if (!tournamentId) {
-
-    tournamentId =
-        sessionStorage.getItem(
-            "selectedTournamentId"
-        );
-
-}
-
-
-if (!tournamentId) {
-
-    tournamentId =
-        sessionStorage.getItem(
-            "tournamentId"
-        );
-
-}
-
-
-if (tournamentId) {
-
-    tournamentId =
-        String(
-            tournamentId
-        ).trim();
-
-}
+    getTournamentId();
 
 
 console.log(
@@ -133,9 +126,9 @@ console.log(
 );
 
 
-/* =========================
-   SAVE ID
-========================= */
+// ========================================
+// SAVE TOURNAMENT ID
+// ========================================
 
 function saveTournamentId(id) {
 
@@ -144,7 +137,6 @@ function saveTournamentId(id) {
     const cleanId =
         String(id).trim();
 
-
     localStorage.setItem(
         "tournamentId",
         cleanId
@@ -162,28 +154,71 @@ function saveTournamentId(id) {
 
     sessionStorage.setItem(
         "selectedTournamentId",
+        cleanId
+    );
+
+    console.log(
+        "💾 Tournament ID SAVED:",
         cleanId
     );
 
 }
 
 
-/* =========================
-   LOAD TOURNAMENT DROPDOWN
-========================= */
+// ========================================
+// SAVE MATCH ID
+// ========================================
+
+function saveMatchId(id) {
+
+    if (!id) return;
+
+    const cleanId =
+        String(id).trim();
+
+    localStorage.setItem(
+        "matchId",
+        cleanId
+    );
+
+    localStorage.setItem(
+        "selectedMatchId",
+        cleanId
+    );
+
+    sessionStorage.setItem(
+        "matchId",
+        cleanId
+    );
+
+    sessionStorage.setItem(
+        "selectedMatchId",
+        cleanId
+    );
+
+    console.log(
+        "💾 Match ID SAVED:",
+        cleanId
+    );
+
+}
+
+
+// ========================================
+// LOAD TOURNAMENT DROPDOWN
+// ========================================
 
 async function loadTournamentSelector() {
 
     if (!tournamentSelector) {
 
-        console.warn(
-            "⚠️ tournamentSelector not found in HTML"
+        console.log(
+            "ℹ️ Tournament selector not present"
         );
 
         return;
 
     }
-
 
     try {
 
@@ -229,16 +264,13 @@ async function loadTournamentSelector() {
                 const data =
                     tournamentDoc.data();
 
-
                 const option =
                     document.createElement(
                         "option"
                     );
 
-
                 option.value =
                     tournamentDoc.id;
-
 
                 option.textContent =
                     data.tournamentName ||
@@ -256,7 +288,6 @@ async function loadTournamentSelector() {
                         true;
 
                 }
-
 
                 tournamentSelector.appendChild(
                     option
@@ -279,7 +310,6 @@ async function loadTournamentSelector() {
             error
         );
 
-
         tournamentSelector.innerHTML = `
             <option value="">
                 ❌ Unable to load tournaments
@@ -291,9 +321,9 @@ async function loadTournamentSelector() {
 }
 
 
-/* =========================
-   DROPDOWN CHANGE
-========================= */
+// ========================================
+// DROPDOWN CHANGE
+// ========================================
 
 if (tournamentSelector) {
 
@@ -304,24 +334,21 @@ if (tournamentSelector) {
             const selectedId =
                 this.value;
 
-
             if (!selectedId) {
-
                 return;
-
             }
-
 
             console.log(
                 "🏆 Tournament changed:",
                 selectedId
             );
 
-
             saveTournamentId(
                 selectedId
             );
 
+            tournamentId =
+                selectedId;
 
             window.location.href =
                 "live-score.html?id=" +
@@ -335,9 +362,9 @@ if (tournamentSelector) {
 }
 
 
-/* =========================
-   NO TOURNAMENT
-========================= */
+// ========================================
+// NO TOURNAMENT
+// ========================================
 
 if (!tournamentId) {
 
@@ -357,7 +384,8 @@ if (!tournamentId) {
                 </h2>
 
                 <p>
-                    Please select a tournament.
+                    Please open Live Score
+                    from Dashboard.
                 </p>
 
                 <br>
@@ -385,17 +413,16 @@ if (!tournamentId) {
 
 } else {
 
-
-    /* SAVE */
+    // SAVE ID
 
     saveTournamentId(
         tournamentId
     );
 
 
-    /* =========================
-       NAVIGATION
-    ========================= */
+    // ========================================
+    // NAVIGATION
+    // ========================================
 
     const id =
         encodeURIComponent(
@@ -435,18 +462,18 @@ if (!tournamentId) {
     }
 
 
-    /* =========================
-       LOAD
-    ========================= */
+    // ========================================
+    // LOAD
+    // ========================================
 
     loadTournament();
 
 }
 
 
-/* =========================
-   LOAD TOURNAMENT
-========================= */
+// ========================================
+// LOAD TOURNAMENT
+// ========================================
 
 async function loadTournament() {
 
@@ -475,6 +502,12 @@ async function loadTournament() {
         if (
             !tournamentSnap.exists()
         ) {
+
+            console.error(
+                "❌ Tournament not found:",
+                tournamentId
+            );
+
 
             if (tournamentInfo) {
 
@@ -598,7 +631,8 @@ async function loadTournament() {
 
                     ❌
                     ${escapeHTML(
-                        error.message
+                        error?.message ||
+                        String(error)
                     )}
 
                 </div>
@@ -612,16 +646,21 @@ async function loadTournament() {
 }
 
 
-/* =========================
-   LOAD MATCHES
-========================= */
+// ========================================
+// LOAD MATCHES
+// ========================================
 
 async function loadMatches() {
 
     try {
 
         console.log(
-            "🔄 Loading live matches..."
+            "🔄 Loading matches..."
+        );
+
+        console.log(
+            "📂 Firebase path:",
+            `tournaments/${tournamentId}/matches`
         );
 
 
@@ -640,7 +679,21 @@ async function loadMatches() {
             );
 
 
+        console.log(
+            "🔥 Firebase response received"
+        );
+
+        console.log(
+            "📊 Match count:",
+            snapshot.size
+        );
+
+
         if (!matchesList) {
+
+            console.error(
+                "❌ matchesList not found in HTML"
+            );
 
             return;
 
@@ -680,34 +733,49 @@ async function loadMatches() {
         snapshot.forEach(
             matchDoc => {
 
+                const data =
+                    matchDoc.data();
+
+
                 matches.push({
 
                     id:
                         matchDoc.id,
 
-                    ...matchDoc.data()
+                    ...data
 
                 });
+
+
+                console.log(
+                    "🏏 MATCH:",
+                    matchDoc.id,
+                    data
+                );
 
             }
         );
 
+
+        // ========================================
+        // SORT
+        // ========================================
 
         matches.sort(
             (a, b) => {
 
                 const aNumber =
                     Number(
-                        a.matchNumber ||
-                        a.matchNo ||
+                        a.matchNumber ??
+                        a.matchNo ??
                         999999
                     );
 
 
                 const bNumber =
                     Number(
-                        b.matchNumber ||
-                        b.matchNo ||
+                        b.matchNumber ??
+                        b.matchNo ??
                         999999
                     );
 
@@ -721,6 +789,10 @@ async function loadMatches() {
         );
 
 
+        // ========================================
+        // DISPLAY
+        // ========================================
+
         matches.forEach(
             match => {
 
@@ -733,7 +805,7 @@ async function loadMatches() {
 
 
         console.log(
-            "✅ Matches loaded:",
+            "✅ Matches displayed:",
             matches.length
         );
 
@@ -752,9 +824,13 @@ async function loadMatches() {
 
                 <div class="empty">
 
-                    ❌
+                    ❌ Unable to load matches.
+
+                    <br><br>
+
                     ${escapeHTML(
-                        error.message
+                        error?.message ||
+                        String(error)
                     )}
 
                 </div>
@@ -768,13 +844,33 @@ async function loadMatches() {
 }
 
 
-/* =========================
-   DISPLAY MATCH
-========================= */
+// ========================================
+// DISPLAY MATCH
+// ========================================
 
-function displayMatch(
-    match
-) {
+function displayMatch(match) {
+
+    // ========================================
+    // MATCH ID
+    // ========================================
+
+    const matchId =
+        String(
+            match.id ||
+            match.matchId ||
+            ""
+        ).trim();
+
+
+    console.log(
+        "🏏 DISPLAY MATCH ID:",
+        matchId
+    );
+
+
+    // ========================================
+    // TEAMS
+    // ========================================
 
     const teamA =
         match.teamA ||
@@ -792,19 +888,27 @@ function displayMatch(
         "Team B";
 
 
+    // ========================================
+    // SCORES
+    // ========================================
+
     const scoreA =
         match.scoreA ??
         match.teamAScore ??
         match.score1 ??
-        "-";
+        "0";
 
 
     const scoreB =
         match.scoreB ??
         match.teamBScore ??
         match.score2 ??
-        "-";
+        "0";
 
+
+    // ========================================
+    // STATUS
+    // ========================================
 
     const status =
         String(
@@ -829,9 +933,7 @@ function displayMatch(
         badge = `
 
             <span class="live-badge">
-
                 🔴 LIVE
-
             </span>
 
         `;
@@ -847,9 +949,7 @@ function displayMatch(
         badge = `
 
             <span class="completed-badge">
-
                 ✅ COMPLETED
-
             </span>
 
         `;
@@ -861,15 +961,17 @@ function displayMatch(
         badge = `
 
             <span class="scheduled-badge">
-
                 📅 SCHEDULED
-
             </span>
 
         `;
 
     }
 
+
+    // ========================================
+    // CARD
+    // ========================================
 
     const card =
         document.createElement(
@@ -887,8 +989,8 @@ function displayMatch(
 
             🏏 Match
             ${escapeHTML(
-                match.matchNumber ||
-                match.matchNo ||
+                match.matchNumber ??
+                match.matchNo ??
                 "-"
             )}
 
@@ -901,17 +1003,11 @@ function displayMatch(
 
         <div class="teams">
 
-
             <div class="team-score">
 
                 <div>
-
-                    ${escapeHTML(
-                        teamA
-                    )}
-
+                    ${escapeHTML(teamA)}
                 </div>
-
 
                 <div class="score">
 
@@ -925,22 +1021,15 @@ function displayMatch(
 
 
             <div class="vs">
-
                 🆚
-
             </div>
 
 
             <div class="team-score">
 
                 <div>
-
-                    ${escapeHTML(
-                        teamB
-                    )}
-
+                    ${escapeHTML(teamB)}
                 </div>
-
 
                 <div class="score">
 
@@ -951,7 +1040,6 @@ function displayMatch(
                 </div>
 
             </div>
-
 
         </div>
 
@@ -979,7 +1067,7 @@ function displayMatch(
             📍
             ${escapeHTML(
                 match.venue ||
-                "-"
+                venueFromMatch(match)
             )}
 
         </div>
@@ -1001,9 +1089,9 @@ function displayMatch(
                         match.result
                         ?
                         `<br>
-                         ${escapeHTML(
-                             match.result
-                         )}`
+                        ${escapeHTML(
+                            match.result
+                        )}`
                         :
                         ""
                     }
@@ -1015,8 +1103,152 @@ function displayMatch(
             ""
         }
 
+
+        <!-- SCORECARD BUTTON -->
+
+        <div
+            style="
+                margin-top:15px;
+            "
+        >
+
+            <button
+                type="button"
+                class="open-scorecard-btn"
+                style="
+                    width:100%;
+                    padding:14px;
+                    border:none;
+                    border-radius:12px;
+                    background:#1d4ed8;
+                    color:white;
+                    font-size:15px;
+                    font-weight:bold;
+                    cursor:pointer;
+                "
+            >
+
+                🏏 OPEN SCORECARD
+
+            </button>
+
+        </div>
+
     `;
 
+
+// ========================================
+    // SCORECARD BUTTON
+    // ========================================
+
+    const scorecardButton =
+        card.querySelector(
+            ".open-scorecard-btn"
+        );
+
+
+    if (scorecardButton) {
+
+        scorecardButton.addEventListener(
+            "click",
+            function () {
+
+                console.log(
+                    "🖱️ SCORECARD BUTTON CLICKED"
+                );
+
+
+                if (!tournamentId) {
+
+                    alert(
+                        "❌ Tournament ID missing"
+                    );
+
+                    console.error(
+                        "❌ Tournament ID missing"
+                    );
+
+                    return;
+
+                }
+
+
+                if (!matchId) {
+
+                    alert(
+                        "❌ Match ID missing"
+                    );
+
+                    console.error(
+                        "❌ Match ID missing",
+                        match
+                    );
+
+                    return;
+
+                }
+
+
+                // ========================================
+                // SAVE IDs
+                // ========================================
+
+                saveTournamentId(
+                    tournamentId
+                );
+
+                saveMatchId(
+                    matchId
+                );
+
+
+                // ========================================
+                // SCORECARD URL
+                // ========================================
+
+                const scorecardURL =
+                    "scorecard.html?id=" +
+                    encodeURIComponent(
+                        tournamentId
+                    ) +
+                    "&matchId=" +
+                    encodeURIComponent(
+                        matchId
+                    );
+
+
+                console.log(
+                    "🏆 Tournament ID:",
+                    tournamentId
+                );
+
+                console.log(
+                    "🏏 Match ID:",
+                    matchId
+                );
+
+                console.log(
+                    "➡️ SCORECARD URL:",
+                    scorecardURL
+                );
+
+
+                // ========================================
+                // OPEN
+                // ========================================
+
+                window.location.href =
+                    scorecardURL;
+
+            }
+        );
+
+    }
+
+
+    // ========================================
+    // ADD CARD
+    // ========================================
 
     matchesList.appendChild(
         card
@@ -1025,9 +1257,23 @@ function displayMatch(
 }
 
 
-/* =========================
-   AUTO REFRESH
-========================= */
+// ========================================
+// VENUE HELPER
+// ========================================
+
+function venueFromMatch(match) {
+
+    return (
+        match.location ||
+        "-"
+    );
+
+}
+
+
+// ========================================
+// AUTO REFRESH
+// ========================================
 
 let refreshTimer =
     null;
@@ -1048,6 +1294,10 @@ function startAutoRefresh() {
         setInterval(
             function () {
 
+                console.log(
+                    "🔄 Auto refreshing matches..."
+                );
+
                 loadMatches();
 
             },
@@ -1057,37 +1307,51 @@ function startAutoRefresh() {
 }
 
 
-/* =========================
-   SAFE HTML
-========================= */
+// ========================================
+// SAFE HTML
+// ========================================
 
 function escapeHTML(value) {
 
-    return String(value)
+    return String(
+        value ?? ""
+    )
 
-        .replaceAll(
-            "&",
-            "&amp;"
-        )
+    .replaceAll(
+        "&",
+        "&amp;"
+    )
 
-        .replaceAll(
-            "<",
-            "&lt;"
-        )
+    .replaceAll(
+        "<",
+        "&lt;"
+    )
 
-        .replaceAll(
-            ">",
-            "&gt;"
-        )
+    .replaceAll(
+        ">",
+        "&gt;"
+    )
 
-        .replaceAll(
-            '"',
-            "&quot;"
-        )
+    .replaceAll(
+        '"',
+        "&quot;"
+    )
 
-        .replaceAll(
-            "'",
-            "&#039;"
-        );
+    .replaceAll(
+        "'",
+        "&#039;"
+    );
 
 }
+
+
+// ========================================
+// INITIALIZATION
+// ========================================
+
+loadTournamentSelector();
+
+
+console.log(
+    "✅ LIVE SCORE JS READY"
+);

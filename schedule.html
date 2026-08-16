@@ -73,6 +73,45 @@
     margin: 7px 0;
 }
 
+.schedule-actions {
+    background: white;
+    padding: 18px;
+    border-radius: 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.10);
+    text-align: center;
+}
+
+.schedule-actions button {
+    border: none;
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 5px;
+}
+
+#generateScheduleBtn {
+    background: #2563eb;
+    color: white;
+}
+
+#generateScheduleBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#refreshScheduleBtn {
+    background: #16a34a;
+    color: white;
+}
+
+.schedule-message {
+    margin-top: 12px;
+    font-weight: bold;
+}
+
 .schedule-title {
     color: white;
     margin-bottom: 15px;
@@ -109,6 +148,17 @@
     color: #1e40af;
     font-weight: bold;
     margin-top: 8px;
+}
+
+.scorecard-btn {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 10px 15px;
+    border-radius: 10px;
+    background: #7c3aed;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
 }
 
 .empty {
@@ -189,6 +239,7 @@
         <p>
             🆔
             <b>Tournament ID:</b>
+
             <span id="tournamentId">
                 -
             </span>
@@ -197,10 +248,41 @@
         <p>
             📍
             <b>Venue:</b>
+
             <span id="venue">
                 -
             </span>
         </p>
+
+    </div>
+
+
+    <!-- ====================================
+         MATCH GENERATOR
+    ===================================== -->
+
+    <div class="schedule-actions">
+
+        <button
+            id="generateScheduleBtn"
+            type="button"
+        >
+            🏏 Generate Matches
+        </button>
+
+
+        <button
+            id="refreshScheduleBtn"
+            type="button"
+        >
+            🔄 Refresh
+        </button>
+
+
+        <div
+            id="scheduleMessage"
+            class="schedule-message"
+        ></div>
 
     </div>
 
@@ -292,7 +374,7 @@
 
 <script
     type="module"
-    src="./js/schedule.js?v=2"
+    src="./js/schedule.js?v=3"
 ></script>
 
 

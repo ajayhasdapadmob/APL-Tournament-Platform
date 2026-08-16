@@ -10,242 +10,309 @@
     content="width=device-width, initial-scale=1.0"
 >
 
-<title>Match Score</title>
+<title>APL Live Scoring</title>
 
 <link
     rel="stylesheet"
-    href="css/style.css"
+    href="./css/style.css"
 >
 
 <style>
 
-.score-container {
+body {
+    margin: 0;
+    background: #f1f5f9;
+    color: #0f172a;
+    font-family: Arial, sans-serif;
+}
 
+.score-page {
     max-width: 900px;
-
     margin: auto;
-
+    padding: 12px 10px 100px;
 }
 
+/* HEADER */
 
-.score-header {
-
-    background: white;
-
-    padding: 22px;
-
+.score-top {
+    background: #0f172a;
+    color: white;
+    padding: 17px;
     border-radius: 16px;
-
-    margin-bottom: 20px;
-
-    box-shadow:
-        0 5px 20px
-        rgba(0,0,0,0.08);
-
-}
-
-
-.score-header h2 {
-
-    color: #1e3a8a;
-
-}
-
-
-.id-box {
-
-    background: #eff6ff;
-
-    padding: 12px;
-
-    border-radius: 8px;
-
-    margin-top: 12px;
-
-    word-break: break-all;
-
-}
-
-
-.match-card {
-
-    background: white;
-
-    padding: 25px;
-
-    border-radius: 16px;
-
-    box-shadow:
-        0 5px 20px
-        rgba(0,0,0,0.08);
-
-}
-
-
-.teams {
-
-    text-align: center;
-
-    font-size: 25px;
-
-    font-weight: bold;
-
-    margin: 20px 0;
-
-}
-
-
-.score-grid {
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(220px, 1fr)
-        );
-
-    gap: 15px;
-
-}
-
-
-.score-box {
-
-    background: #f8fafc;
-
-    padding: 20px;
-
-    border-radius: 12px;
-
-    text-align: center;
-
-}
-
-
-.score-box h3 {
-
     margin-bottom: 12px;
-
 }
 
+.score-top h1 {
+    margin: 0;
+    font-size: 21px;
+}
 
-.score-box input {
+.score-top p {
+    margin: 5px 0 0;
+    color: #cbd5e1;
+    font-size: 12px;
+}
 
-    width: 100%;
+/* MATCH */
 
-    box-sizing: border-box;
+.match-info {
+    background: white;
+    padding: 16px;
+    border-radius: 15px;
+    margin-bottom: 12px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.08);
+}
 
-    padding: 13px;
+.match-info h2 {
+    margin: 0 0 7px;
+    font-size: 18px;
+}
 
-    font-size: 20px;
+.match-id {
+    color: #64748b;
+    font-size: 11px;
+    word-break: break-all;
+}
 
+/* SCOREBOARD */
+
+.scoreboard {
+    background: #1e3a8a;
+    color: white;
+    padding: 22px 15px;
+    border-radius: 18px;
     text-align: center;
-
-    border: 1px solid #ccc;
-
-    border-radius: 8px;
-
+    margin-bottom: 12px;
 }
 
-
-.result-box {
-
-    margin-top: 20px;
-
+.batting-team {
+    font-size: 18px;
+    font-weight: bold;
 }
 
-
-.result-box input,
-.result-box select {
-
-    width: 100%;
-
-    box-sizing: border-box;
-
-    padding: 12px;
-
-    border: 1px solid #ccc;
-
-    border-radius: 8px;
-
+.main-score {
+    font-size: 46px;
+    font-weight: 900;
+    margin: 6px 0;
 }
 
+.overs {
+    color: #dbeafe;
+}
 
-.save-btn {
+.crr {
+    font-size: 12px;
+    margin-top: 7px;
+}
 
-    width: 100%;
+.live-status {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: #dc2626;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+}
 
-    margin-top: 20px;
+/* CARDS */
 
-    padding: 14px;
+.card,
+.scoring-card {
+    background: white;
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 12px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.07);
+}
 
+.card-title {
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+/* BATTERS */
+
+.player-row {
+    display: grid;
+    grid-template-columns: 1fr 55px 55px 55px;
+    gap: 5px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 13px;
+}
+
+.player-row:last-child {
+    border-bottom: none;
+}
+
+.player-row span {
+    text-align: center;
+    font-weight: bold;
+}
+
+/* BOWLER */
+
+.bowler-row {
+    display: grid;
+    grid-template-columns: 1fr 60px 60px 60px;
+    gap: 5px;
+}
+
+.bowler-row span {
+    text-align: center;
+}
+
+/* CURRENT OVER */
+
+.ball-row {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+
+.ball {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* RUN BUTTONS */
+
+.run-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.run-btn {
     border: none;
-
-    border-radius: 9px;
-
+    padding: 16px 5px;
+    border-radius: 12px;
+    background: #2563eb;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
     cursor: pointer;
-
-    font-size: 17px;
-
 }
 
+.extra-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+}
 
-.message {
+.extra-btn {
+    border: none;
+    padding: 13px;
+    border-radius: 10px;
+    background: #f59e0b;
+    color: white;
+    font-weight: bold;
+}
 
-    margin-top: 15px;
+.wicket-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px;
+    border: none;
+    border-radius: 11px;
+    background: #dc2626;
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+}
 
-    padding: 12px;
+/* ACTIONS */
 
-    border-radius: 8px;
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
 
+.action-btn {
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    background: #0f172a;
+    color: white;
+    font-weight: bold;
+}
+
+.end-btn {
+    background: #16a34a;
+}
+
+/* MESSAGE */
+
+#message {
     display: none;
-
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    text-align: center;
+    font-size: 13px;
 }
 
-
-.success {
-
+.message-success {
+    display: block !important;
     background: #dcfce7;
-
     color: #166534;
-
 }
 
-
-.error {
-
+.message-error {
+    display: block !important;
     background: #fee2e2;
-
     color: #991b1b;
-
 }
 
+/* NAVIGATION */
 
 .navigation {
-
     display: flex;
-
-    justify-content: center;
-
+    gap: 8px;
     flex-wrap: wrap;
-
-    gap: 10px;
-
-    margin-top: 20px;
-
+    margin-top: 15px;
 }
 
-
-.error-box {
-
-    background: white;
-
-    padding: 30px;
-
-    border-radius: 15px;
-
+.navigation a {
+    flex: 1;
+    min-width: 120px;
     text-align: center;
+    text-decoration: none;
+    padding: 12px;
+    border-radius: 10px;
+    background: white;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* MOBILE */
+
+@media(max-width:430px) {
+
+    .main-score {
+        font-size: 40px;
+    }
+
+    .player-row {
+        grid-template-columns: 1fr 42px 42px 42px;
+    }
+
+    .bowler-row {
+        grid-template-columns: 1fr 45px 45px 45px;
+    }
 
 }
 
@@ -257,136 +324,358 @@
 <body>
 
 
-<header class="top-header">
+<header class="score-top">
 
-    <div class="logo">
+    <h1>
+        🏏 APL Live Scoring
+    </h1>
 
-        🏏
-
-    </div>
-
-
-    <div>
-
-        <h1>
-            Match Score
-        </h1>
-
-        <p>
-            APL Tournament Platform
-        </p>
-
-    </div>
+    <p>
+        Cricheroes-style Match Scoring
+    </p>
 
 </header>
 
 
-
-<main class="home-container">
-
-
-<div class="score-container">
+<main class="score-page">
 
 
-    <div
-        id="tournamentInfo"
-        class="score-header"
-    >
+<section
+    id="matchInfo"
+    class="match-info"
+>
 
-        ⏳ Loading Tournament...
-
-    </div>
-
-
-
-    <div
-        id="matchCard"
-        class="match-card"
-    >
-
+    <h2>
         ⏳ Loading Match...
-
-    </div>
-
-
+    </h2>
 
     <div
-        id="message"
-        class="message"
-    ></div>
+        id="matchId"
+        class="match-id"
+    >
+        -
+    </div>
+
+</section>
 
 
+<section class="scoreboard">
 
-    <div class="navigation">
+    <div
+        id="battingTeam"
+        class="batting-team"
+    >
+        Team A
+    </div>
+
+    <div
+        id="score"
+        class="main-score"
+    >
+        0/0
+    </div>
+
+    <div
+        id="overs"
+        class="overs"
+    >
+        0.0 Overs
+    </div>
+
+    <div
+        id="crr"
+        class="crr"
+    >
+        CRR: 0.00
+    </div>
+
+    <div class="live-status">
+        🔴 LIVE
+    </div>
+
+</section>
 
 
-        <a
-            id="tournamentLink"
-            href="#"
-            class="btn"
-        >
+<section class="card">
 
-            🏆 Tournament
+    <div class="card-title">
+        🏏 Batters
+    </div>
 
-        </a>
+    <div class="player-row">
 
+        <strong>Batter</strong>
 
-        <a
-            id="scheduleLink"
-            href="#"
-            class="btn"
-        >
-
-            📅 Schedule
-
-        </a>
-
-
-        <a
-            id="resultsLink"
-            href="#"
-            class="btn"
-        >
-
-            🏆 Results
-
-        </a>
-
-
-        <a
-            id="pointsLink"
-            href="#"
-            class="btn"
-        >
-
-            📈 Points Table
-
-        </a>
-
+        <span>R</span>
+        <span>B</span>
+        <span>SR</span>
 
     </div>
 
 
-</div>
+    <div class="player-row">
+
+        <strong>
+            ⭐ Striker
+        </strong>
+
+        <span id="strikerRuns">0</span>
+
+        <span id="strikerBalls">0</span>
+
+        <span id="strikerSR">0.00</span>
+
+    </div>
+
+
+    <div class="player-row">
+
+        <strong>
+            Non-Striker
+        </strong>
+
+        <span id="nonStrikerRuns">0</span>
+
+        <span id="nonStrikerBalls">0</span>
+
+        <span id="nonStrikerSR">0.00</span>
+
+    </div>
+
+</section>
+
+
+<section class="card">
+
+    <div class="card-title">
+        🎯 Bowler
+    </div>
+
+    <div class="bowler-row">
+
+        <strong id="bowlerName">
+            Bowler
+        </strong>
+
+        <span id="bowlerOvers">
+            0
+        </span>
+
+        <span id="bowlerRuns">
+            0
+        </span>
+
+        <span id="bowlerWickets">
+            0
+        </span>
+
+    </div>
+
+</section>
+
+
+<section class="card">
+
+    <div class="card-title">
+        📊 Current Over
+    </div>
+
+    <div
+        id="currentOver"
+        class="ball-row"
+    >
+
+        <div class="ball">
+            -
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="scoring-card">
+
+    <div class="card-title">
+        ➕ Add Score
+    </div>
+
+
+    <div class="run-grid">
+
+        <button
+            class="run-btn"
+            data-runs="0"
+        >
+            0
+        </button>
+
+        <button
+            class="run-btn"
+            data-runs="1"
+        >
+            1
+        </button>
+
+        <button
+            class="run-btn"
+            data-runs="2"
+        >
+            2
+        </button>
+
+        <button
+            class="run-btn"
+            data-runs="3"
+        >
+            3
+        </button>
+
+        <button
+            class="run-btn"
+            data-runs="4"
+        >
+            4
+        </button>
+
+        <button
+            class="run-btn"
+            data-runs="5"
+        >
+            5
+        </button>
+
+        <button
+            class="run-btn"
+            data-runs="6"
+        >
+            6
+        </button>
+
+        <button
+            class="run-btn"
+            data-runs="7"
+        >
+            7
+        </button>
+
+    </div>
+
+
+    <div class="extra-grid">
+
+        <button
+            id="wideBtn"
+            class="extra-btn"
+        >
+            Wide +1
+        </button>
+
+        <button
+            id="noBallBtn"
+            class="extra-btn"
+        >
+            No Ball +1
+        </button>
+
+        <button
+            id="byeBtn"
+            class="extra-btn"
+        >
+            Bye +1
+        </button>
+
+        <button
+            id="legByeBtn"
+            class="extra-btn"
+        >
+            Leg Bye +1
+        </button>
+
+    </div>
+
+
+    <button
+        id="wicketBtn"
+        class="wicket-btn"
+    >
+        ❌ WICKET
+    </button>
+
+</section>
+
+
+<section class="card">
+
+    <div class="card-title">
+        ⚙️ Match Actions
+    </div>
+
+    <div class="action-grid">
+
+        <button
+            id="undoBtn"
+            class="action-btn"
+        >
+            ↩ Undo
+        </button>
+
+        <button
+            id="swapBtn"
+            class="action-btn"
+        >
+            🔄 Swap Batter
+        </button>
+
+        <button
+            id="saveBtn"
+            class="action-btn"
+        >
+            💾 Save Score
+        </button>
+
+        <button
+            id="endMatchBtn"
+            class="action-btn end-btn"
+        >
+            🏆 End Match
+        </button>
+
+    </div>
+
+</section>
+
+
+<div id="message"></div>
+
+
+<nav class="navigation">
+
+    <a id="tournamentLink" href="#">
+        🏆 Tournament
+    </a>
+
+    <a id="scheduleLink" href="#">
+        📅 Schedule
+    </a>
+
+    <a id="resultsLink" href="#">
+        🏆 Results
+    </a>
+
+    <a id="pointsLink" href="#">
+        📊 Points
+    </a>
+
+</nav>
 
 
 </main>
 
 
-
-<footer>
-
-    <p>
-        🏏 APL Tournament Platform
-    </p>
-
-</footer>
-
-
-
 <script
     type="module"
-    src="js/score.js"
+    src="./scorecard.js?v=10"
 ></script>
 
 
