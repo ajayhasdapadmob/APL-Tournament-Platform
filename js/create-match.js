@@ -19,17 +19,14 @@ console.log("🔥 CREATE MATCH JS STARTED");
 
 
 // ========================================
-// ELEMENTS
+// HTML ELEMENTS
 // ========================================
 
 const matchForm =
     document.getElementById("matchForm");
 
-const tournamentNameElement =
-    document.getElementById("tournamentName");
-
-const tournamentIdElement =
-    document.getElementById("tournamentId");
+const tournamentInfo =
+    document.getElementById("tournamentInfo");
 
 const team1Select =
     document.getElementById("team1");
@@ -38,7 +35,9 @@ const team2Select =
     document.getElementById("team2");
 
 const venueInput =
+    document.getElementById("venue") ||
     document.getElementById("matchVenue");
+
 const messageElement =
     document.getElementById("message");
 
@@ -47,6 +46,9 @@ const createMatchBtn =
 
 const scheduleLink =
     document.getElementById("scheduleLink");
+
+const liveLink =
+    document.getElementById("liveLink");
 
 
 // ========================================
@@ -153,7 +155,7 @@ function saveTournamentId(id) {
 
 
 // ========================================
-// MESSAGE
+// SHOW MESSAGE
 // ========================================
 
 function showMessage(
@@ -161,17 +163,14 @@ function showMessage(
     type = "success"
 ) {
 
-    if (!messageElement) {
-
-        console.log(
-            type === "error"
+    console.log(
+        type === "error"
             ? "❌"
             : "✅",
-            text
-        );
+        text
+    );
 
-        return;
-    }
+    if (!messageElement) return;
 
     messageElement.textContent =
         text;
@@ -222,12 +221,19 @@ async function loadTournament() {
         if (!tournamentSnap.exists()) {
 
             throw new Error(
-                "Tournament not found."
+                "Tournament not found: " +
+                tournamentId
             );
         }
 
         const tournament =
             tournamentSnap.data();
+
+        console.log(
+            "✅ Tournament loaded:",
+            tournament
+        );
+
 
         const name =
             tournament.tournamentName ||
@@ -235,50 +241,99 @@ async function loadTournament() {
             tournament.title ||
             "Tournament";
 
+
         const venue =
             tournament.venue ||
             tournament.location ||
             "";
 
-        if (tournamentNameElement) {
 
-            tournamentNameElement.textContent =
-                name;
+        // ========================================
+        // TOURNAMENT INFORMATION
+        // ========================================
+
+        if (tournamentInfo) {
+
+            tournamentInfo.innerHTML = `
+
+                <strong>
+                    🏆 ${escapeHTML(name)}
+                </strong>
+
+                <br><br>
+
+                🆔 Tournament ID:
+                ${escapeHTML(tournamentId)}
+
+                ${
+                    venue
+                    ?
+                    `
+                    <br><br>
+                    📍 Venue:
+                    ${escapeHTML(venue)}
+                    `
+                    :
+                    ""
+                }
+
+            `;
+
         }
 
-        if (tournamentIdElement) {
 
-            tournamentIdElement.textContent =
-                tournamentId;
-        }
+        // ========================================
+        // AUTO FILL VENUE
+        // ========================================
 
         if (
             venueInput &&
-            !venueInput.value
+            !venueInput.value.trim()
         ) {
 
             venueInput.value =
                 venue;
+
         }
+
+
+        // ========================================
+        // SAVE ID
+        // ========================================
 
         saveTournamentId(
             tournamentId
         );
 
+
+        // ========================================
+        // LINKS
+        // ========================================
+
+        const encodedId =
+            encodeURIComponent(
+                tournamentId
+            );
+
+
         if (scheduleLink) {
 
             scheduleLink.href =
-                `schedule.html?id=${encodeURIComponent(
-                    tournamentId
-                )}`;
+                `schedule.html?id=${encodedId}`;
+
         }
 
-        console.log(
-            "✅ Tournament loaded:",
-            tournament
-        );
+
+        if (liveLink) {
+
+            liveLink.href =
+                `live-score.html?id=${encodedId}`;
+
+        }
+
 
         return true;
+
 
     } catch (error) {
 
@@ -304,14 +359,27 @@ async function loadTournament() {
 async function loadTeams() {
 
     if (!tournamentId) {
+
+        console.error(
+            "❌ Tournament ID missing while loading teams."
+        );
+
         return [];
+
     }
+
 
     try {
 
         console.log(
             "🔥 Loading teams..."
         );
+
+        console.log(
+            "📂 Firebase teams path:",
+            `tournaments/${tournamentId}/teams`
+        );
+
 
         const teamsRef =
             collection(
@@ -321,35 +389,34 @@ async function loadTeams() {
                 "teams"
             );
 
-        console.log(
-            "📂 Firebase teams path:",
-            `tournaments/${tournamentId}/teams`
-        );
 
         const snapshot =
             await getDocs(
                 teamsRef
             );
 
+
         console.log(
             "📦 Teams found:",
             snapshot.size
         );
 
+
         if (!team1Select || !team2Select) {
 
-            console.error(
-                "❌ Team select elements not found in HTML."
+            throw new Error(
+                "Team select element not found in HTML."
             );
 
-            return [];
         }
+
 
         team1Select.innerHTML = `
             <option value="">
                 Select Team 1
             </option>
         `;
+
 
         team2Select.innerHTML = `
             <option value="">
@@ -372,12 +439,23 @@ async function loadTeams() {
                 </option>
             `;
 
+
             showMessage(
-                "❌ No teams found for this tournament. Please create/register teams first.",
+                "❌ No teams found. Please register teams first.",
                 "error"
             );
 
+
+            if (createMatchBtn) {
+
+                createMatchBtn.disabled =
+                    true;
+
+            }
+
+
             return [];
+
         }
 
 
@@ -389,6 +467,7 @@ async function loadTeams() {
 
                 const data =
                     teamDoc.data();
+
 
                 console.log(
                     "🏏 TEAM:",
@@ -422,6 +501,10 @@ async function loadTeams() {
         );
 
 
+        // ========================================
+        // SORT TEAMS
+        // ========================================
+
         teams.sort(
             (a, b) =>
                 a.name.localeCompare(
@@ -429,6 +512,10 @@ async function loadTeams() {
                 )
         );
 
+
+        // ========================================
+        // ADD TEAMS
+        // ========================================
 
         teams.forEach(
             team => {
@@ -443,6 +530,7 @@ async function loadTeams() {
 
                 option1.textContent =
                     team.name;
+
 
                 team1Select.appendChild(
                     option1
@@ -460,6 +548,7 @@ async function loadTeams() {
                 option2.textContent =
                     team.name;
 
+
                 team2Select.appendChild(
                     option2
                 );
@@ -474,18 +563,17 @@ async function loadTeams() {
         );
 
 
-        // --------------------------------
-        // CHECK TEAM COUNT
-        // --------------------------------
+        // ========================================
+        // TEAM COUNT
+        // ========================================
 
         if (teams.length < 2) {
 
             showMessage(
-                "⚠️ Only " +
-                teams.length +
-                " team found. At least 2 teams are required to create a match.",
+                "⚠️ At least 2 teams are required.",
                 "error"
             );
+
 
             if (createMatchBtn) {
 
@@ -503,8 +591,9 @@ async function loadTeams() {
 
             }
 
+
             console.log(
-                "✅ Enough teams available for match."
+                "✅ Enough teams available."
             );
 
         }
@@ -520,11 +609,13 @@ async function loadTeams() {
             error
         );
 
+
         showMessage(
             "❌ Unable to load teams: " +
             error.message,
             "error"
         );
+
 
         return [];
 
@@ -545,6 +636,7 @@ if (matchForm) {
 
             event.preventDefault();
 
+
             console.log(
                 "🚀 CREATE MATCH SUBMITTED"
             );
@@ -558,6 +650,7 @@ if (matchForm) {
                 );
 
                 return;
+
             }
 
 
@@ -606,9 +699,9 @@ if (matchForm) {
                 "Scheduled";
 
 
-            // -------------------------
+            // ========================================
             // VALIDATION
-            // -------------------------
+            // ========================================
 
             if (!matchNumber) {
 
@@ -635,7 +728,7 @@ if (matchForm) {
             if (team1Id === team2Id) {
 
                 showMessage(
-                    "❌ Team 1 and Team 2 cannot be the same.",
+                    "❌ Team 1 and Team 2 cannot be same.",
                     "error"
                 );
 
@@ -685,12 +778,13 @@ if (matchForm) {
 
                     createMatchBtn.textContent =
                         "⏳ Creating Match...";
+
                 }
 
 
-                // -------------------------
-                // GET TEAM DOCUMENTS
-                // -------------------------
+                // ========================================
+                // LOAD TEAM 1
+                // ========================================
 
                 const team1Ref =
                     doc(
@@ -701,6 +795,10 @@ if (matchForm) {
                         team1Id
                     );
 
+
+                // ========================================
+                // LOAD TEAM 2
+                // ========================================
 
                 const team2Ref =
                     doc(
@@ -717,11 +815,8 @@ if (matchForm) {
                     team2Snap
                 ] =
                     await Promise.all([
-
                         getDoc(team1Ref),
-
                         getDoc(team2Ref)
-
                     ]);
 
 
@@ -733,6 +828,7 @@ if (matchForm) {
                     throw new Error(
                         "Selected team document not found."
                     );
+
                 }
 
 
@@ -748,7 +844,6 @@ if (matchForm) {
                     team1Data.teamName ||
                     team1Data.name ||
                     team1Data.team ||
-                    team1Data.teamName1 ||
                     "Team 1";
 
 
@@ -756,13 +851,12 @@ if (matchForm) {
                     team2Data.teamName ||
                     team2Data.name ||
                     team2Data.team ||
-                    team2Data.teamName1 ||
                     "Team 2";
 
 
-                // -------------------------
+                // ========================================
                 // MATCH DATA
-                // -------------------------
+                // ========================================
 
                 const matchData = {
 
@@ -853,9 +947,9 @@ if (matchForm) {
                 );
 
 
-                // -------------------------
-                // FIRESTORE PATH
-                // -------------------------
+                // ========================================
+                // FIRESTORE MATCH COLLECTION
+                // ========================================
 
                 const matchesRef =
                     collection(
@@ -864,12 +958,6 @@ if (matchForm) {
                         tournamentId,
                         "matches"
                     );
-
-
-                console.log(
-                    "📂 Saving match to:",
-                    `tournaments/${tournamentId}/matches`
-                );
 
 
                 const matchDoc =
@@ -885,12 +973,17 @@ if (matchForm) {
                 );
 
 
-                // -------------------------
-                // SAVE SELECTED MATCH
-                // -------------------------
+                // ========================================
+                // SAVE MATCH ID
+                // ========================================
 
                 localStorage.setItem(
                     "selectedMatchId",
+                    matchDoc.id
+                );
+
+                localStorage.setItem(
+                    "matchId",
                     matchDoc.id
                 );
 
@@ -899,13 +992,19 @@ if (matchForm) {
                     matchDoc.id
                 );
 
+                sessionStorage.setItem(
+                    "matchId",
+                    matchDoc.id
+                );
 
-                // -------------------------
+
+                // ========================================
                 // SUCCESS
-                // -------------------------
+                // ========================================
 
                 showMessage(
-                    "✅ Match created successfully!",
+                    "✅ Match created successfully! Match ID: " +
+                    matchDoc.id,
                     "success"
                 );
 
@@ -918,12 +1017,12 @@ if (matchForm) {
                 }
 
 
-                // -------------------------
+// ========================================
                 // OPEN SCORECARD
-                // -------------------------
+                // ========================================
 
                 setTimeout(
-                    function() {
+                    () => {
 
                         window.location.href =
                             `scorecard.html?id=${encodeURIComponent(
@@ -933,7 +1032,7 @@ if (matchForm) {
                             )}`;
 
                     },
-                    1000
+                    1200
                 );
 
 
@@ -970,14 +1069,14 @@ if (matchForm) {
 } else {
 
     console.error(
-        "❌ matchForm NOT FOUND in HTML"
+        "❌ matchForm NOT FOUND"
     );
 
 }
 
 
 // ========================================
-// START
+// INIT
 // ========================================
 
 async function init() {
@@ -1003,6 +1102,10 @@ async function init() {
     );
 
 
+    // ========================================
+    // LOAD TOURNAMENT
+    // ========================================
+
     const loaded =
         await loadTournament();
 
@@ -1010,8 +1113,13 @@ async function init() {
     if (!loaded) {
 
         return;
+
     }
 
+
+    // ========================================
+    // LOAD TEAMS
+    // ========================================
 
     await loadTeams();
 
@@ -1024,3 +1132,41 @@ async function init() {
 
 
 init();
+
+
+// ========================================
+// SAFE HTML
+// ========================================
+
+function escapeHTML(value) {
+
+    return String(
+        value ?? ""
+    )
+
+    .replaceAll(
+        "&",
+        "&amp;"
+    )
+
+    .replaceAll(
+        "<",
+        "&lt;"
+    )
+
+    .replaceAll(
+        ">",
+        "&gt;"
+    )
+
+    .replaceAll(
+        '"',
+        "&quot;"
+    )
+
+    .replaceAll(
+        "'",
+        "&#039;"
+    );
+
+}
