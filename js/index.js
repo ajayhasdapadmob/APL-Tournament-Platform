@@ -1,7 +1,7 @@
 // ========================================
 // INDEX.JS
 // APL TOURNAMENT PLATFORM
-// HOME PAGE
+// HOME PAGE - FINAL VERSION
 // ========================================
 
 import { db, auth } from "../firebase.js";
@@ -26,28 +26,20 @@ console.log("🔥 INDEX JS STARTED");
 // ========================================
 
 const tournamentNameEl =
-    document.getElementById(
-        "homeTournamentName"
-    );
+    document.getElementById("homeTournamentName");
 
 const tournamentIdEl =
-    document.getElementById(
-        "homeTournamentId"
-    );
+    document.getElementById("homeTournamentId");
 
 const totalTeamsEl =
-    document.getElementById(
-        "homeTotalTeams"
-    );
+    document.getElementById("homeTotalTeams");
 
 const teamListEl =
-    document.getElementById(
-        "homeTeamList"
-    );
+    document.getElementById("homeTeamList");
 
 
 // ========================================
-// MESSAGE
+// SHOW MESSAGE
 // ========================================
 
 function showMessage(message) {
@@ -111,6 +103,10 @@ function saveTournamentId(id) {
 
 // ========================================
 // GET TOURNAMENT ID
+// PRIORITY:
+// 1. URL
+// 2. LocalStorage
+// 3. SessionStorage
 // ========================================
 
 function getTournamentId() {
@@ -130,17 +126,30 @@ function getTournamentId() {
         params.get("tournamentId");
 
 
+    if (id) {
+
+        id =
+            String(id).trim();
+
+        saveTournamentId(id);
+
+        console.log(
+            "🏆 HOME TOURNAMENT FROM URL:",
+            id
+        );
+
+        return id;
+    }
+
+
     // ====================================
     // 2. LOCAL STORAGE
     // ====================================
 
-    if (!id) {
-
-        id =
-            localStorage.getItem(
-                "selectedTournamentId"
-            );
-    }
+    id =
+        localStorage.getItem(
+            "selectedTournamentId"
+        );
 
 
     if (!id) {
@@ -149,6 +158,22 @@ function getTournamentId() {
             localStorage.getItem(
                 "tournamentId"
             );
+    }
+
+
+    if (id) {
+
+        id =
+            String(id).trim();
+
+        saveTournamentId(id);
+
+        console.log(
+            "🏆 HOME TOURNAMENT FROM LOCAL STORAGE:",
+            id
+        );
+
+        return id;
     }
 
 
@@ -156,13 +181,10 @@ function getTournamentId() {
     // 3. SESSION STORAGE
     // ====================================
 
-    if (!id) {
-
-        id =
-            sessionStorage.getItem(
-                "selectedTournamentId"
-            );
-    }
+    id =
+        sessionStorage.getItem(
+            "selectedTournamentId"
+        );
 
 
     if (!id) {
@@ -174,25 +196,31 @@ function getTournamentId() {
     }
 
 
-    // ====================================
-    // CLEAN ID
-    // ====================================
-
     if (id) {
 
         id =
             String(id).trim();
 
+        saveTournamentId(id);
+
+        console.log(
+            "🏆 HOME TOURNAMENT FROM SESSION:",
+            id
+        );
+
+        return id;
     }
 
 
-    console.log(
-        "🏆 HOME TOURNAMENT:",
-        id
+    // ====================================
+    // NOTHING FOUND
+    // ====================================
+
+    console.warn(
+        "⚠️ HOME TOURNAMENT ID MISSING"
     );
 
-
-    return id || null;
+    return null;
 }
 
 
@@ -200,22 +228,21 @@ function getTournamentId() {
 // LOAD TOURNAMENT
 // ========================================
 
-async function loadTournament(
-    tournamentId
-) {
+async function loadTournament(tournamentId) {
 
     if (!tournamentId) {
+
         return false;
     }
 
 
+    console.log(
+        "🏆 Loading Home Tournament:",
+        tournamentId
+    );
+
+
     try {
-
-        console.log(
-            "🏆 Loading tournament:",
-            tournamentId
-        );
-
 
         const tournamentRef =
             doc(
@@ -231,6 +258,10 @@ async function loadTournament(
             );
 
 
+        // =================================
+        // NOT FOUND
+        // =================================
+
         if (!tournamentSnap.exists()) {
 
             console.error(
@@ -243,7 +274,6 @@ async function loadTournament(
 
                 tournamentNameEl.textContent =
                     "Tournament Not Found";
-
             }
 
 
@@ -251,7 +281,6 @@ async function loadTournament(
 
                 tournamentIdEl.textContent =
                     tournamentId;
-
             }
 
 
@@ -259,25 +288,36 @@ async function loadTournament(
 
                 totalTeamsEl.textContent =
                     "0";
-
             }
 
 
-            showMessage(
-                "❌ Tournament not found."
-            );
+            showMessage(`
+                ❌ Tournament not found.
+                <br><br>
+
+                <a
+                    href="my-tournaments.html"
+                    class="btn primary-btn"
+                >
+                    Select Tournament
+                </a>
+            `);
 
 
             return false;
         }
 
 
+        // =================================
+        // DATA
+        // =================================
+
         const tournament =
             tournamentSnap.data();
 
 
         console.log(
-            "🏆 TOURNAMENT LOADED:",
+            "🏆 HOME TOURNAMENT DATA:",
             tournament
         );
 
@@ -289,11 +329,14 @@ async function loadTournament(
             "Tournament";
 
 
+        // =================================
+        // DISPLAY
+        // =================================
+
         if (tournamentNameEl) {
 
             tournamentNameEl.textContent =
                 name;
-
         }
 
 
@@ -301,14 +344,21 @@ async function loadTournament(
 
             tournamentIdEl.textContent =
                 tournamentId;
-
         }
 
 
-        // Save again
+        // =================================
+        // SAVE AGAIN
+        // =================================
 
         saveTournamentId(
             tournamentId
+        );
+
+
+        console.log(
+            "✅ HOME TOURNAMENT LOADED:",
+            name
         );
 
 
@@ -323,17 +373,11 @@ async function loadTournament(
         );
 
 
-        if (tournamentNameEl) {
-
-            tournamentNameEl.textContent =
-                "Error";
-
-        }
-
-
-        showMessage(
-            "❌ Unable to load tournament."
-        );
+        showMessage(`
+            ❌ Unable to load tournament.
+            <br><br>
+            ${error.message}
+        `);
 
 
         return false;
@@ -345,9 +389,7 @@ async function loadTournament(
 // LOAD REGISTERED TEAMS
 // ========================================
 
-async function loadTeams(
-    tournamentId
-) {
+async function loadTeams(tournamentId) {
 
     if (!tournamentId) {
 
@@ -355,20 +397,7 @@ async function loadTeams(
 
             totalTeamsEl.textContent =
                 "0";
-
         }
-
-        showMessage(`
-            🏆 No tournament selected.
-            <br><br>
-
-            <a
-                href="my-tournaments.html"
-                class="btn primary-btn"
-            >
-                Select Tournament
-            </a>
-        `);
 
         return;
     }
@@ -403,19 +432,24 @@ async function loadTeams(
         );
 
 
+        // =================================
+        // TOTAL TEAM COUNT
+        // =================================
+
         if (totalTeamsEl) {
 
             totalTeamsEl.textContent =
                 snapshot.size;
-
         }
 
 
+        // =================================
+        // CLEAR OLD LIST
+        // =================================
+
         if (teamListEl) {
 
-            teamListEl.innerHTML =
-                "";
-
+            teamListEl.innerHTML = "";
         }
 
 
@@ -427,6 +461,7 @@ async function loadTeams(
 
             showMessage(`
                 👥 No registered teams yet.
+
                 <br><br>
 
                 <a
@@ -446,7 +481,7 @@ async function loadTeams(
         // =================================
 
         snapshot.forEach(
-            teamDoc => {
+            (teamDoc) => {
 
                 const team =
                     teamDoc.data();
@@ -508,33 +543,25 @@ async function loadTeams(
                 card.innerHTML = `
 
                     <h3>
-                        🏏 ${escapeHTML(
-                            teamName
-                        )}
+                        🏏 ${teamName}
                     </h3>
 
                     <p>
                         👤
                         <b>Captain:</b>
-                        ${escapeHTML(
-                            captain
-                        )}
+                        ${captain}
                     </p>
 
                     <p>
                         📱
                         <b>Mobile:</b>
-                        ${escapeHTML(
-                            mobile
-                        )}
+                        ${mobile}
                     </p>
 
                     <p>
                         🏙️
                         <b>City:</b>
-                        ${escapeHTML(
-                            city
-                        )}
+                        ${city}
                     </p>
 
                     <p>
@@ -544,9 +571,7 @@ async function loadTeams(
                     </p>
 
                     <span class="status-badge">
-                        ${escapeHTML(
-                            status
-                        )}
+                        ${status}
                     </span>
 
                 `;
@@ -557,10 +582,14 @@ async function loadTeams(
                     teamListEl.appendChild(
                         card
                     );
-
                 }
 
             }
+        );
+
+
+        console.log(
+            "✅ HOME TEAMS DISPLAYED"
         );
 
 
@@ -576,53 +605,81 @@ async function loadTeams(
 
             totalTeamsEl.textContent =
                 "0";
-
         }
 
 
         showMessage(`
             ❌ Unable to load registered teams.
             <br><br>
-            ${escapeHTML(
-                error.message
-            )}
+            ${error.message}
         `);
     }
 }
 
 
 // ========================================
-// ESCAPE HTML
+// FIX ALL HOME LINKS
+// ADD ACTIVE TOURNAMENT ID
 // ========================================
 
-function escapeHTML(value) {
+function setupHomeLinks(tournamentId) {
 
-    return String(value)
+    if (!tournamentId) return;
 
-        .replaceAll(
-            "&",
-            "&amp;"
-        )
 
-        .replaceAll(
-            "<",
-            "&lt;"
-        )
+    const pages = [
 
-        .replaceAll(
-            ">",
-            "&gt;"
-        )
+        "schedule.html",
 
-        .replaceAll(
-            '"',
-            "&quot;"
-        )
+        "results.html",
 
-        .replaceAll(
-            "'",
-            "&#039;"
-        );
+        "points.html",
+
+        "player-stats.html",
+
+        "orange.html",
+
+        "purple.html",
+
+        "admin.html",
+
+        "my-tournaments.html",
+
+        "team-registration.html",
+
+        "registration.html",
+
+        "live-score.html"
+
+    ];
+
+
+    pages.forEach(
+        (page) => {
+
+            const links =
+                document.querySelectorAll(
+                    `a[href="${page}"]`
+                );
+
+
+            links.forEach(
+                (link) => {
+
+                    link.href =
+                        `${page}?id=${encodeURIComponent(tournamentId)}`;
+
+                }
+            );
+
+        }
+    );
+
+
+    console.log(
+        "🔗 HOME LINKS UPDATED:",
+        tournamentId
+    );
 }
 
 
@@ -632,33 +689,37 @@ function escapeHTML(value) {
 
 async function loadHome() {
 
-    console.log(
-        "🚀 LOADING HOME..."
-    );
-
-
     try {
+
+        console.log(
+            "🚀 STARTING HOME..."
+        );
+
+
+        // =================================
+        // GET ACTIVE TOURNAMENT
+        // =================================
 
         const tournamentId =
             getTournamentId();
 
 
+        console.log(
+            "🏆 HOME TOURNAMENT:",
+            tournamentId
+        );
+
+
         // =================================
-        // NO ID
+        // NO TOURNAMENT
         // =================================
 
         if (!tournamentId) {
-
-            console.warn(
-                "⚠️ HOME TOURNAMENT ID MISSING"
-            );
-
 
             if (tournamentNameEl) {
 
                 tournamentNameEl.textContent =
                     "Select Tournament";
-
             }
 
 
@@ -666,7 +727,6 @@ async function loadHome() {
 
                 tournamentIdEl.textContent =
                     "-";
-
             }
 
 
@@ -674,34 +734,25 @@ async function loadHome() {
 
                 totalTeamsEl.textContent =
                     "0";
-
             }
 
 
             showMessage(`
                 🏆 Please select a tournament.
+
                 <br><br>
 
                 <a
                     href="my-tournaments.html"
                     class="btn primary-btn"
                 >
-                    Select Tournament
+                    🏆 Select Tournament
                 </a>
             `);
 
 
             return;
         }
-
-
-        // =================================
-        // SAVE ID
-        // =================================
-
-        saveTournamentId(
-            tournamentId
-        );
 
 
         // =================================
@@ -715,6 +766,7 @@ async function loadHome() {
 
 
         if (!tournamentLoaded) {
+
             return;
         }
 
@@ -728,8 +780,17 @@ async function loadHome() {
         );
 
 
+        // =================================
+        // UPDATE HOME LINKS
+        // =================================
+
+        setupHomeLinks(
+            tournamentId
+        );
+
+
         console.log(
-            "✅ HOME READY"
+            "✅ HOME COMPLETELY LOADED"
         );
 
 
@@ -754,24 +815,19 @@ async function loadHome() {
 
 onAuthStateChanged(
     auth,
-    async user => {
+    async (user) => {
 
         console.log(
             "👤 HOME USER:",
             user
-                ? user.email
-                : "Not logged in"
         );
 
 
-        if (!user) {
-
-            window.location.href =
-                "./login.html";
-
-            return;
-        }
-
+        // =================================
+        // IMPORTANT:
+        // HOME KO LOGIN KE BINA BHI LOAD
+        // KARNE DENGE
+        // =================================
 
         await loadHome();
 
