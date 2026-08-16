@@ -1,5 +1,5 @@
 // ========================================
-// SCORECARD.JS - FINAL
+// SCORECARD.JS - FINAL COMPLETE VERSION
 // APL TOURNAMENT PLATFORM
 // LIVE CRICKET SCORING
 // ========================================
@@ -45,7 +45,7 @@ const nextMatchBtn =
 
 
 // ========================================
-// IDS
+// GET TOURNAMENT ID
 // ========================================
 
 function getTournamentId() {
@@ -68,6 +68,10 @@ function getTournamentId() {
         : null;
 }
 
+
+// ========================================
+// GET MATCH ID
+// ========================================
 
 function getMatchId() {
 
@@ -157,7 +161,82 @@ function saveIds() {
 
 
 // ========================================
-// SCORE STATE
+// DEFAULT BATTER
+// ========================================
+
+function createBatter(name = "Batter") {
+
+    return {
+
+        name: name,
+
+        runs: 0,
+
+        balls: 0,
+
+        fours: 0,
+
+        sixes: 0,
+
+        strikeRate: 0,
+
+        out: false
+    };
+}
+
+
+// ========================================
+// DEFAULT BOWLER
+// ========================================
+
+function createBowler(name = "Bowler") {
+
+    return {
+
+        name: name,
+
+        balls: 0,
+
+        runs: 0,
+
+        wickets: 0,
+
+        wides: 0,
+
+        noBalls: 0,
+
+        maidens: 0,
+
+        economy: 0,
+
+        currentOverRuns: 0
+    };
+}
+
+
+// ========================================
+// DEFAULT EXTRAS
+// ========================================
+
+function createExtras() {
+
+    return {
+
+        wides: 0,
+
+        noBalls: 0,
+
+        byes: 0,
+
+        legByes: 0,
+
+        total: 0
+    };
+}
+
+
+// ========================================
+// CREATE NEW INNINGS
 // ========================================
 
 function createNewInnings(
@@ -182,24 +261,21 @@ function createNewInnings(
 
         currentOverRuns: [],
 
-        striker: {
-            name: "Striker",
-            runs: 0,
-            balls: 0
-        },
+        striker:
+            createBatter("Striker"),
 
-        nonStriker: {
-            name: "Non-Striker",
-            runs: 0,
-            balls: 0
-        },
+        nonStriker:
+            createBatter("Non-Striker"),
 
-        bowler: {
-            name: "Bowler",
-            balls: 0,
-            runs: 0,
-            wickets: 0
-        },
+        bowler:
+            createBowler("Bowler"),
+
+        extras:
+            createExtras(),
+
+        totalFours: 0,
+
+        totalSixes: 0,
 
         history: [],
 
@@ -213,7 +289,7 @@ let scoreState =
 
 
 // ========================================
-// HELPERS
+// TEAM NAMES
 // ========================================
 
 function team1Name() {
@@ -238,6 +314,10 @@ function team2Name() {
 }
 
 
+// ========================================
+// OVERS
+// ========================================
+
 function getOversFromBalls(balls) {
 
     const b =
@@ -250,6 +330,89 @@ function getOversFromBalls(balls) {
     );
 }
 
+
+// ========================================
+// CRR
+// ========================================
+
+function calculateCRR(
+    runs,
+    balls
+) {
+
+    const r =
+        Number(runs) || 0;
+
+    const b =
+        Number(balls) || 0;
+
+    if (b <= 0) {
+        return "0.00";
+    }
+
+    return (
+        r /
+        (b / 6)
+    ).toFixed(2);
+}
+
+
+// ========================================
+// ECONOMY
+// ========================================
+
+function calculateEconomy(
+    runs,
+    balls
+) {
+
+    const r =
+        Number(runs) || 0;
+
+    const b =
+        Number(balls) || 0;
+
+    if (b <= 0) {
+        return "0.00";
+    }
+
+    return (
+        r /
+        (b / 6)
+    ).toFixed(2);
+}
+
+
+// ========================================
+// STRIKE RATE
+// ========================================
+
+function calculateStrikeRate(
+    runs,
+    balls
+) {
+
+    const r =
+        Number(runs) || 0;
+
+    const b =
+        Number(balls) || 0;
+
+    if (b <= 0) {
+        return "0.00";
+    }
+
+    return (
+        r /
+        b *
+        100
+    ).toFixed(2);
+}
+
+
+// ========================================
+// PARSE SCORE
+// ========================================
 
 function parseScore(score) {
 
@@ -271,6 +434,10 @@ function parseScore(score) {
     };
 }
 
+
+// ========================================
+// ESCAPE HTML
+// ========================================
 
 function escapeHTML(value) {
 
@@ -401,11 +568,6 @@ async function loadMatch() {
         currentMatch =
             await findFirstMatch();
 
-        console.log(
-            "🏏 FIRST MATCH:",
-            currentMatch
-        );
-
         return;
     }
 
@@ -445,6 +607,149 @@ async function loadMatch() {
         "🏏 MATCH LOADED:",
         currentMatch
     );
+}
+
+
+// ========================================
+// NORMALIZE SAVED BATTER
+// ========================================
+
+function normalizeBatter(
+    batter,
+    defaultName
+) {
+
+    return {
+
+        name:
+            batter?.name ||
+            defaultName,
+
+        runs:
+            Number(
+                batter?.runs || 0
+            ),
+
+        balls:
+            Number(
+                batter?.balls || 0
+            ),
+
+        fours:
+            Number(
+                batter?.fours || 0
+            ),
+
+        sixes:
+            Number(
+                batter?.sixes || 0
+            ),
+
+        strikeRate:
+            Number(
+                batter?.strikeRate || 0
+            ),
+
+        out:
+            Boolean(
+                batter?.out || false
+            )
+    };
+}
+
+
+// ========================================
+// NORMALIZE BOWLER
+// ========================================
+
+function normalizeBowler(
+    bowler
+) {
+
+    return {
+
+        name:
+            bowler?.name ||
+            "Bowler",
+
+        balls:
+            Number(
+                bowler?.balls || 0
+            ),
+
+        runs:
+            Number(
+                bowler?.runs || 0
+            ),
+
+        wickets:
+            Number(
+                bowler?.wickets || 0
+            ),
+
+        wides:
+            Number(
+                bowler?.wides || 0
+            ),
+
+        noBalls:
+            Number(
+                bowler?.noBalls || 0
+            ),
+
+        maidens:
+            Number(
+                bowler?.maidens || 0
+            ),
+
+        economy:
+            Number(
+                bowler?.economy || 0
+            ),
+
+        currentOverRuns:
+            Number(
+                bowler?.currentOverRuns || 0
+            )
+    };
+}
+
+
+// ========================================
+// NORMALIZE EXTRAS
+// ========================================
+
+function normalizeExtras(
+    extras
+) {
+
+    return {
+
+        wides:
+            Number(
+                extras?.wides || 0
+            ),
+
+        noBalls:
+            Number(
+                extras?.noBalls || 0
+            ),
+
+        byes:
+            Number(
+                extras?.byes || 0
+            ),
+
+        legByes:
+            Number(
+                extras?.legByes || 0
+            ),
+
+        total:
+            Number(
+                extras?.total || 0
+            )
+    };
 }
 
 
@@ -506,26 +811,36 @@ function loadSavedScore() {
                 : [],
 
         striker:
-            saved.striker || {
-                name: "Striker",
-                runs: 0,
-                balls: 0
-            },
+            normalizeBatter(
+                saved.striker,
+                "Striker"
+            ),
 
         nonStriker:
-            saved.nonStriker || {
-                name: "Non-Striker",
-                runs: 0,
-                balls: 0
-            },
+            normalizeBatter(
+                saved.nonStriker,
+                "Non-Striker"
+            ),
 
         bowler:
-            saved.bowler || {
-                name: "Bowler",
-                balls: 0,
-                runs: 0,
-                wickets: 0
-            },
+            normalizeBowler(
+                saved.bowler
+            ),
+
+        extras:
+            normalizeExtras(
+                saved.extras
+            ),
+
+        totalFours:
+            Number(
+                saved.totalFours || 0
+            ),
+
+        totalSixes:
+            Number(
+                saved.totalSixes || 0
+            ),
 
         history: [],
 
@@ -658,14 +973,10 @@ function renderScore() {
 
 
     const crr =
-        scoreState.balls > 0
-            ? (
-                scoreState.runs /
-                (
-                    scoreState.balls / 6
-                )
-            ).toFixed(2)
-            : "0.00";
+        calculateCRR(
+            scoreState.runs,
+            scoreState.balls
+        );
 
 
     let scoreA =
@@ -690,6 +1001,11 @@ function renderScore() {
         scoreB =
             scoreText;
     }
+
+
+    const extras =
+        scoreState.extras ||
+        createExtras();
 
 
     scoreElement.innerHTML = `
@@ -758,6 +1074,16 @@ function renderScore() {
 
             <br>
 
+            <span>
+                Extras: ${extras.total}
+                (WD ${extras.wides},
+                NB ${extras.noBalls},
+                B ${extras.byes},
+                LB ${extras.legByes})
+            </span>
+
+            <br>
+
             <span style="
                 display:inline-block;
                 margin-top:8px;
@@ -814,48 +1140,35 @@ function renderScore() {
 }
 
 
+
 // ========================================
-// BATTERS
+// UPDATE BATTERS
 // ========================================
 
 function updateBatters() {
 
     const striker =
         scoreState.striker ||
-        {
-            name: "Striker",
-            runs: 0,
-            balls: 0
-        };
+        createBatter("Striker");
 
 
     const nonStriker =
         scoreState.nonStriker ||
-        {
-            name: "Non-Striker",
-            runs: 0,
-            balls: 0
-        };
+        createBatter("Non-Striker");
 
 
     const sr =
-        striker.balls > 0
-            ? (
-                striker.runs /
-                striker.balls *
-                100
-            ).toFixed(2)
-            : "0.00";
+        calculateStrikeRate(
+            striker.runs,
+            striker.balls
+        );
 
 
     const nsr =
-        nonStriker.balls > 0
-            ? (
-                nonStriker.runs /
-                nonStriker.balls *
-                100
-            ).toFixed(2)
-            : "0.00";
+        calculateStrikeRate(
+            nonStriker.runs,
+            nonStriker.balls
+        );
 
 
     const strikerName =
@@ -940,83 +1253,59 @@ function updateBatters() {
             nsr;
 
 
-// Compatibility with existing HTML
+    // Optional 4s / 6s HTML IDs
 
-    const oldStrikerRuns =
+    const strikerFours =
         document.getElementById(
-            "strikerRuns"
+            "strikerFours"
         );
 
-    if (oldStrikerRuns)
-        oldStrikerRuns.textContent =
-            striker.runs;
-
-
-    const oldStrikerBalls =
+    const strikerSixes =
         document.getElementById(
-            "strikerBalls"
+            "strikerSixes"
         );
 
-    if (oldStrikerBalls)
-        oldStrikerBalls.textContent =
-            striker.balls;
-
-
-    const oldStrikerSR =
+    const nonStrikerFours =
         document.getElementById(
-            "strikerSR"
+            "nonStrikerFours"
         );
 
-    if (oldStrikerSR)
-        oldStrikerSR.textContent =
-            sr;
-
-
-    const oldNonRuns =
+    const nonStrikerSixes =
         document.getElementById(
-            "nonStrikerRuns"
+            "nonStrikerSixes"
         );
 
-    if (oldNonRuns)
-        oldNonRuns.textContent =
-            nonStriker.runs;
+
+    if (strikerFours)
+        strikerFours.textContent =
+            striker.fours;
 
 
-    const oldNonBalls =
-        document.getElementById(
-            "nonStrikerBalls"
-        );
-
-    if (oldNonBalls)
-        oldNonBalls.textContent =
-            nonStriker.balls;
+    if (strikerSixes)
+        strikerSixes.textContent =
+            striker.sixes;
 
 
-    const oldNonSR =
-        document.getElementById(
-            "nonStrikerSR"
-        );
+    if (nonStrikerFours)
+        nonStrikerFours.textContent =
+            nonStriker.fours;
 
-    if (oldNonSR)
-        oldNonSR.textContent =
-            nsr;
+
+    if (nonStrikerSixes)
+        nonStrikerSixes.textContent =
+            nonStriker.sixes;
 }
 
 
 // ========================================
-// BOWLER
+// UPDATE BOWLER
 // ========================================
 
 function updateBowler() {
 
     const bowler =
         scoreState.bowler ||
-        {
-            name: "Bowler",
-            balls: 0,
-            runs: 0,
-            wickets: 0
-        };
+        createBowler();
 
 
     const bowlerName =
@@ -1037,6 +1326,26 @@ function updateBowler() {
     const bowlerWickets =
         document.getElementById(
             "bowlerWickets"
+        );
+
+    const bowlerMaidens =
+        document.getElementById(
+            "bowlerMaidens"
+        );
+
+    const bowlerWides =
+        document.getElementById(
+            "bowlerWides"
+        );
+
+    const bowlerNoBalls =
+        document.getElementById(
+            "bowlerNoBalls"
+        );
+
+    const bowlerEconomy =
+        document.getElementById(
+            "bowlerEconomy"
         );
 
 
@@ -1060,11 +1369,34 @@ function updateBowler() {
     if (bowlerWickets)
         bowlerWickets.textContent =
             bowler.wickets;
+
+
+    if (bowlerMaidens)
+        bowlerMaidens.textContent =
+            bowler.maidens;
+
+
+    if (bowlerWides)
+        bowlerWides.textContent =
+            bowler.wides;
+
+
+    if (bowlerNoBalls)
+        bowlerNoBalls.textContent =
+            bowler.noBalls;
+
+
+    if (bowlerEconomy)
+        bowlerEconomy.textContent =
+            calculateEconomy(
+                bowler.runs,
+                bowler.balls
+            );
 }
 
 
 // ========================================
-// CURRENT OVER
+// UPDATE CURRENT OVER
 // ========================================
 
 function updateCurrentOver() {
@@ -1120,7 +1452,7 @@ function updateCurrentOver() {
 
 
 // ========================================
-// HISTORY
+// SAVE HISTORY
 // ========================================
 
 function saveHistory() {
@@ -1149,91 +1481,44 @@ function saveHistory() {
 
 
 // ========================================
-// SAVE MATCH DATA
+// COMPLETE CURRENT BOWLER OVER
 // ========================================
 
-async function writeMatchData(
-    statusOverride = null
-) {
+function completeBowlerOver() {
 
-    if (
-        !tournamentId ||
-        !matchId ||
-        !currentMatch
-    ) {
+    const bowler =
+        scoreState.bowler;
+
+
+    if (!bowler) {
         return;
     }
 
 
-    const scoreA =
-        scoreState.battingTeam === "A"
-            ? `${scoreState.runs}/${scoreState.wickets}`
-            : (
-                currentMatch.scoreA ||
-                "0/0"
-            );
+    const overRuns =
+        Number(
+            bowler.currentOverRuns || 0
+        );
 
 
-    const scoreB =
-        scoreState.battingTeam === "B"
-            ? `${scoreState.runs}/${scoreState.wickets}`
-            : (
-                currentMatch.scoreB ||
-                "0/0"
-            );
+    if (
+        bowler.balls > 0 &&
+        bowler.balls % 6 === 0
+    ) {
+
+        if (overRuns === 0) {
+
+            bowler.maidens += 1;
+        }
 
 
-    const data = {
-
-        scoreA: scoreA,
-
-        scoreB: scoreB,
-
-        scorecard: scoreState,
-
-        innings:
-            scoreState.innings,
-
-        currentBall:
-            scoreState.balls,
-
-        status:
-            statusOverride ||
-            scoreState.status ||
-            "Live",
-
-        updatedAt:
-            serverTimestamp()
-    };
-
-
-    await updateDoc(
-
-        doc(
-            db,
-            "tournaments",
-            tournamentId,
-            "matches",
-            matchId
-        ),
-
-        data
-    );
-
-
-    currentMatch.scoreA =
-        scoreA;
-
-    currentMatch.scoreB =
-        scoreB;
-
-    currentMatch.status =
-        data.status;
+        bowler.currentOverRuns = 0;
+    }
 }
 
 
 // ========================================
-// ADD RUNS
+// ADD NORMAL RUNS
 // ========================================
 
 async function addRuns(
@@ -1252,51 +1537,108 @@ async function addRuns(
     }
 
 
+    const value =
+        Number(runs);
+
+
+    if (
+        !Number.isFinite(value) ||
+        value < 0
+    ) {
+
+        return;
+    }
+
+
     saveHistory();
 
 
+    // Team runs
+
     scoreState.runs +=
-        Number(runs);
+        value;
 
 
-    scoreState.balls += 1;
+    // Legal ball
 
+    scoreState.balls +=
+        1;
+
+
+    // Batter
 
     scoreState.striker.runs +=
-        Number(runs);
-
+        value;
 
     scoreState.striker.balls +=
         1;
 
 
-    scoreState.bowler.runs +=
-        Number(runs);
+    // Boundary statistics
 
+    if (value === 4) {
+
+        scoreState.striker.fours += 1;
+
+        scoreState.totalFours += 1;
+    }
+
+
+    if (value === 6) {
+
+        scoreState.striker.sixes += 1;
+
+        scoreState.totalSixes += 1;
+    }
+
+
+    // Bowler
+
+    scoreState.bowler.runs +=
+        value;
 
     scoreState.bowler.balls +=
         1;
 
+    scoreState.bowler.currentOverRuns +=
+        value;
+
+
+    scoreState.bowler.economy =
+        Number(
+            calculateEconomy(
+                scoreState.bowler.runs,
+                scoreState.bowler.balls
+            )
+        );
+
+
+    // Current over
 
     scoreState.currentOverRuns.push(
-        String(runs)
+        String(value)
     );
 
 
+    // Odd runs = strike change
+
     if (
-        Number(runs) % 2 === 1
+        value % 2 === 1
     ) {
 
         swapBatters(false);
     }
 
 
+    // Over completed
+
     if (
         scoreState.balls % 6 === 0
     ) {
 
-        scoreState.currentOverRuns =
-            [];
+        completeBowlerOver();
+
+        scoreState.currentOverRuns = [];
 
         swapBatters(false);
     }
@@ -1304,13 +1646,12 @@ async function addRuns(
 
     renderScore();
 
-
     await autoSave();
 }
 
 
 // ========================================
-// EXTRAS
+// ADD EXTRAS
 // ========================================
 
 async function addExtra(
@@ -1330,45 +1671,195 @@ async function addExtra(
     }
 
 
+    const value =
+        Number(runs) || 1;
+
+
     saveHistory();
 
 
-    scoreState.runs +=
-        Number(runs);
-
+    // ====================================
+    // WIDE
+    // ====================================
 
     if (
         type === "Wide"
     ) {
 
+        scoreState.runs +=
+            value;
+
+
+        scoreState.extras.wides +=
+            value;
+
+
+        scoreState.extras.total +=
+            value;
+
+
         scoreState.bowler.runs +=
-            Number(runs);
+            value;
+
+
+        scoreState.bowler.wides +=
+            value;
+
+
+        scoreState.bowler.currentOverRuns +=
+            value;
+
 
         scoreState.currentOverRuns.push(
-            `Wd+${runs}`
-        );
-
-    } else if (
-        type === "No Ball"
-    ) {
-
-        scoreState.bowler.runs +=
-            Number(runs);
-
-        scoreState.currentOverRuns.push(
-            `NB+${runs}`
-        );
-
-    } else {
-
-        scoreState.currentOverRuns.push(
-            `${type}+${runs}`
+            value === 1
+                ? "Wd"
+                : `Wd+${value}`
         );
     }
 
 
-    renderScore();
+    // ====================================
+    // NO BALL
+    // ====================================
 
+    else if (
+        type === "No Ball"
+    ) {
+
+        scoreState.runs +=
+            value;
+
+
+        scoreState.extras.noBalls +=
+            value;
+
+
+        scoreState.extras.total +=
+            value;
+
+
+        scoreState.bowler.runs +=
+            value;
+
+
+        scoreState.bowler.noBalls +=
+            value;
+
+
+        scoreState.bowler.currentOverRuns +=
+            value;
+
+
+        scoreState.currentOverRuns.push(
+            value === 1
+                ? "NB"
+                : `NB+${value}`
+        );
+    }
+
+
+    // ====================================
+    // BYE
+    // ====================================
+
+    else if (
+        type === "Bye"
+    ) {
+
+        scoreState.runs +=
+            value;
+
+
+        scoreState.extras.byes +=
+            value;
+
+
+        scoreState.extras.total +=
+            value;
+
+
+        // Bye does NOT count to bowler runs
+
+        scoreState.currentOverRuns.push(
+            value === 1
+                ? "B"
+                : `B+${value}`
+        );
+
+
+        // Bye is a legal delivery
+
+        scoreState.balls +=
+            1;
+
+        scoreState.striker.balls +=
+            1;
+
+        scoreState.bowler.balls +=
+            1;
+    }
+
+
+    // ====================================
+    // LEG BYE
+    // ====================================
+
+    else if (
+        type === "Leg Bye"
+    ) {
+
+        scoreState.runs +=
+            value;
+
+
+        scoreState.extras.legByes +=
+            value;
+
+
+        scoreState.extras.total +=
+            value;
+
+
+        // Leg bye does NOT count to bowler runs
+
+        scoreState.currentOverRuns.push(
+            value === 1
+                ? "LB"
+                : `LB+${value}`
+        );
+
+
+        // Legal delivery
+
+        scoreState.balls +=
+            1;
+
+        scoreState.striker.balls +=
+            1;
+
+        scoreState.bowler.balls +=
+            1;
+    }
+
+
+    // ====================================
+    // OVER COMPLETE
+    // ====================================
+
+    if (
+        scoreState.balls > 0 &&
+        scoreState.balls % 6 === 0
+    ) {
+
+        completeBowlerOver();
+
+        scoreState.currentOverRuns = [];
+
+        swapBatters(false);
+    }
+
+
+    renderScore();
 
     await autoSave();
 }
@@ -1383,6 +1874,7 @@ async function addWicket() {
     if (
         scoreState.status === "Completed"
     ) {
+
         return;
     }
 
@@ -1390,15 +1882,28 @@ async function addWicket() {
     saveHistory();
 
 
-    scoreState.wickets += 1;
+    scoreState.wickets +=
+        1;
 
-    scoreState.balls += 1;
 
-    scoreState.striker.balls += 1;
+    scoreState.balls +=
+        1;
 
-    scoreState.bowler.balls += 1;
 
-    scoreState.bowler.wickets += 1;
+    scoreState.striker.balls +=
+        1;
+
+
+    scoreState.striker.out =
+        true;
+
+
+    scoreState.bowler.balls +=
+        1;
+
+
+    scoreState.bowler.wickets +=
+        1;
 
 
     scoreState.currentOverRuns.push(
@@ -1406,8 +1911,28 @@ async function addWicket() {
     );
 
 
-    renderScore();
+    // New batter placeholder
 
+    scoreState.striker =
+        createBatter(
+            "New Batter"
+        );
+
+
+    if (
+        scoreState.balls > 0 &&
+        scoreState.balls % 6 === 0
+    ) {
+
+        completeBowlerOver();
+
+        scoreState.currentOverRuns = [];
+
+        swapBatters(false);
+    }
+
+
+    renderScore();
 
     await autoSave();
 }
@@ -1477,6 +2002,186 @@ async function undoScore() {
 
 
 // ========================================
+// PREPARE SCORECARD FOR FIREBASE
+// ========================================
+
+function prepareScorecardData() {
+
+    return {
+
+        battingTeam:
+            scoreState.battingTeam,
+
+        innings:
+            scoreState.innings,
+
+        runs:
+            Number(
+                scoreState.runs || 0
+            ),
+
+        wickets:
+            Number(
+                scoreState.wickets || 0
+            ),
+
+        balls:
+            Number(
+                scoreState.balls || 0
+            ),
+
+        overs:
+            getOversFromBalls(
+                scoreState.balls
+            ),
+
+        crr:
+            Number(
+                calculateCRR(
+                    scoreState.runs,
+                    scoreState.balls
+                )
+            ),
+
+        striker:
+            scoreState.striker,
+
+        nonStriker:
+            scoreState.nonStriker,
+
+        bowler:
+            scoreState.bowler,
+
+        extras:
+            scoreState.extras,
+
+        totalFours:
+            scoreState.totalFours,
+
+        totalSixes:
+            scoreState.totalSixes,
+
+        currentOverRuns:
+            scoreState.currentOverRuns,
+
+        status:
+            scoreState.status
+    };
+}
+
+
+// ========================================
+// WRITE MATCH DATA
+// ========================================
+
+async function writeMatchData(
+    statusOverride = null
+) {
+
+    if (
+        !tournamentId ||
+        !matchId ||
+        !currentMatch
+    ) {
+
+        return;
+    }
+
+
+    const scoreText =
+        `${scoreState.runs}/${scoreState.wickets}`;
+
+
+    let scoreA =
+        currentMatch.scoreA ||
+        "0/0";
+
+
+    let scoreB =
+        currentMatch.scoreB ||
+        "0/0";
+
+
+    if (
+        scoreState.battingTeam === "A"
+    ) {
+
+        scoreA =
+            scoreText;
+
+    } else {
+
+        scoreB =
+            scoreText;
+    }
+
+
+    const scorecard =
+        prepareScorecardData();
+
+
+    const data = {
+
+        scoreA:
+            scoreA,
+
+        scoreB:
+            scoreB,
+
+        scorecard:
+            scorecard,
+
+        innings:
+            scoreState.innings,
+
+        currentBall:
+            scoreState.balls,
+
+        currentOvers:
+            getOversFromBalls(
+                scoreState.balls
+            ),
+
+        currentRuns:
+            scoreState.runs,
+
+        currentWickets:
+            scoreState.wickets,
+
+        status:
+            statusOverride ||
+            scoreState.status ||
+            "Live",
+
+        updatedAt:
+            serverTimestamp()
+    };
+
+
+    await updateDoc(
+
+        doc(
+            db,
+            "tournaments",
+            tournamentId,
+            "matches",
+            matchId
+        ),
+
+        data
+    );
+
+
+    currentMatch = {
+
+        ...currentMatch,
+
+        ...data
+    };
+}
+
+
+// ========================================
 // AUTO SAVE
 // ========================================
 
@@ -1529,6 +2234,109 @@ async function saveScore() {
             )
         );
     }
+}
+
+
+// ========================================
+// CALCULATE NRR
+// ========================================
+
+function calculateNRR(
+    teamRuns,
+    teamBalls,
+    opponentRuns,
+    opponentBalls
+) {
+
+    const tr =
+        Number(teamRuns) || 0;
+
+    const tb =
+        Number(teamBalls) || 0;
+
+    const or =
+        Number(opponentRuns) || 0;
+
+    const ob =
+        Number(opponentBalls) || 0;
+
+
+    if (
+        tb <= 0 ||
+        ob <= 0
+    ) {
+
+        return 0;
+    }
+
+
+    const teamRunRate =
+        tr /
+        (tb / 6);
+
+
+    const opponentRunRate =
+        or /
+        (ob / 6);
+
+
+    return Number(
+        (
+            teamRunRate -
+            opponentRunRate
+        ).toFixed(3)
+    );
+}
+
+
+// ========================================
+// SAVE FIRST INNINGS DATA
+// ========================================
+
+function getFirstInningsData() {
+
+    const firstTeam =
+        scoreState.battingTeam === "A"
+            ? team1Name()
+            : team2Name();
+
+
+    return {
+
+        firstInningsTeam:
+            firstTeam,
+
+        firstInningsScore:
+            `${scoreState.runs}/${scoreState.wickets}`,
+
+        firstInningsRuns:
+            scoreState.runs,
+
+        firstInningsWickets:
+            scoreState.wickets,
+
+        firstInningsBalls:
+            scoreState.balls,
+
+        firstInningsOvers:
+            getOversFromBalls(
+                scoreState.balls
+            ),
+
+        firstInningsCRR:
+            Number(
+                calculateCRR(
+                    scoreState.runs,
+                    scoreState.balls
+                )
+            ),
+
+        firstInningsExtras:
+            scoreState.extras,
+
+        firstInningsScorecard:
+            prepareScorecardData()
+    };
 }
 
 
@@ -1588,30 +2396,8 @@ async function startSecondInnings() {
     }
 
 
-    // First innings data
-
-    const firstInningsData = {
-
-        firstInningsTeam:
-            firstTeam,
-
-        firstInningsScore:
-            firstScore,
-
-        firstInningsRuns:
-            scoreState.runs,
-
-        firstInningsWickets:
-            scoreState.wickets,
-
-        firstInningsBalls:
-            scoreState.balls,
-
-        firstInningsOvers:
-            getOversFromBalls(
-                scoreState.balls
-            )
-    };
+    const firstInningsData =
+        getFirstInningsData();
 
 
     if (
@@ -1627,8 +2413,6 @@ async function startSecondInnings() {
             firstScore;
     }
 
-
-    // Second innings
 
     const secondBattingTeam =
         scoreState.battingTeam === "A"
@@ -1651,27 +2435,33 @@ async function startSecondInnings() {
         const updateData = {
 
             scoreA:
-                secondBattingTeam === "B"
-                    ? currentMatch.scoreA ||
-                      firstScore
-                    : "0/0",
+                currentMatch.scoreA ||
+                "0/0",
 
             scoreB:
-                secondBattingTeam === "A"
-                    ? currentMatch.scoreB ||
-                      firstScore
-                    : "0/0",
+                currentMatch.scoreB ||
+                "0/0",
+
+            innings:
+                2,
+
+            currentBall:
+                0,
+
+            currentOvers:
+                "0.0",
+
+            currentRuns:
+                0,
+
+            currentWickets:
+                0,
+
+            status:
+                "Live",
 
             scorecard:
-                scoreState,
-
-            innings: 2,
-
-            status: "Live",
-
-            currentBall: 0,
-
-            ...firstInningsData,
+                prepareScorecardData(),
 
             secondInningsTeam:
                 secondTeam,
@@ -1690,6 +2480,11 @@ async function startSecondInnings() {
 
             secondInningsOvers:
                 "0.0",
+
+            secondInningsCRR:
+                0,
+
+            ...firstInningsData,
 
             updatedAt:
                 serverTimestamp()
@@ -1764,9 +2559,9 @@ async function endMatch() {
     }
 
 
-    // -------------------------------
+    // ====================================
     // FIRST INNINGS
-    // -------------------------------
+    // ====================================
 
     if (
         scoreState.innings === 1
@@ -1786,7 +2581,10 @@ async function endMatch() {
 
 
         alert(
-            `✅ ${team1Name()} innings completed.\n\n` +
+            `${scoreState.battingTeam === "A"
+                ? team1Name()
+                : team2Name()
+            } innings completed.\n\n` +
             `Now click "Start 2nd Innings".`
         );
 
@@ -1795,9 +2593,9 @@ async function endMatch() {
     }
 
 
-    // -------------------------------
+    // ====================================
     // SECOND INNINGS
-    // -------------------------------
+    // ====================================
 
     const currentScore =
         `${scoreState.runs}/${scoreState.wickets}`;
@@ -1840,6 +2638,10 @@ async function endMatch() {
     let result = "";
 
 
+    // ====================================
+    // WINNER
+    // ====================================
+
     if (
         parsedA.runs >
         parsedB.runs
@@ -1874,6 +2676,100 @@ async function endMatch() {
     }
 
 
+    // ====================================
+    // FIRST INNINGS DETAILS
+    // ====================================
+
+    const firstTeam =
+        currentMatch.firstInningsTeam ||
+        (
+            scoreState.battingTeam === "A"
+                ? team2Name()
+                : team1Name()
+        );
+
+
+    const firstRuns =
+        Number(
+            currentMatch.firstInningsRuns ||
+            0
+        );
+
+
+    const firstBalls =
+        Number(
+            currentMatch.firstInningsBalls ||
+            0
+        );
+
+
+    const firstTeamIsA =
+        firstTeam === team1Name();
+
+
+    const firstTeamRuns =
+        firstRuns;
+
+
+    const secondTeamRuns =
+        scoreState.runs;
+
+
+    const firstTeamBalls =
+        firstBalls;
+
+
+    const secondTeamBalls =
+        scoreState.balls;
+
+
+    let nrrA = 0;
+
+    let nrrB = 0;
+
+
+    if (firstTeamIsA) {
+
+        nrrA =
+            calculateNRR(
+                firstTeamRuns,
+                firstTeamBalls,
+                secondTeamRuns,
+                secondTeamBalls
+            );
+
+        nrrB =
+            calculateNRR(
+                secondTeamRuns,
+                secondTeamBalls,
+                firstTeamRuns,
+                firstTeamBalls
+            );
+
+    } else {
+
+        nrrB =
+            calculateNRR(
+                firstTeamRuns,
+                firstTeamBalls,
+                secondTeamRuns,
+                secondTeamBalls
+            );
+
+        nrrA =
+            calculateNRR(
+                secondTeamRuns,
+                secondTeamBalls,
+                firstTeamRuns,
+                firstTeamBalls
+            );
+    }
+
+
+// ====================================
+    // CONFIRM
+    // ====================================
+
     const ok =
         confirm(
             `🏆 MATCH RESULT\n\n` +
@@ -1882,9 +2778,13 @@ async function endMatch() {
 
             `${team2Name()}: ${scoreB}\n\n` +
 
-            `Winner: ${winner}\n` +
+            `Winner: ${winner}\n\n` +
 
             `${result}\n\n` +
+
+            `NRR ${team1Name()}: ${nrrA}\n` +
+
+            `NRR ${team2Name()}: ${nrrB}\n\n` +
 
             `Complete this match?`
         );
@@ -1899,6 +2799,46 @@ async function endMatch() {
 
         scoreState.status =
             "Completed";
+
+
+        const secondInningsData = {
+
+            secondInningsTeam:
+                scoreState.battingTeam === "A"
+                    ? team1Name()
+                    : team2Name(),
+
+            secondInningsScore:
+                currentScore,
+
+            secondInningsRuns:
+                scoreState.runs,
+
+            secondInningsWickets:
+                scoreState.wickets,
+
+            secondInningsBalls:
+                scoreState.balls,
+
+            secondInningsOvers:
+                getOversFromBalls(
+                    scoreState.balls
+                ),
+
+            secondInningsCRR:
+                Number(
+                    calculateCRR(
+                        scoreState.runs,
+                        scoreState.balls
+                    )
+                ),
+
+            secondInningsExtras:
+                scoreState.extras,
+
+            secondInningsScorecard:
+                prepareScorecardData()
+        };
 
 
         const updateData = {
@@ -1924,28 +2864,36 @@ async function endMatch() {
             currentBall:
                 scoreState.balls,
 
-            secondInningsScore:
-                currentScore,
-
-            secondInningsRuns:
-                scoreState.runs,
-
-            secondInningsWickets:
-                scoreState.wickets,
-
-            secondInningsBalls:
-                scoreState.balls,
-
-            secondInningsOvers:
+            currentOvers:
                 getOversFromBalls(
                     scoreState.balls
                 ),
 
+            currentRuns:
+                scoreState.runs,
+
+            currentWickets:
+                scoreState.wickets,
+
             scorecard:
                 {
-                    ...scoreState,
+                    ...prepareScorecardData(),
                     status: "Completed"
                 },
+
+            team1NRR:
+                nrrA,
+
+            team2NRR:
+                nrrB,
+
+            nrrTeamA:
+                nrrA,
+
+            nrrTeamB:
+                nrrB,
+
+            ...secondInningsData,
 
             updatedAt:
                 serverTimestamp()
@@ -1984,13 +2932,25 @@ async function endMatch() {
         alert(
             `🏆 MATCH COMPLETED!\n\n` +
             `Winner: ${winner}\n\n` +
-            result
+            `${result}\n\n` +
+            `${team1Name()} NRR: ${nrrA}\n` +
+            `${team2Name()} NRR: ${nrrB}`
         );
 
 
         console.log(
             "✅ WINNER SAVED:",
             winner
+        );
+
+        console.log(
+            "📊 TEAM A NRR:",
+            nrrA
+        );
+
+        console.log(
+            "📊 TEAM B NRR:",
+            nrrB
         );
 
 
@@ -2172,7 +3132,10 @@ async function openNextMatch() {
 
 function setupButtons() {
 
-    // RUNS
+
+    // ====================================
+    // NORMAL RUN BUTTONS
+    // ====================================
 
     document
         .querySelectorAll(".run-btn")
@@ -2194,92 +3157,139 @@ function setupButtons() {
         );
 
 
+// ====================================
     // WIDE
+    // ====================================
 
     const wideBtn =
         document.getElementById(
             "wideBtn"
         );
 
+
     if (wideBtn) {
 
         wideBtn.addEventListener(
             "click",
-            () =>
-                addExtra(
+            async () => {
+
+                const runs =
+                    Number(
+                        wideBtn.dataset.runs ||
+                        1
+                    );
+
+                await addExtra(
                     "Wide",
-                    1
-                )
+                    runs
+                );
+            }
         );
     }
 
 
+    // ====================================
     // NO BALL
+    // ====================================
 
     const noBallBtn =
         document.getElementById(
             "noBallBtn"
         );
 
+
     if (noBallBtn) {
 
         noBallBtn.addEventListener(
             "click",
-            () =>
-                addExtra(
+            async () => {
+
+                const runs =
+                    Number(
+                        noBallBtn.dataset.runs ||
+                        1
+                    );
+
+                await addExtra(
                     "No Ball",
-                    1
-                )
+                    runs
+                );
+            }
         );
     }
 
 
+    // ====================================
     // BYE
+    // ====================================
 
     const byeBtn =
         document.getElementById(
             "byeBtn"
         );
 
+
     if (byeBtn) {
 
         byeBtn.addEventListener(
             "click",
-            () =>
-                addExtra(
+            async () => {
+
+                const runs =
+                    Number(
+                        byeBtn.dataset.runs ||
+                        1
+                    );
+
+                await addExtra(
                     "Bye",
-                    1
-                )
+                    runs
+                );
+            }
         );
     }
 
 
+    // ====================================
     // LEG BYE
+    // ====================================
 
     const legByeBtn =
         document.getElementById(
             "legByeBtn"
         );
 
+
     if (legByeBtn) {
 
         legByeBtn.addEventListener(
             "click",
-            () =>
-                addExtra(
+            async () => {
+
+                const runs =
+                    Number(
+                        legByeBtn.dataset.runs ||
+                        1
+                    );
+
+                await addExtra(
                     "Leg Bye",
-                    1
-                )
+                    runs
+                );
+            }
         );
     }
 
 
+    // ====================================
     // WICKET
+    // ====================================
 
     const wicketBtn =
         document.getElementById(
             "wicketBtn"
         );
+
 
     if (wicketBtn) {
 
@@ -2290,12 +3300,15 @@ function setupButtons() {
     }
 
 
+    // ====================================
     // UNDO
+    // ====================================
 
     const undoBtn =
         document.getElementById(
             "undoBtn"
         );
+
 
     if (undoBtn) {
 
@@ -2306,12 +3319,15 @@ function setupButtons() {
     }
 
 
+    // ====================================
     // SWAP
+    // ====================================
 
     const swapBtn =
         document.getElementById(
             "swapBtn"
         );
+
 
     if (swapBtn) {
 
@@ -2323,12 +3339,15 @@ function setupButtons() {
     }
 
 
+    // ====================================
     // SAVE
+    // ====================================
 
     const saveBtn =
         document.getElementById(
             "saveBtn"
         );
+
 
     if (saveBtn) {
 
@@ -2339,12 +3358,15 @@ function setupButtons() {
     }
 
 
+    // ====================================
     // END MATCH
+    // ====================================
 
     const endMatchBtn =
         document.getElementById(
             "endMatchBtn"
         );
+
 
     if (endMatchBtn) {
 
@@ -2355,7 +3377,9 @@ function setupButtons() {
     }
 
 
+// ====================================
     // SECOND INNINGS
+    // ====================================
 
     if (
         startSecondInningsBtn
@@ -2368,7 +3392,9 @@ function setupButtons() {
     }
 
 
+    // ====================================
     // NEXT MATCH
+    // ====================================
 
     if (nextMatchBtn) {
 
@@ -2414,7 +3440,7 @@ function setupButtons() {
 
 
 // ========================================
-// NAVIGATION
+// NAVIGATION LINKS
 // ========================================
 
 function setupLinks() {
