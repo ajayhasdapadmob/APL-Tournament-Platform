@@ -109,48 +109,62 @@ function getTournamentId() {
             window.location.search
         );
 
-    // 1. URL ID
     let id =
         params.get("id") ||
         params.get("tournamentId");
 
-    // 2. LOCAL STORAGE
+
+    // LOCAL STORAGE
     if (!id) {
 
         id =
             localStorage.getItem(
                 "selectedTournamentId"
-            ) ||
+            );
+    }
+
+    if (!id) {
+
+        id =
             localStorage.getItem(
                 "tournamentId"
             );
     }
 
-    // 3. SESSION STORAGE
+
+    // SESSION STORAGE
     if (!id) {
 
         id =
             sessionStorage.getItem(
                 "selectedTournamentId"
-            ) ||
+            );
+    }
+
+    if (!id) {
+
+        id =
             sessionStorage.getItem(
                 "tournamentId"
             );
     }
 
-    // 4. CLEAN + SAVE
+
     if (id) {
 
         id =
             String(id).trim();
 
         saveTournamentId(id);
+
     }
+
 
     console.log(
         "🏆 DASHBOARD TOURNAMENT ID:",
         id || null
     );
+
 
     return id || null;
 }
