@@ -99,7 +99,7 @@ const bottomStatsLink =
 
 
 // ========================================
-// GET TOURNAMENT ID
+// GET TOURNAMENT ID - FINAL
 // ========================================
 
 function getTournamentId() {
@@ -109,72 +109,50 @@ function getTournamentId() {
             window.location.search
         );
 
+    // 1. URL ID
     let id =
-        params.get("id");
+        params.get("id") ||
+        params.get("tournamentId");
 
-
-    // URL
-
+    // 2. LOCAL STORAGE
     if (!id) {
 
         id =
             localStorage.getItem(
                 "selectedTournamentId"
-            );
-
-    }
-
-
-    // LocalStorage
-
-    if (!id) {
-
-        id =
+            ) ||
             localStorage.getItem(
                 "tournamentId"
             );
-
     }
 
-
-    // SessionStorage
-
+    // 3. SESSION STORAGE
     if (!id) {
 
         id =
             sessionStorage.getItem(
                 "selectedTournamentId"
-            );
-
-    }
-
-
-    if (!id) {
-
-        id =
+            ) ||
             sessionStorage.getItem(
                 "tournamentId"
             );
-
     }
 
-
+    // 4. CLEAN + SAVE
     if (id) {
 
         id =
             String(id).trim();
 
+        saveTournamentId(id);
     }
-
 
     console.log(
         "🏆 DASHBOARD TOURNAMENT ID:",
-        id
+        id || null
     );
 
-
     return id || null;
-
 }
 
 
