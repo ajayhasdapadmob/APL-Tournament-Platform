@@ -1,4 +1,10 @@
+// ========================================
+// MY TOURNAMENTS JS
+// APL TOURNAMENT PLATFORM
+// ========================================
+
 console.log("🔥 MY TOURNAMENTS JS LOADED");
+
 
 import { auth, db } from "../firebase.js";
 
@@ -14,17 +20,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 
-/* =========================
-   ELEMENT
-========================= */
+// ========================================
+// ELEMENT
+// ========================================
 
 const tournamentList =
     document.getElementById("tournamentList");
 
-
-/* =========================
-   CHECK ELEMENT
-========================= */
 
 if (!tournamentList) {
 
@@ -35,18 +37,17 @@ if (!tournamentList) {
     throw new Error(
         "tournamentList not found"
     );
-
 }
 
 
-/* =========================
-   MESSAGE
-========================= */
+// ========================================
+// MESSAGE
+// ========================================
 
 function showMessage(html) {
 
     tournamentList.innerHTML = `
-        <div class="empty-message">
+        <div class="empty">
             ${html}
         </div>
     `;
@@ -54,9 +55,93 @@ function showMessage(html) {
 }
 
 
-/* =========================
-   LOAD TOURNAMENTS
-========================= */
+// ========================================
+// GET SELECTED TOURNAMENT ID
+// ========================================
+
+function getSelectedTournamentId() {
+
+    return (
+        localStorage.getItem(
+            "selectedTournamentId"
+        ) ||
+        localStorage.getItem(
+            "tournamentId"
+        ) ||
+        ""
+    );
+
+}
+
+
+// ========================================
+// SAVE SELECTED TOURNAMENT
+// ========================================
+
+function selectTournament(tournamentId) {
+
+    if (!tournamentId) {
+
+        console.error(
+            "❌ Tournament ID missing"
+        );
+
+        return;
+
+    }
+
+
+    const cleanId =
+        String(tournamentId).trim();
+
+
+    if (!cleanId) return;
+
+
+    // LOCAL STORAGE
+
+    localStorage.setItem(
+        "selectedTournamentId",
+        cleanId
+    );
+
+    localStorage.setItem(
+        "tournamentId",
+        cleanId
+    );
+
+
+    // SESSION STORAGE
+
+    sessionStorage.setItem(
+        "selectedTournamentId",
+        cleanId
+    );
+
+    sessionStorage.setItem(
+        "tournamentId",
+        cleanId
+    );
+
+
+    console.log(
+        "✅ TOURNAMENT SELECTED:",
+        cleanId
+    );
+
+
+    // GO HOME
+
+    window.location.href =
+        "index.html?id=" +
+        encodeURIComponent(cleanId);
+
+}
+
+
+// ========================================
+// LOAD TOURNAMENTS
+// ========================================
 
 async function loadTournaments(user) {
 
@@ -80,11 +165,14 @@ async function loadTournaments(user) {
             );
 
 
-        /* =========================
-           FIND BY OWNER ID
-        ========================= */
+        let tournaments = [];
 
-        let snapshot =
+
+        // =================================
+        // SEARCH OWNER ID
+        // =================================
+
+        const ownerSnapshot =
             await getDocs(
                 query(
                     tournamentsRef,
@@ -97,19 +185,38 @@ async function loadTournaments(user) {
             );
 
 
-        console.log(
-            "🔥 ownerId tournaments:",
-            snapshot.size
+        ownerSnapshot.forEach(
+            tournamentDoc => {
+
+                tournaments.push({
+
+                    id:
+                        tournamentDoc.id,
+
+                    ...tournamentDoc.data()
+
+                });
+
+            }
         );
 
 
-        /* =========================
-           FIND BY CREATED BY
-        ========================= */
+        console.log(
+            "🔥 ownerId tournaments:",
+            ownerSnapshot.size
+        );
 
-        if (snapshot.empty) {
 
-            snapshot =
+        // =================================
+        // IF NOTHING FOUND
+        // SEARCH createdBy
+        // =================================
+
+        if (
+            tournaments.length === 0
+        ) {
+
+            const createdSnapshot =
                 await getDocs(
                     query(
                         tournamentsRef,
@@ -122,22 +229,66 @@ async function loadTournaments(user) {
                 );
 
 
+            createdSnapshot.forEach(
+                tournamentDoc => {
+
+                    tournaments.push({
+
+                        id:
+                            tournamentDoc.id,
+
+                        ...tournamentDoc.data()
+
+                    });
+
+                }
+            );
+
+
             console.log(
                 "🔥 createdBy tournaments:",
-                snapshot.size
+                createdSnapshot.size
             );
 
         }
 
 
-        /* =========================
-           NO TOURNAMENT
-        ========================= */
+        // =================================
+        // REMOVE DUPLICATES
+        // =================================
 
-        if (snapshot.empty) {
+        const uniqueMap =
+            new Map();
+
+
+        tournaments.forEach(
+            tournament => {
+
+                uniqueMap.set(
+                    tournament.id,
+                    tournament
+                );
+
+            }
+        );
+
+
+        tournaments =
+            Array.from(
+                uniqueMap.values()
+            );
+
+
+        // =================================
+        // NO TOURNAMENT
+        // =================================
+
+        if (
+            tournaments.length === 0
+        ) {
 
             showMessage(`
-                
+
                 <h2>
                     🏆 No Tournament Found
                 </h2>
@@ -150,7 +301,7 @@ async function loadTournaments(user) {
 
                 <a
                     href="create-tournament.html"
-                    class="btn primary-btn"
+                    class="create-button"
                 >
                     ➕ Create Tournament
                 </a>
@@ -162,41 +313,36 @@ async function loadTournaments(user) {
         }
 
 
-        /* =========================
-           CLEAR LOADING
-        ========================= */
+        // =================================
+        // CLEAR
+        // =================================
 
         tournamentList.innerHTML = "";
 
 
-        /* =========================
-           SHOW TOURNAMENTS
-        ========================= */
+        // =================================
+        // CURRENT SELECTED
+        // =================================
 
-        snapshot.forEach(
-            tournamentDoc => {
-
-                const tournamentId =
-                    tournamentDoc.id;
-
-                const tournament =
-                    tournamentDoc.data();
+        const selectedId =
+            getSelectedTournamentId();
 
 
-                console.log(
-                    "🏆 Tournament:",
-                    tournamentId,
-                    tournament
-                );
+        // =================================
+        // CREATE CARDS
+        // =================================
 
+        for (
+            const tournament
+            of tournaments
+        ) {
 
-                createTournamentCard(
-                    tournamentId,
-                    tournament
-                );
+            createTournamentCard(
+                tournament,
+                selectedId
+            );
 
-            }
-        );
+        }
 
 
         console.log(
@@ -229,27 +375,24 @@ async function loadTournaments(user) {
 }
 
 
-/* =========================
-   CREATE CARD
-========================= */
+// ========================================
+// CREATE TOURNAMENT CARD
+// ========================================
 
 function createTournamentCard(
-    tournamentId,
-    tournament
+    tournament,
+    selectedId
 ) {
 
-    const card =
-        document.createElement("div");
-
-
-    card.className =
-        "tournament-card";
+    const tournamentId =
+        tournament.id;
 
 
     const name =
         tournament.tournamentName ||
         tournament.name ||
-        "APL Tournament";
+        tournament.title ||
+        "Unnamed Tournament";
 
 
     const venue =
@@ -268,92 +411,221 @@ function createTournamentCard(
         "-";
 
 
+    const format =
+        tournament.format ||
+        tournament.tournamentFormat ||
+        "-";
+
+
+    const status =
+        tournament.status ||
+        "Active";
+
+
     const totalTeams =
         tournament.totalTeams ||
         0;
 
 
+    const isSelected =
+        String(selectedId) ===
+        String(tournamentId);
+
+
+    // =================================
+    // CARD
+    // =================================
+
+    const card =
+        document.createElement(
+            "div"
+        );
+
+
+    card.className =
+        "tournament-card" +
+        (
+            isSelected
+                ? " selected-tournament"
+                : ""
+        );
+
+
     card.innerHTML = `
 
+        ${
+            isSelected
+                ? `
+                    <div class="selected-label">
+                        ✓ SELECTED TOURNAMENT
+                    </div>
+                `
+                : ""
+        }
+
+
         <h2>
-            🏆 ${name}
+            🏆 ${escapeHtml(name)}
         </h2>
 
-        <p>
-            🆔
-            <b>Tournament ID:</b>
-            ${tournamentId}
-        </p>
 
-        <p>
-            📍
-            <b>Venue:</b>
-            ${venue}
-        </p>
+        <div class="tournament-info">
 
-        <p>
-            📅
-            <b>Start:</b>
-            ${startDate}
-        </p>
+            <p>
+                🆔
+                <b>Tournament ID:</b>
+                ${escapeHtml(tournamentId)}
+            </p>
 
-        <p>
-            📅
-            <b>End:</b>
-            ${endDate}
-        </p>
 
-        <p>
+            <p>
+                📍
+                <b>Venue:</b>
+                ${escapeHtml(venue)}
+            </p>
+
+
+            <p>
+                📅
+                <b>Start:</b>
+                ${escapeHtml(startDate)}
+            </p>
+
+
+            <p>
+                📅
+                <b>End:</b>
+                ${escapeHtml(endDate)}
+            </p>
+
+
+            <p>
+                🏏
+                <b>Format:</b>
+                ${escapeHtml(format)}
+            </p>
+
+
+            <p>
+                📌
+                <b>Status:</b>
+                ${escapeHtml(status)}
+            </p>
+
+        </div>
+
+
+        <div class="team-count">
+
             👥
-            <b>Total Teams:</b>
-            ${totalTeams}
-        </p>
+            ${Number(totalTeams) || 0}
+            Registered Teams
+
+        </div>
 
 
-        <div class="card-buttons">
+        <div class="tournament-actions">
+
+
+            <!-- SELECT -->
+
+            <button
+                type="button"
+                class="select-btn"
+                data-id="${escapeHtml(tournamentId)}"
+            >
+                ${
+                    isSelected
+                        ? "✓ Selected"
+                        : "✓ Select Tournament"
+                }
+            </button>
+
+
+            <!-- OPEN -->
 
             <a
                 href="tournament.html?id=${encodeURIComponent(tournamentId)}"
-                class="btn primary-btn"
+                class="register-btn"
             >
                 🏆 Open Tournament
             </a>
 
 
+            <!-- TEAM -->
+
             <a
-                href="registration.html?id=${encodeURIComponent(tournamentId)}"
-                class="btn"
+                href="team-registration.html?id=${encodeURIComponent(tournamentId)}"
+                class="register-btn"
             >
-                👥 Team Registration
+                👥 Register Team
             </a>
 
 
-            <a
-                href="schedule.html?id=${encodeURIComponent(tournamentId)}"
-                class="btn"
-            >
-                📅 Schedule
-            </a>
-
+            <!-- LIVE -->
 
             <a
                 href="live-score.html?id=${encodeURIComponent(tournamentId)}"
-                class="btn"
+                class="live-btn"
             >
                 🔴 Live Score
             </a>
 
 
+            <!-- SCHEDULE -->
+
+            <a
+                href="schedule.html?id=${encodeURIComponent(tournamentId)}"
+                class="schedule-btn"
+            >
+                📅 Schedule
+            </a>
+
+
+            <!-- POINTS -->
+
             <a
                 href="points.html?id=${encodeURIComponent(tournamentId)}"
-                class="btn"
+                class="points-btn"
             >
                 📊 Points Table
+            </a>
+
+
+            <!-- ADMIN -->
+
+            <a
+                href="admin.html?id=${encodeURIComponent(tournamentId)}"
+                class="admin-btn"
+            >
+                ⚙️ Manage
             </a>
 
         </div>
 
     `;
+
+
+    // =================================
+    // SELECT BUTTON
+    // =================================
+
+    const selectButton =
+        card.querySelector(
+            ".select-btn"
+        );
+
+
+    selectButton.addEventListener(
+        "click",
+        () => {
+
+            selectTournament(
+                tournamentId
+            );
+
+        }
+    );
 
 
     tournamentList.appendChild(
@@ -363,9 +635,50 @@ function createTournamentCard(
 }
 
 
-/* =========================
-   AUTH
-========================= */
+// ========================================
+// ESCAPE HTML
+// ========================================
+
+function escapeHtml(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "";
+
+    }
+
+
+    return String(value)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+// ========================================
+// AUTH
+// ========================================
 
 onAuthStateChanged(
     auth,

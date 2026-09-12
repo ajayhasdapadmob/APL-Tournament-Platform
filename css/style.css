@@ -913,3 +913,146 @@ a {
     }
 
 }
+
+/* ========================================
+   APL BRAND HEADER
+======================================== */
+
+.app-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    padding: 12px 14px;
+
+}
+
+
+/* LOGO + TITLE */
+
+.app-brand {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    min-width: 0;
+
+}
+
+
+/* APL LOGO */
+
+.app-brand-logo {
+
+    width: 52px;
+
+    height: 52px;
+
+    min-width: 52px;
+
+    object-fit: contain;
+
+    border-radius: 12px;
+
+}
+
+
+/* TITLE */
+
+.app-title {
+
+    min-width: 0;
+
+}
+
+
+.app-title h1 {
+
+    margin: 0;
+
+    font-size: 18px;
+
+    font-weight: 800;
+
+    line-height: 1.2;
+
+    white-space: nowrap;
+
+}
+
+
+.app-title span {
+
+    display: block;
+
+    margin-top: 3px;
+
+    font-size: 11px;
+
+    color: #64748b;
+
+}
+
+
+/* PROFILE */
+
+.profile-button {
+
+    width: 42px;
+
+    height: 42px;
+
+    min-width: 42px;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: #eff6ff;
+
+    font-size: 20px;
+
+    cursor: pointer;
+
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 430px) {
+
+    .app-brand-logo {
+
+        width: 44px;
+
+        height: 44px;
+
+        min-width: 44px;
+
+    }
+
+
+    .app-title h1 {
+
+        font-size: 15px;
+
+    }
+
+
+    .app-title span {
+
+        font-size: 10px;
+
+    }
+
+}
