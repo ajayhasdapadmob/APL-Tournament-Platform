@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>APL Tournament Platform — Recycle Bin</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #0b1110;
+      color: #f4f7f5;
+      font-family: Arial, sans-serif;
+    }
+    main {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    h1 { color: #08a045; }
+    .notice {
+      padding: 14px;
+      background: #17231c;
+      border-radius: 10px;
+      line-height: 1.5;
+    }
+    .tournament {
+      margin: 14px 0;
+      padding: 16px;
+      background: #142019;
+      border: 1px solid #2b4735;
+      border-radius: 10px;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    button, .back {
+      display: inline-block;
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 6px;
+      background: #08a045;
+      color: white;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+    .status { color: #cbd5ce; }
+    .error { color: #ff9b9b; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>🗑️ Tournament Recycle Bin</h1>
+
+    <p class="notice">
+      Recycled tournaments are listed here. Restore should return a
+      tournament using its original ID. Permanent deletion will be
+      enabled only after server-side Admin authorization is configured.
+    </p>
+
+    <p><a class="back" href="./my-tournaments.html">← Back to Tournaments</a></p>
+
+    <p id="message" class="status">Checking login and loading Recycle Bin…</p>
+    <section id="recycleList"></section>
+  </main>
+
+  <script type="module" src="./js/recycle-bin.js"></script>
+</body>
+</html>
