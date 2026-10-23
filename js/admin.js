@@ -56,15 +56,13 @@ function getTournamentName(data, id) {
   return data.name || data.tournamentName || data.title || `Tournament ${id}`;
 }
 
-/* ---------------- TOURNAMENTS ---------------- */
+/* =====================================================
+   EXISTING TOURNAMENT MANAGEMENT
+   ===================================================== */
 
 async function loadTournaments(preferredId = "") {
   tournamentSelect.innerHTML = "";
-
-  const loadingOption = document.createElement("option");
-  loadingOption.value = "";
-  loadingOption.textContent = "Loading tournaments...";
-  tournamentSelect.appendChild(loadingOption);
+  tournamentSelect.add(new Option("Loading tournaments...", ""));
 
   try {
     const snapshot = await getDocs(collection(db, "tournaments"));
@@ -75,7 +73,7 @@ async function loadTournaments(preferredId = "") {
 
     tournamentSelect.innerHTML = "";
 
-    if (activeTournaments.length === 0) {
+    if (!activeTournaments.length) {
       tournamentSelect.add(new Option("No active tournaments", ""));
       teamList.className = "empty";
       teamList.textContent = "No active tournaments found.";
@@ -97,24 +95,19 @@ async function loadTournaments(preferredId = "") {
       "";
 
     const selected = activeTournaments.find(item => item.id === savedId);
+
     tournamentSelect.value = selected
       ? selected.id
       : activeTournaments[0].id;
 
     await loadTeams(tournamentSelect.value);
   } catch (error) {
-    console.error("Could not load tournaments:", error);
+    console.error(error);
     tournamentSelect.innerHTML = "";
     tournamentSelect.add(new Option("Unable to load tournaments", ""));
-    showMessage(
-      "Tournament load nahi hua. Firebase permissions aur network check karein.\n" +
-      error.message,
-      true
-    );
+    showMessage("Tournament load nahi hua: " + error.message, true);
   }
 }
-
-/* ---------------- EXISTING TOURNAMENT TEAMS ---------------- */
 
 async function loadTeams(tournamentId) {
   const token = ++currentLoadToken;
@@ -148,7 +141,7 @@ async function loadTeams(tournamentId) {
       ...item.data()
     }));
 
-    const count = {
+    const counts = {
       total: teams.length,
       pending: 0,
       approved: 0,
@@ -161,38 +154,35 @@ async function loadTeams(tournamentId) {
     teams.forEach(team => {
       const status = String(team.status || "Pending").toLowerCase();
 
-      if (status === "approved") count.approved++;
-      else if (status === "rejected") count.rejected++;
-      else if (status === "paid") count.paid++;
-      else if (status === "on hold" || status === "hold") count.hold++;
-      else if (status === "cancelled" || status === "canceled") count.cancelled++;
-      else count.pending++;
+      if (status === "approved") counts.approved++;
+      else if (status === "rejected") counts.rejected++;
+      else if (status === "paid") counts.paid++;
+      else if (status === "on hold" || status === "hold") counts.hold++;
+      else if (status === "cancelled" || status === "canceled") counts.cancelled++;
+      else counts.pending++;
     });
 
-    setCount("totalTeams", count.total);
-    setCount("pendingTeams", count.pending);
-    setCount("approvedTeams", count.approved);
-    setCount("rejectedTeams", count.rejected);
-    setCount("paidTeams", count.paid);
-    setCount("holdTeams", count.hold);
-    setCount("cancelledTeams", count.cancelled);
+    setCount("totalTeams", counts.total);
+    setCount("pendingTeams", counts.pending);
+    setCount("approvedTeams", counts.approved);
+    setCount("rejectedTeams", counts.rejected);
+    setCount("paidTeams", counts.paid);
+    setCount("holdTeams", counts.hold);
+    setCount("cancelledTeams", counts.cancelled);
 
     teamList.replaceChildren();
 
-    if (teams.length === 0) {
+    if (!teams.length) {
       teamList.className = "empty";
       teamList.textContent = "No teams registered for this tournament.";
       return;
     }
 
     teamList.className = "";
-    teams.forEach(team => {
-      teamList.appendChild(createTeamCard(tournamentId, team));
-    });
+    teams.forEach(team => teamList.appendChild(createTeamCard(tournamentId, team)));
   } catch (error) {
     if (token !== currentLoadToken) return;
-
-    console.error("Could not load teams:", error);
+    console.error(error);
     teamList.className = "empty";
     teamList.textContent = "Teams load nahi hue: " + error.message;
   }
@@ -214,53 +204,45 @@ function createTeamCard(tournamentId, team) {
   const actions = document.createElement("div");
   actions.className = "actions";
 
-  const statuses = ["Pending", "Approved", "Rejected", "Paid", "On Hold", "Cancelled"];
+  ["Pending", "Approved", "Rejected", "Paid", "On Hold", "Cancelled"]
+    .forEach(status => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "status-btn";
+      button.textContent = status;
 
-  statuses.forEach(status => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "status-btn";
-
-    if (String(team.status || "Pending").toLowerCase() === status.toLowerCase()) {
-      button.classList.add("active");
-    }
-
-    button.textContent = status;
-
-    button.addEventListener("click", async () => {
-      button.disabled = true;
-
-      try {
-        await updateDoc(
-          doc(db, "tournaments", tournamentId, "teams", team.id),
-          { status }
-        );
-
-        showMessage(`Team status updated: ${status}`);
-        await loadTeams(tournamentId);
-      } catch (error) {
-        console.error("Status update failed:", error);
-        showMessage("Status update nahi hua: " + error.message, true);
-      } finally {
-        button.disabled = false;
+      if (String(team.status || "Pending").toLowerCase() === status.toLowerCase()) {
+        button.classList.add("active");
       }
+
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        try {
+          await updateDoc(
+            doc(db, "tournaments", tournamentId, "teams", team.id),
+            { status }
+          );
+          showMessage(`Team status updated: ${status}`);
+          await loadTeams(tournamentId);
+        } catch (error) {
+          showMessage("Status update nahi hua: " + error.message, true);
+        } finally {
+          button.disabled = false;
+        }
+      });
+
+      actions.appendChild(button);
     });
 
-    actions.appendChild(button);
-  });
-
-  // Existing delete action retained. Confirmation is required.
   const deleteButton = document.createElement("button");
   deleteButton.type = "button";
   deleteButton.className = "danger";
   deleteButton.textContent = "Delete Team";
 
   deleteButton.addEventListener("click", async () => {
-    const confirmed = confirm(
-      `Team "${heading.textContent}" ko permanently delete karna hai?`
-    );
-
-    if (!confirmed) return;
+    if (!confirm(`Team "${heading.textContent}" ko permanently delete karna hai?`)) {
+      return;
+    }
 
     deleteButton.disabled = true;
 
@@ -270,11 +252,9 @@ function createTeamCard(tournamentId, team) {
       );
 
       await deleteDoc(doc(db, "tournaments", tournamentId, "teams", team.id));
-
       showMessage("Team deleted.");
       await loadTeams(tournamentId);
     } catch (error) {
-      console.error("Team deletion failed:", error);
       showMessage("Team delete nahi hui: " + error.message, true);
     } finally {
       deleteButton.disabled = false;
@@ -287,122 +267,167 @@ function createTeamCard(tournamentId, team) {
 }
 
 tournamentSelect.addEventListener("change", async () => {
-  const tournamentId = tournamentSelect.value;
+  const id = tournamentSelect.value;
 
-  if (tournamentId) {
-    localStorage.setItem("selectedTournamentId", tournamentId);
-    localStorage.setItem("tournamentId", tournamentId);
+  if (id) {
+    localStorage.setItem("selectedTournamentId", id);
+    localStorage.setItem("tournamentId", id);
   }
 
-  await loadTeams(tournamentId);
+  await loadTeams(id);
 });
 
 recycleButton.addEventListener("click", async () => {
-  const tournamentId = tournamentSelect.value;
+  const id = tournamentSelect.value;
 
   if (!auth.currentUser) {
     showMessage("Please login first.", true);
     return;
   }
 
-  const tournament = activeTournaments.find(item => item.id === tournamentId);
+  const tournament = activeTournaments.find(item => item.id === id);
 
   if (!tournament || isRecycled(tournament)) {
     showMessage("Please select an active tournament.", true);
     return;
   }
 
-  const name = getTournamentName(tournament, tournamentId);
+  const name = getTournamentName(tournament, id);
 
-  const confirmed = confirm(
+  if (!confirm(
     `"${name}" ko Recycle Bin mein bhejna hai?\n\n` +
     "Teams aur matches ki subcollections delete nahi hongi."
-  );
-
-  if (!confirmed) return;
+  )) return;
 
   recycleButton.disabled = true;
 
   try {
-    await updateDoc(doc(db, "tournaments", tournamentId), {
+    await updateDoc(doc(db, "tournaments", id), {
       isDeleted: true,
       deleted: true,
       deletedAt: new Date().toISOString(),
       deletedBy: auth.currentUser.uid
     });
 
-    if (localStorage.getItem("selectedTournamentId") === tournamentId) {
+    if (localStorage.getItem("selectedTournamentId") === id) {
       localStorage.removeItem("selectedTournamentId");
     }
-
-    if (localStorage.getItem("tournamentId") === tournamentId) {
+    if (localStorage.getItem("tournamentId") === id) {
       localStorage.removeItem("tournamentId");
     }
 
     showMessage("Tournament Recycle Bin mein bhej diya gaya.");
     await loadTournaments();
   } catch (error) {
-    console.error("Tournament recycle failed:", error);
-    showMessage(
-      "Tournament recycle nahi hua. Firebase permissions check karein.\n" +
-      error.message,
-      true
-    );
+    showMessage("Tournament recycle nahi hua: " + error.message, true);
   } finally {
     recycleButton.disabled = false;
   }
 });
 
-/* ---------------- LEGACY APL LEAGUE REGISTRATIONS ---------------- */
-/* Read-only: this section never writes to legacyDb. */
+/* =====================================================
+   LEGACY APL LEAGUE REGISTRATIONS
+   Read/write ONLY to legacyDb registrations.
+   ===================================================== */
 
-function safeText(value) {
-  if (value === null || value === undefined || value === "") return "—";
-  return String(value);
+function textValue(value) {
+  return value === null || value === undefined || value === ""
+    ? "—"
+    : String(value);
 }
 
-function normalized(value) {
+function norm(value) {
   return String(value || "").trim().toLowerCase();
 }
 
-function getLegacyStatus(registration) {
+function registrationStatus(registration) {
   return registration.status || "Pending";
 }
 
-function updateLegacyStats(registrations) {
-  setCount("legacyTotal", registrations.length);
+function updateLegacyStats() {
+  setCount("legacyTotal", legacyRegistrations.length);
 
   setCount(
     "legacyPending",
-    registrations.filter(item => normalized(getLegacyStatus(item)) === "pending").length
+    legacyRegistrations.filter(r => norm(registrationStatus(r)) === "pending").length
   );
 
   setCount(
     "legacyApproved",
-    registrations.filter(item => normalized(getLegacyStatus(item)) === "approved").length
+    legacyRegistrations.filter(r => norm(registrationStatus(r)) === "approved").length
+  );
+
+  setCount(
+    "legacyRejected",
+    legacyRegistrations.filter(r => norm(registrationStatus(r)) === "rejected").length
   );
 
   setCount(
     "legacyPaid",
-    registrations.filter(item =>
-      normalized(item.paymentStatus) === "paid" ||
-      normalized(item.paymentDone) === "paid" ||
-      normalized(item.paymentDone) === "yes"
+    legacyRegistrations.filter(r =>
+      norm(r.paymentStatus) === "paid" ||
+      norm(r.paymentDone) === "paid" ||
+      norm(r.paymentDone) === "yes"
     ).length
   );
 }
 
-function createInfoLine(label, value) {
+function addInfo(card, label, value) {
   const paragraph = document.createElement("p");
-  const strong = document.createElement("strong");
-  strong.textContent = label + ": ";
-  paragraph.append(strong, document.createTextNode(safeText(value)));
-  return paragraph;
+  const bold = document.createElement("strong");
+  bold.textContent = label + ": ";
+  paragraph.append(bold, document.createTextNode(textValue(value)));
+  card.appendChild(paragraph);
+}
+
+async function updateLegacyRegistration(registration, changes, button) {
+  if (!auth.currentUser) {
+    showLegacyMessage("Admin login zaroori hai.", true);
+    return;
+  }
+
+  const confirmed = confirm(
+    `Team: ${registration.teamName || "Unnamed Team"}\n` +
+    `Registration ID: ${registration.registrationId || registration.id}\n\n` +
+    `Is registration ka status update karna hai?`
+  );
+
+  if (!confirmed) return;
+
+  button.disabled = true;
+
+  try {
+    // Update the existing legacy document; do not copy or recreate it.
+    await updateDoc(
+      doc(legacyDb, "registrations", registration.id),
+      changes
+    );
+
+    Object.assign(registration, changes);
+    renderLegacyRegistrations();
+
+    showLegacyMessage(
+      `Registration ${registration.registrationId || registration.id} updated successfully.`
+    );
+  } catch (error) {
+    console.error("Legacy registration update failed:", error);
+    showLegacyMessage(
+      "Update nahi hua. Purane Firebase project ki Firestore Rules check karein.\n" +
+      error.message,
+      true
+    );
+  } finally {
+    button.disabled = false;
+  }
 }
 
 function renderLegacyRegistrations() {
-  const searchTerm = normalized(legacySearch.value);
-  const statusFilter = normalized(legacyStatusFilter.value);
+  if (!legacyList) return;
+
+  const search = norm(legacySearch?.value);
+  const selectedFilter = norm(legacyStatusFilter?.value);
+
+  updateLegacyStats();
 
   const filtered = legacyRegistrations.filter(registration => {
     const searchable = [
@@ -417,43 +442,41 @@ function renderLegacyRegistrations() {
       registration.status,
       registration.paymentStatus,
       registration.paymentDone
-    ].map(normalized).join(" ");
+    ].map(norm).join(" ");
 
-    const matchesSearch = !searchTerm || searchable.includes(searchTerm);
+    const matchesSearch = !search || searchable.includes(search);
 
-    const status = normalized(registration.status);
-    const paymentStatus = normalized(registration.paymentStatus);
-    const paymentDone = normalized(registration.paymentDone);
+    let matchesFilter = true;
+    const status = norm(registration.status);
+    const paymentStatus = norm(registration.paymentStatus);
+    const paymentDone = norm(registration.paymentDone);
 
-    let matchesStatus = !statusFilter;
-
-    if (statusFilter === "paid") {
-      matchesStatus =
+    if (selectedFilter === "paid") {
+      matchesFilter =
         paymentStatus === "paid" ||
         paymentDone === "paid" ||
         paymentDone === "yes";
-    } else if (statusFilter === "unpaid") {
-      matchesStatus =
+    } else if (selectedFilter === "unpaid") {
+      matchesFilter =
         paymentStatus === "unpaid" ||
-        paymentDone === "no" ||
-        paymentDone === "unpaid";
-    } else if (statusFilter) {
-      matchesStatus =
-        status === statusFilter ||
-        (statusFilter === "on hold" && status === "hold");
+        paymentDone === "unpaid" ||
+        paymentDone === "no";
+    } else if (selectedFilter) {
+      matchesFilter =
+        status === selectedFilter ||
+        (selectedFilter === "on hold" && status === "hold");
     }
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesFilter;
   });
 
-  updateLegacyStats(legacyRegistrations);
   legacyList.replaceChildren();
 
-  if (filtered.length === 0) {
+  if (!filtered.length) {
     legacyList.className = "empty";
     legacyList.textContent = legacyRegistrations.length
-      ? "Search/filter ke liye koi registration nahi mili."
-      : "Purane APL League database mein koi registration nahi mili.";
+      ? "Is search/filter mein koi registration nahi mili."
+      : "Koi APL League registration nahi mili.";
     return;
   }
 
@@ -464,51 +487,110 @@ function renderLegacyRegistrations() {
     card.className = "registration-card";
 
     const heading = document.createElement("h3");
-    heading.textContent = safeText(registration.teamName || "Unnamed Team");
+    heading.textContent = textValue(registration.teamName || "Unnamed Team");
+    card.appendChild(heading);
 
-    const status = document.createElement("span");
-    status.className = "tag";
+    const statusTag = document.createElement("span");
+    statusTag.className = "tag";
+    statusTag.textContent = "Status: " + textValue(registrationStatus(registration));
 
-    const statusValue = safeText(getLegacyStatus(registration));
-    status.textContent = "Registration: " + statusValue;
+    const currentStatus = norm(registrationStatus(registration));
+    if (currentStatus === "pending") statusTag.classList.add("pending");
+    if (currentStatus === "rejected") statusTag.classList.add("rejected");
 
-    if (normalized(statusValue) === "pending") status.classList.add("pending");
-    if (normalized(statusValue) === "rejected") status.classList.add("rejected");
+    card.appendChild(statusTag);
 
-    card.append(heading, status);
+    addInfo(card, "Registration ID", registration.registrationId);
+    addInfo(card, "Team ID", registration.teamId);
+    addInfo(card, "Captain", registration.captainName);
+    addInfo(card, "Mobile", registration.mobile);
+    addInfo(card, "WhatsApp", registration.whatsapp);
+    addInfo(card, "Email", registration.email);
+    addInfo(card, "Area", registration.area);
+    addInfo(card, "Address", registration.address);
+    addInfo(card, "Player Type", registration.playerType);
+    addInfo(card, "Payment Status", registration.paymentStatus);
+    addInfo(card, "Payment Details", registration.paymentDone);
 
-    card.append(
-      createInfoLine("Registration ID", registration.registrationId),
-      createInfoLine("Team ID", registration.teamId),
-      createInfoLine("Captain", registration.captainName),
-      createInfoLine("Mobile", registration.mobile),
-      createInfoLine("WhatsApp", registration.whatsapp),
-      createInfoLine("Email", registration.email),
-      createInfoLine("Area", registration.area),
-      createInfoLine("Address", registration.address),
-      createInfoLine("Player Type", registration.playerType),
-      createInfoLine("Payment Status", registration.paymentStatus),
-      createInfoLine("Payment Details", registration.paymentDone),
-      createInfoLine("UPI", registration.upi)
-    );
+    const actions = document.createElement("div");
+    actions.className = "actions";
 
+    const statusButtons = [
+      { label: "Approve", status: "Approved" },
+      { label: "Reject", status: "Rejected" },
+      { label: "Pending", status: "Pending" }
+    ];
+
+    statusButtons.forEach(item => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = item.label;
+      button.className = item.status === "Rejected" ? "danger" : "primary";
+
+      if (norm(registrationStatus(registration)) === norm(item.status)) {
+        button.disabled = true;
+        button.title = "This is the current status";
+      }
+
+      button.addEventListener("click", () => {
+        updateLegacyRegistration(
+          registration,
+          { status: item.status },
+          button
+        );
+      });
+
+      actions.appendChild(button);
+    });
+
+    const paidButton = document.createElement("button");
+    paidButton.type = "button";
+    paidButton.textContent = "Mark Paid";
+    paidButton.className = "primary";
+
+    const alreadyPaid =
+      norm(registration.paymentStatus) === "paid" ||
+      norm(registration.paymentDone) === "paid" ||
+      norm(registration.paymentDone) === "yes";
+
+    if (alreadyPaid) {
+      paidButton.disabled = true;
+      paidButton.title = "Payment already marked paid";
+    }
+
+    paidButton.addEventListener("click", () => {
+      if (!confirm(
+        `Kya aapne payment verify kar liya hai?\n` +
+        `Team: ${registration.teamName || "Unnamed Team"}`
+      )) return;
+
+      updateLegacyRegistration(
+        registration,
+        { paymentStatus: "Paid" },
+        paidButton
+      );
+    });
+
+    actions.appendChild(paidButton);
+    card.appendChild(actions);
     legacyList.appendChild(card);
   });
 
   showLegacyMessage(
-    `Purane APL database se ${legacyRegistrations.length} registrations mili. ` +
-    `Is waqt ${filtered.length} result dikh rahe hain.`
+    `Total registrations: ${legacyRegistrations.length}. ` +
+    `Filtered results: ${filtered.length}.`
   );
 }
 
 async function loadLegacyRegistrations() {
+  if (!legacyList) return;
+
   refreshLegacyBtn.disabled = true;
   legacyList.className = "empty";
-  legacyList.textContent = "Purane APL League database se registrations load ho rahi hain...";
+  legacyList.textContent = "APL League registrations load ho rahi hain...";
   showLegacyMessage("Loading registrations...");
 
   try {
-    // IMPORTANT: Read from the old APL League project, not Platform db.
     const snapshot = await getDocs(collection(legacyDb, "registrations"));
 
     legacyRegistrations = snapshot.docs.map(item => ({
@@ -516,37 +598,31 @@ async function loadLegacyRegistrations() {
       ...item.data()
     }));
 
-    // Newest registrations first when a Firestore timestamp exists.
     legacyRegistrations.sort((a, b) => {
-      const timeA = a.createdAt?.toMillis?.() || 0;
-      const timeB = b.createdAt?.toMillis?.() || 0;
-      return timeB - timeA;
+      const aTime = a.createdAt?.toMillis?.() || 0;
+      const bTime = b.createdAt?.toMillis?.() || 0;
+      return bTime - aTime;
     });
 
     renderLegacyRegistrations();
   } catch (error) {
-    console.error("Legacy registrations could not load:", error);
-
+    console.error("Legacy registrations load failed:", error);
     legacyList.className = "empty";
     legacyList.textContent =
-      "APL League registrations load nahi hui.\n" +
-      "Firebase rules, network aur legacyDb configuration check karein.";
-
-    showLegacyMessage(
-      "Error: " + error.message +
-      "\nData delete ya migrate nahi kiya gaya hai.",
-      true
-    );
+      "Registrations load nahi hui. Firebase permissions aur connection check karein.";
+    showLegacyMessage(error.message, true);
   } finally {
     refreshLegacyBtn.disabled = false;
   }
 }
 
-legacySearch.addEventListener("input", renderLegacyRegistrations);
-legacyStatusFilter.addEventListener("change", renderLegacyRegistrations);
-refreshLegacyBtn.addEventListener("click", loadLegacyRegistrations);
+legacySearch?.addEventListener("input", renderLegacyRegistrations);
+legacyStatusFilter?.addEventListener("change", renderLegacyRegistrations);
+refreshLegacyBtn?.addEventListener("click", loadLegacyRegistrations);
 
-/* ---------------- ADMIN LOGIN ---------------- */
+/* =====================================================
+   ADMIN AUTHENTICATION
+   ===================================================== */
 
 onAuthStateChanged(auth, async user => {
   if (!user) {
