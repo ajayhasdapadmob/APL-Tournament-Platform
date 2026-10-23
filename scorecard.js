@@ -10,51 +10,60 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-/* =========================================================
-   APL TOURNAMENT PLATFORM — COMPLETE SCORECARD
-   Registered players, ball-by-ball scoring, undo, autosave,
-   innings management, match result and navigation.
-========================================================= */
+/*
+ * APL TOURNAMENT PLATFORM — SCORECARD
+ * Features:
+ * - Registered player dropdowns
+ * - Batting / bowling statistics
+ * - Runs, extras, wickets, undo
+ * - Firebase autosave
+ * - Innings 1 and innings 2
+ * - Winner, result, scoreA and scoreB
+ * - LIVE / COMPLETED / SCHEDULED status compatibility
+ *
+ * Important:
+ * - Uses updateDoc; does not delete existing registration data.
+ * - This is an umpire-assisting scorer, not a replacement for the
+ *   official umpire's judgement in unusual Law-specific situations.
+ */
 
-const $ = id => document.getElementById(id);
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) =>
+  Array.from(root.querySelectorAll(selector));
+
 const params = new URLSearchParams(location.search);
 
-let tournamentId =
+const tournamentId =
   params.get("id") ||
   params.get("tournamentId") ||
   localStorage.getItem("selectedTournamentId") ||
   localStorage.getItem("tournamentId") ||
+  localStorage.getItem("aplTournamentId") ||
   sessionStorage.getItem("selectedTournamentId") ||
-  sessionStorage.getItem("tournamentId") ||
-  sessionStorage.getItem("aplTournamentId") ||
-  localStorage.getItem("aplTournamentId") || "";
+  "";
 
-let matchId =
+const matchId =
   params.get("matchId") ||
   params.get("match") ||
-  sessionStorage.getItem("selectedMatchId") ||
   localStorage.getItem("selectedMatchId") ||
-  sessionStorage.getItem("matchId") ||
   localStorage.getItem("matchId") ||
-  sessionStorage.getItem("aplMatchId") ||
-  localStorage.getItem("aplMatchId") || "";
+  localStorage.getItem("aplMatchId") ||
+  sessionStorage.getItem("selectedMatchId") ||
+  "";
 
-let tournamentData = {};
-let currentMatch = {};
-let currentMatchRef = null;
-
-let team1Id = "";
-let team2Id = "";
-let team1Players = [];
-let team2Players = [];
-
+let tournament = null;
+let currentMatch = null;
+let matchRef = null;
+let teamPlayers = { A: [], B: [] };
+let history = [];
 let saving = false;
 let saveAgain = false;
-let saveQueue = Promise.resolve();
-let history = [];
-let matchLoaded = false;
+let saveTimer = null;
+let initialized = false;
+let inningsOne = null;
+let inningsTwo = null;
 
-const BOWLER_CREDIT_DISMISSALS = new Set([
+const BOWLER_WICKET_TYPES = new Set([
   "Bowled",
   "Caught",
   "LBW",
@@ -63,109 +72,89 @@ const BOWLER_CREDIT_DISMISSALS = new Set([
   "Caught and Bowled"
 ]);
 
-const DISMISSAL_OPTIONS = [
-  "Bowled",
-  "Caught",
-  "LBW",
+const NO_BALL_ALLOWED_DISMISSALS = new Set([
+  "Run Out",
+  "Obstructing the Field",
+  "Hit the Ball Twice"
+]);
+
+const WIDE_ALLOWED_DISMISSALS = new Set([
   "Run Out",
   "Stumped",
   "Hit Wicket",
-  "Caught and Bowled",
-  "Retired Hurt",
-  "Retired Out",
   "Obstructing the Field",
-  "Timed Out",
   "Hit the Ball Twice"
-];
-
-/* ---------------- Helpers ---------------- */
+]);
 
 function num(value) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
+  const result = Number(value);
+  return Number.isFinite(result) ? result : 0;
 }
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function setText(id, value) {
-  const el = $(id);
-  if (el) el.textContent = String(value);
+function setText(selector, value) {
+  const element = $(selector);
+  if (element) element.textContent = String(value);
 }
 
-function showMessage(message) {
-  console.log("[APL Scorecard]", message);
+function showMessage(message, type = "info") {
+  const element =
+    $("#message") ||
+    $("#statusMessage") ||
+    $("#scoreMessage") ||
+    $(".message");
 
-  let el = $("scoringMessage");
-
-  if (!el) {
-    el = document.createElement("div");
-    el.id = "scoringMessage";
-    el.setAttribute("role", "status");
-
-    Object.assign(el.style, {
-      position: "fixed",
-      left: "50%",
-      bottom: "18px",
-      transform: "translateX(-50%)",
-      zIndex: "20000",
-      maxWidth: "90%",
-      padding: "11px 16px",
-      background: "#172033",
-      color: "#fff",
-      borderRadius: "8px",
-      fontSize: "14px",
-      boxShadow: "0 4px 16px #0003",
-      textAlign: "center"
-    });
-
-    document.body.appendChild(el);
+  if (element) {
+    element.textContent = message;
+    element.dataset.type = type;
+    element.style.display = "block";
+  } else if (type === "error") {
+    console.error(message);
   }
-
-  el.textContent = message;
-  el.style.display = "block";
-
-  clearTimeout(el._timer);
-  el._timer = setTimeout(() => {
-    el.style.display = "none";
-  }, 3500);
 }
 
 function oversText(balls) {
-  balls = Math.max(0, Math.floor(num(balls)));
-  return `${Math.floor(balls / 6)}.${balls % 6}`;
+  const legalBalls = Math.max(0, num(balls));
+  return `${Math.floor(legalBalls / 6)}.${legalBalls % 6}`;
 }
 
-function strikeRate(runs, balls) {
-  return balls > 0
-    ? ((num(runs) / num(balls)) * 100).toFixed(2)
+function strikeRate(batter) {
+  return num(batter?.balls)
+    ? ((num(batter.runs) / num(batter.balls)) * 100).toFixed(2)
     : "0.00";
 }
 
-function economy(runs, balls) {
-  return balls > 0
-    ? ((num(runs) * 6) / num(balls)).toFixed(2)
+function economy(bowler) {
+  const balls = num(bowler?.balls);
+  return balls
+    ? (num(bowler.runs) / (balls / 6)).toFixed(2)
     : "0.00";
 }
 
-function createBatter(name = "New Batter") {
+function createBatter(name = "") {
   return {
     name,
     runs: 0,
     balls: 0,
     fours: 0,
     sixes: 0,
-    out: false
+    out: false,
+    dismissal: ""
   };
 }
 
-function createBowler(name = "Bowler") {
+function createBowler(name = "") {
   return {
     name,
     runs: 0,
     balls: 0,
-    wickets: 0
+    wickets: 0,
+    wides: 0,
+    noBalls: 0,
+    maidens: 0
   };
 }
 
@@ -175,383 +164,283 @@ function createExtras() {
     noBalls: 0,
     byes: 0,
     legByes: 0,
+    penalty: 0,
     total: 0
   };
 }
 
-function createInitialState(innings = 1, battingTeam = "A") {
+function createInnings(number = 1, battingTeam = "A") {
   return {
-    innings,
+    innings: number,
     battingTeam,
     runs: 0,
     wickets: 0,
     balls: 0,
     currentOverRuns: [],
-    striker: createBatter("Striker"),
-    nonStriker: createBatter("Non-Striker"),
-    bowler: createBowler(),
+    striker: createBatter(""),
+    nonStriker: createBatter(""),
+    bowler: createBowler(""),
     extras: createExtras(),
     totalFours: 0,
     totalSixes: 0,
     dismissals: [],
-    status: "Live"
+    status: "LIVE",
+    fallOfWickets: [],
+    battingStats: {},
+    bowlingStats: {},
+    ballLog: []
   };
 }
 
-let scoreState = createInitialState();
+let scoreState = createInnings();
 
-function normalizeBatter(value, fallback) {
-  const b = value || {};
-
-  return {
-    name: b.name || fallback,
-    runs: num(b.runs),
-    balls: num(b.balls),
-    fours: num(b.fours),
-    sixes: num(b.sixes),
-    out: Boolean(b.out)
-  };
+function oversLimit() {
+  return Math.max(1, num(currentMatch?.overs) || 20);
 }
 
-function normalizeBowler(value) {
-  const b = value || {};
-
-  return {
-    name: b.name || "Bowler",
-    runs: num(b.runs),
-    balls: num(b.balls),
-    wickets: num(b.wickets)
-  };
+function maxBalls() {
+  return oversLimit() * 6;
 }
 
-function normalizeExtras(value) {
-  const e = value || {};
-
-  return {
-    wides: num(e.wides),
-    noBalls: num(e.noBalls),
-    byes: num(e.byes),
-    legByes: num(e.legByes),
-    total: num(e.total)
-  };
-}
-
-function normalizedStatus(value) {
-  const status = String(value || "").trim().toLowerCase();
-
-  if (["completed", "complete", "finished"].includes(status)) {
-    return "Completed";
-  }
-
-  if ([
-    "live",
-    "in progress",
-    "in-progress",
-    "ongoing"
-  ].includes(status)) {
-    return "Live";
-  }
-
-  if ([
-    "innings completed",
-    "innings_completed",
-    "innings-completed"
-  ].includes(status)) {
-    return "Innings Completed";
-  }
-
-  if (["scheduled", "upcoming", "not started"].includes(status)) {
-    return "Scheduled";
-  }
-
-  return "";
+function legalBallsRemaining() {
+  return Math.max(0, maxBalls() - scoreState.balls);
 }
 
 function isCompleted() {
-  return normalizedStatus(currentMatch.status) === "Completed" ||
-    normalizedStatus(scoreState.status) === "Completed";
-}
-
-function isInningsCompleted() {
-  return normalizedStatus(scoreState.status) === "Innings Completed";
-}
-
-/* ---------------- Team names and registered players ---------------- */
-
-function teamName(side) {
-  if (side === "A") {
-    return currentMatch.team1Name ||
-      currentMatch.teamAName ||
-      currentMatch.teamA ||
-      currentMatch.team1 ||
-      tournamentData.teamAName ||
-      "Team A";
-  }
-
-  return currentMatch.team2Name ||
-    currentMatch.teamBName ||
-    currentMatch.teamB ||
-    currentMatch.team2 ||
-    tournamentData.teamBName ||
-    "Team B";
-}
-
-function getPlayerNames(teamData) {
-  const raw = Array.isArray(teamData?.players)
-    ? teamData.players
-    : [];
-
-  return [...new Set(raw.map(player => {
-    if (typeof player === "string") return player.trim();
-
-    if (player && typeof player === "object") {
-      return String(
-        player.name || player.playerName || ""
-      ).trim();
-    }
-
-    return "";
-  }).filter(Boolean))];
-}
-
-function battingPlayers() {
-  return scoreState.battingTeam === "A"
-    ? team1Players
-    : team2Players;
-}
-
-function bowlingPlayers() {
-  return scoreState.battingTeam === "A"
-    ? team2Players
-    : team1Players;
-}
-
-async function loadMatchPlayers() {
-  team1Id = currentMatch.team1Id || "";
-  team2Id = currentMatch.team2Id || "";
-
-  if (!team1Id || !team2Id) {
-    team1Players = [];
-    team2Players = [];
-
-    showMessage(
-      "Match में team1Id/team2Id नहीं मिला। Player dropdown खाली हो सकता है।"
-    );
-
-    return;
-  }
-
-  const [snap1, snap2] = await Promise.all([
-    getDoc(doc(db, "tournaments", tournamentId, "teams", team1Id)),
-    getDoc(doc(db, "tournaments", tournamentId, "teams", team2Id))
-  ]);
-
-  if (!snap1.exists() || !snap2.exists()) {
-    throw new Error("Match की दोनों टीमों का record नहीं मिला।");
-  }
-
-  team1Players = getPlayerNames(snap1.data());
-  team2Players = getPlayerNames(snap2.data());
-
-  if (!team1Players.length || !team2Players.length) {
-    showMessage(
-      "किसी टीम की registered player list खाली है। Team registration data जाँचें।"
-    );
-  }
-}
-
-/* ---------------- Remember IDs ---------------- */
-
-function rememberIds() {
-  if (tournamentId) {
-    for (const store of [localStorage, sessionStorage]) {
-      store.setItem("selectedTournamentId", tournamentId);
-      store.setItem("tournamentId", tournamentId);
-      store.setItem("aplTournamentId", tournamentId);
-    }
-  }
-
-  if (matchId) {
-    for (const store of [localStorage, sessionStorage]) {
-      store.setItem("selectedMatchId", matchId);
-      store.setItem("matchId", matchId);
-      store.setItem("aplMatchId", matchId);
-    }
-  }
-}
-
-/* ---------------- Firebase loading ---------------- */
-
-async function loadTournamentAndMatch() {
-  if (!tournamentId) {
-    showMessage("Tournament ID नहीं मिला। Tournament से Scorecard खोलें।");
-    return false;
-  }
-
-  const tournamentSnap = await getDoc(
-    doc(db, "tournaments", tournamentId)
+  return (
+    String(currentMatch?.status || "").toLowerCase() === "completed" ||
+    String(currentMatch?.status || "").toLowerCase() === "complete" ||
+    String(scoreState.status || "").toLowerCase() === "completed"
   );
+}
 
-  if (!tournamentSnap.exists()) {
-    showMessage("Tournament नहीं मिला।");
+function inningsFinished() {
+  return (
+    scoreState.wickets >= 10 ||
+    scoreState.balls >= maxBalls() ||
+    scoreState.status === "COMPLETED" ||
+    scoreState.status === "Innings Completed"
+  );
+}
+
+function canScore() {
+  if (!currentMatch) return false;
+
+  if (isCompleted()) {
+    showMessage("Match already completed. Scoring is locked.", "warning");
     return false;
   }
 
-  tournamentData = tournamentSnap.data() || {};
-
-  if (matchId) {
-    currentMatchRef = doc(
-      db,
-      "tournaments",
-      tournamentId,
-      "matches",
-      matchId
+  if (inningsFinished()) {
+    showMessage(
+      "Innings completed. Use Start Second Innings or End Match.",
+      "warning"
     );
-
-    const matchSnap = await getDoc(currentMatchRef);
-
-    if (!matchSnap.exists()) {
-      showMessage("Match नहीं मिला।");
-      return false;
-    }
-
-    currentMatch = matchSnap.data() || {};
-  } else {
-    const matchesSnap = await getDocs(
-      collection(db, "tournaments", tournamentId, "matches")
-    );
-
-    if (matchesSnap.empty) {
-      showMessage("इस tournament में कोई match नहीं है।");
-      return false;
-    }
-
-    const docs = [...matchesSnap.docs].sort((a, b) => {
-      const ma = a.data() || {};
-      const mb = b.data() || {};
-
-      return num(ma.matchNumber) - num(mb.matchNumber);
-    });
-
-    const first = docs[0];
-
-    matchId = first.id;
-    currentMatchRef = first.ref;
-    currentMatch = first.data() || {};
+    return false;
   }
 
-  await loadMatchPlayers();
-  rememberIds();
-
-  const saved = currentMatch.scorecard;
-  const topStatus = normalizedStatus(currentMatch.status);
-  const savedStatus = normalizedStatus(saved?.status);
-
-  if (saved && typeof saved === "object") {
-    scoreState = {
-      ...createInitialState(),
-      ...saved,
-      innings: num(saved.innings) || num(currentMatch.innings) || 1,
-      battingTeam: saved.battingTeam === "B" ? "B" : "A",
-      runs: num(saved.runs),
-      wickets: num(saved.wickets),
-      balls: num(saved.balls),
-      striker: normalizeBatter(saved.striker, "Striker"),
-      nonStriker: normalizeBatter(saved.nonStriker, "Non-Striker"),
-      bowler: normalizeBowler(saved.bowler),
-      extras: normalizeExtras(saved.extras),
-      currentOverRuns: Array.isArray(saved.currentOverRuns)
-        ? saved.currentOverRuns
-        : [],
-      dismissals: Array.isArray(saved.dismissals)
-        ? saved.dismissals
-        : [],
-      totalFours: num(saved.totalFours),
-      totalSixes: num(saved.totalSixes),
-      status: savedStatus || "Live"
-    };
-  } else {
-    scoreState = createInitialState();
-
-    if (topStatus === "Completed") {
-      scoreState.status = "Completed";
-    } else if (topStatus === "Scheduled") {
-      scoreState.status = "Scheduled";
-    } else if (topStatus === "Innings Completed") {
-      scoreState.status = "Innings Completed";
-    } else if (topStatus === "Live") {
-      scoreState.status = "Live";
-    } else {
-      // Do not silently change an existing scheduled match to Live.
-      scoreState.status = currentMatch.date || currentMatch.matchDate
-        ? "Scheduled"
-        : "Live";
-    }
+  if (!scoreState.striker?.name || !scoreState.nonStriker?.name) {
+    showMessage("Please select both striker and non-striker.", "warning");
+    return false;
   }
 
-  // Main match status takes precedence for a completed match.
-  if (topStatus === "Completed") {
-    scoreState.status = "Completed";
-  } else if (topStatus === "Scheduled" && scoreState.runs === 0 &&
-             scoreState.wickets === 0 && scoreState.balls === 0) {
-    scoreState.status = "Scheduled";
-  } else if (topStatus === "Innings Completed") {
-    scoreState.status = "Innings Completed";
-  } else if (topStatus === "Live") {
-    scoreState.status = "Live";
-  }
-
-  // Legacy fallback: an actual saved second innings means play has started.
   if (
-    !topStatus &&
-    (currentMatch.innings1 || scoreState.runs > 0 ||
-      scoreState.wickets > 0 || scoreState.balls > 0)
+    scoreState.striker.name === scoreState.nonStriker.name
   ) {
-    scoreState.status = "Live";
+    showMessage("Striker and non-striker must be different players.", "warning");
+    return false;
   }
 
-  displayMatch();
-  renderScorecard();
-  matchLoaded = true;
+  if (!scoreState.bowler?.name) {
+    showMessage("Please select the bowler.", "warning");
+    return false;
+  }
 
   return true;
 }
 
-/* ---------------- Player selectors ---------------- */
+function getTeamName(team) {
+  if (!currentMatch) return team;
 
-function ensureSelect(id, label, anchorId) {
-  let select = $(id);
-  if (select) return select;
+  if (team === "A") {
+    return (
+      currentMatch.team1Name ||
+      currentMatch.teamA ||
+      currentMatch.team1 ||
+      "Team A"
+    );
+  }
 
-  const wrapper = document.createElement("div");
-  wrapper.style.cssText = "margin:10px 0;";
-
-  const labelEl = document.createElement("label");
-  labelEl.htmlFor = id;
-  labelEl.textContent = label;
-  labelEl.style.cssText =
-    "display:block;margin-bottom:5px;font-weight:600;";
-
-  select = document.createElement("select");
-  select.id = id;
-  select.style.cssText =
-    "width:100%;max-width:100%;padding:10px;border-radius:6px;";
-
-  wrapper.append(labelEl, select);
-
-  const anchor = $(anchorId) || $("matchInfo") || document.body;
-  anchor.insertAdjacentElement("afterend", wrapper);
-
-  return select;
+  return (
+    currentMatch.team2Name ||
+    currentMatch.teamB ||
+    currentMatch.team2 ||
+    "Team B"
+  );
 }
 
-function fillSelect(select, names, selectedName, placeholder) {
+function getBattingTeamForInnings(number) {
+  if (number === 1) {
+    return currentMatch?.firstBattingTeam || "A";
+  }
+
+  const first = inningsOne?.battingTeam || "A";
+  return first === "A" ? "B" : "A";
+}
+
+function activePlayers() {
+  return teamPlayers[scoreState.battingTeam] || [];
+}
+
+function fieldingPlayers() {
+  const side = scoreState.battingTeam === "A" ? "B" : "A";
+  return teamPlayers[side] || [];
+}
+
+function playerNames(players) {
+  return [...new Set(
+    (players || [])
+      .map(player => {
+        if (typeof player === "string") return player.trim();
+
+        return String(
+          player?.name ||
+          player?.playerName ||
+          player?.fullName ||
+          player?.displayName ||
+          ""
+        ).trim();
+      })
+      .filter(Boolean)
+  )];
+}
+
+function findUnusedBatter(excluded = []) {
+  const used = new Set(
+    [
+      scoreState.striker?.name,
+      scoreState.nonStriker?.name,
+      ...excluded
+    ].filter(Boolean)
+  );
+
+  return playerNames(activePlayers()).find(name => !used.has(name)) || "";
+}
+
+function normaliseStatus(status) {
+  const value = String(status || "").trim().toLowerCase();
+
+  if (
+    value === "completed" ||
+    value === "complete" ||
+    value === "finished" ||
+    value === "result"
+  ) {
+    return "COMPLETED";
+  }
+
+  if (
+    value === "live" ||
+    value === "in progress" ||
+    value === "innings completed"
+  ) {
+    return "LIVE";
+  }
+
+  return "SCHEDULED";
+}
+
+function normaliseInnings(raw, number, battingTeam) {
+  const base = createInnings(number, battingTeam);
+
+  if (!raw || typeof raw !== "object") return base;
+
+  const state = { ...base, ...raw };
+  state.innings = number;
+  state.battingTeam = raw.battingTeam || battingTeam;
+  state.runs = num(raw.runs ?? raw.totalRuns);
+  state.wickets = num(raw.wickets ?? raw.totalWickets);
+  state.balls = num(raw.balls ?? raw.legalBalls);
+  state.currentOverRuns = Array.isArray(raw.currentOverRuns)
+    ? raw.currentOverRuns
+    : [];
+  state.striker = { ...createBatter(""), ...(raw.striker || {}) };
+  state.nonStriker = { ...createBatter(""), ...(raw.nonStriker || {}) };
+  state.bowler = { ...createBowler(""), ...(raw.bowler || {}) };
+  state.extras = { ...createExtras(), ...(raw.extras || {}) };
+  state.dismissals = Array.isArray(raw.dismissals) ? raw.dismissals : [];
+  state.ballLog = Array.isArray(raw.ballLog) ? raw.ballLog : [];
+  state.fallOfWickets = Array.isArray(raw.fallOfWickets)
+    ? raw.fallOfWickets
+    : [];
+  state.status = raw.status || "LIVE";
+
+  return state;
+}
+
+async function loadPlayersForTeam(teamId) {
+  if (!teamId || !tournamentId) return [];
+
+  try {
+    const snapshot = await getDocs(
+      collection(db, "tournaments", tournamentId, "teams")
+    );
+
+    for (const teamDoc of snapshot.docs) {
+      const team = teamDoc.data();
+
+      if (
+        teamDoc.id === teamId ||
+        team.id === teamId ||
+        team.teamId === teamId
+      ) {
+        return playerNames(
+          team.players ||
+          team.registeredPlayers ||
+          team.playerNames ||
+          team.squad ||
+          []
+        );
+      }
+    }
+
+    return [];
+  } catch (error) {
+    console.error("Unable to load registered players:", error);
+    return [];
+  }
+}
+
+async function loadTeamPlayers() {
+  const [playersA, playersB] = await Promise.all([
+    loadPlayersForTeam(currentMatch?.team1Id),
+    loadPlayersForTeam(currentMatch?.team2Id)
+  ]);
+
+  teamPlayers = {
+    A: playersA,
+    B: playersB
+  };
+
+  if (!playersA.length || !playersB.length) {
+    showMessage(
+      "Some registered players could not be loaded. Check team1Id/team2Id and team registrations.",
+      "warning"
+    );
+  }
+}
+
+function populateSelect(selector, names, selected = "") {
+  const select = $(selector);
+  if (!select) return;
+
+  const previous = selected || select.value;
   select.replaceChildren();
 
-  const first = document.createElement("option");
-  first.value = "";
-  first.textContent = placeholder;
-  select.appendChild(first);
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "-- Select Player --";
+  select.appendChild(placeholder);
 
   names.forEach(name => {
     const option = document.createElement("option");
@@ -560,883 +449,384 @@ function fillSelect(select, names, selectedName, placeholder) {
     select.appendChild(option);
   });
 
-  if (names.includes(selectedName)) {
-    select.value = selectedName;
+  if (previous && names.includes(previous)) {
+    select.value = previous;
   } else {
     select.value = "";
   }
 }
 
-function syncPlayerSelectors() {
-  const batters = battingPlayers();
-  const bowlers = bowlingPlayers();
+function refreshPlayerDropdowns() {
+  const batting = playerNames(activePlayers());
+  const fielding = playerNames(fieldingPlayers());
 
-  const strikerSelect = ensureSelect(
-    "strikerPlayerSelect",
-    "Striker",
-    "matchInfo"
+  populateSelect(
+    "#strikerSelect",
+    batting,
+    scoreState.striker?.name || ""
   );
 
-  const nonStrikerSelect = ensureSelect(
-    "nonStrikerPlayerSelect",
-    "Non-Striker",
-    "strikerPlayerSelect"
+  populateSelect(
+    "#nonStrikerSelect",
+    batting,
+    scoreState.nonStriker?.name || ""
   );
 
-  const bowlerSelect = ensureSelect(
-    "bowlerPlayerSelect",
-    "Bowler (opposition)",
-    "nonStrikerPlayerSelect"
+  populateSelect(
+    "#bowlerSelect",
+    fielding,
+    scoreState.bowler?.name || ""
   );
 
-  fillSelect(
-    strikerSelect,
-    batters,
-    scoreState.striker.name,
-    "Select striker"
-  );
+  populateSelect("#dismissedBatter", [
+    scoreState.striker?.name,
+    scoreState.nonStriker?.name
+  ].filter(Boolean));
 
-  fillSelect(
-    nonStrikerSelect,
-    batters,
-    scoreState.nonStriker.name,
-    "Select non-striker"
-  );
-
-  fillSelect(
-    bowlerSelect,
-    bowlers,
-    scoreState.bowler.name,
-    "Select bowler"
-  );
-
-  strikerSelect.onchange = () => {
-    if (!strikerSelect.value || !canEditScore()) return;
-
-    scoreState.striker.name = strikerSelect.value;
-    renderScorecard();
-    saveInBackground();
-  };
-
-  nonStrikerSelect.onchange = () => {
-    if (!nonStrikerSelect.value || !canEditScore()) return;
-
-    scoreState.nonStriker.name = nonStrikerSelect.value;
-    renderScorecard();
-    saveInBackground();
-  };
-
-  bowlerSelect.onchange = () => {
-    if (!bowlerSelect.value || !canEditScore()) return;
-
-    scoreState.bowler.name = bowlerSelect.value;
-    renderScorecard();
-    saveInBackground();
-  };
-
-  [strikerSelect, nonStrikerSelect, bowlerSelect].forEach(select => {
-    select.disabled = !canEditScore();
+  [
+    "#catcherSelect",
+    "#runOutFielderSelect",
+    "#wicketkeeperSelect",
+    "#assistFielderSelect"
+  ].forEach(selector => {
+    populateSelect(selector, fielding);
   });
 }
 
-/* ---------------- Display and rendering ---------------- */
+function syncSelectedPlayers() {
+  const striker = $("#strikerSelect")?.value;
+  const nonStriker = $("#nonStrikerSelect")?.value;
+  const bowler = $("#bowlerSelect")?.value;
 
-function battingTeamName() {
-  return teamName(scoreState.battingTeam);
-}
-
-function getInningsForSide(side) {
-  const innings2 = currentMatch.innings2;
-  const innings1 = currentMatch.innings1;
-
-  if (innings2 && innings2.battingTeam === side) return innings2;
-  if (innings1 && innings1.battingTeam === side) return innings1;
-
-  if (scoreState.battingTeam === side) {
-    return makeInningsSnapshot();
+  if (striker) {
+    scoreState.striker.name = striker;
+    ensurePlayerStats(striker);
   }
 
-  return null;
-}
-
-function scoreForSide(side) {
-  const innings = getInningsForSide(side);
-
-  if (innings) {
-    return num(innings.runs);
+  if (nonStriker) {
+    scoreState.nonStriker.name = nonStriker;
+    ensurePlayerStats(nonStriker);
   }
 
-  const savedScore = side === "A"
-    ? currentMatch.scoreA
-    : currentMatch.scoreB;
-
-  if (typeof savedScore === "string" && savedScore.includes("/")) {
-    return num(savedScore.split("/")[0]);
-  }
-
-  return num(savedScore);
-}
-
-function wicketsForSide(side) {
-  const innings = getInningsForSide(side);
-
-  if (innings) {
-    return num(innings.wickets);
-  }
-
-  const savedScore = side === "A"
-    ? currentMatch.scoreA
-    : currentMatch.scoreB;
-
-  if (typeof savedScore === "string" && savedScore.includes("/")) {
-    return num(savedScore.split("/")[1]);
-  }
-
-  return 0;
-}
-
-function displayMatch() {
-  setText("matchId", matchId || "—");
-
-  setText(
-    "matchInfo",
-    currentMatch.matchName ||
-      currentMatch.name ||
-      currentMatch.title ||
-      `${teamName("A")} vs ${teamName("B")}`
-  );
-
-  setText("battingTeam", battingTeamName());
-
-  const statusEl = $("matchStatus");
-
-  if (statusEl) {
-    statusEl.textContent =
-      scoreState.status === "Completed" ? "✅ COMPLETED" :
-      scoreState.status === "Innings Completed" ? "⏸ INNINGS COMPLETED" :
-      scoreState.status === "Scheduled" ? "📅 SCHEDULED" :
-      "🔴 LIVE";
+  if (bowler) {
+    scoreState.bowler.name = bowler;
+    ensureBowlerStats(bowler);
   }
 }
 
-function renderCurrentOver() {
-  const container = $("currentOver");
-  if (!container) return;
+function ensurePlayerStats(name) {
+  if (!name) return;
 
-  container.replaceChildren();
-
-  if (!scoreState.currentOverRuns.length) {
-    container.textContent = "No balls yet";
-    return;
+  if (!scoreState.battingStats[name]) {
+    scoreState.battingStats[name] = createBatter(name);
   }
-
-  scoreState.currentOverRuns.forEach(value => {
-    const item = document.createElement("span");
-    item.textContent = value;
-    item.style.cssText =
-      "display:inline-block;margin:3px;padding:5px 8px;border-radius:6px;background:#e2e8f0;color:#0f172a;";
-    container.appendChild(item);
-  });
 }
 
-function renderDismissalHistory() {
-  const container = $("dismissalHistory");
-  if (!container) return;
+function ensureBowlerStats(name) {
+  if (!name) return;
 
-  container.replaceChildren();
-
-  if (!scoreState.dismissals.length) {
-    container.textContent = "No wickets recorded yet.";
-    return;
+  if (!scoreState.bowlingStats[name]) {
+    scoreState.bowlingStats[name] = createBowler(name);
   }
-
-  scoreState.dismissals.forEach(item => {
-    const row = document.createElement("div");
-
-    row.textContent = [
-      `${item.batterName} — ${item.type}`,
-      item.catcher ? `Catch: ${item.catcher}` : "",
-      item.wicketkeeper ? `Keeper: ${item.wicketkeeper}` : "",
-      item.runOutFielder ? `Run out by: ${item.runOutFielder}` : "",
-      item.runOutAssist ? `Assist: ${item.runOutAssist}` : "",
-      item.bowler ? `Bowler: ${item.bowler}` : ""
-    ].filter(Boolean).join(" | ");
-
-    row.style.cssText =
-      "padding:8px;margin:5px 0;border-bottom:1px solid #e2e8f0;";
-
-    container.appendChild(row);
-  });
 }
 
-function canEditScore() {
-  return Boolean(currentMatchRef) &&
-    matchLoaded &&
-    !isCompleted() &&
-    !isInningsCompleted() &&
-    scoreState.status !== "Scheduled";
-}
-
-function updateButtonStates() {
-  const locked = !canEditScore();
-
-  document.querySelectorAll(
-    ".run-btn,#wideBtn,#noBallBtn,#byeBtn,#legByeBtn,#wicketBtn,#swapBtn"
-  ).forEach(button => {
-    button.disabled = locked;
+function snapshotForUndo() {
+  history.push({
+    scoreState: clone(scoreState),
+    inningsOne: clone(inningsOne),
+    inningsTwo: clone(inningsTwo),
+    currentMatch: {
+      status: currentMatch?.status,
+      winner: currentMatch?.winner,
+      result: currentMatch?.result
+    }
   });
 
-  if ($("undoBtn")) {
-    $("undoBtn").disabled = locked || history.length === 0;
-  }
-
-  if ($("saveBtn")) {
-    $("saveBtn").disabled = !currentMatchRef || isCompleted();
-  }
-
-  if ($("startSecondInningsBtn")) {
-    $("startSecondInningsBtn").disabled =
-      !currentMatchRef ||
-      isCompleted() ||
-      scoreState.innings !== 1 ||
-      scoreState.status === "Scheduled";
-  }
-
-  if ($("endMatchBtn")) {
-    $("endMatchBtn").disabled =
-      !currentMatchRef ||
-      isCompleted() ||
-      scoreState.status === "Scheduled";
-  }
+  if (history.length > 100) history.shift();
 }
 
-function renderScorecard() {
-  setText("score", `${scoreState.runs}/${scoreState.wickets}`);
-  setText("overs", oversText(scoreState.balls));
-
-  setText(
-    "crr",
-    scoreState.balls > 0
-      ? ((scoreState.runs * 6) / scoreState.balls).toFixed(2)
-      : "0.00"
-  );
-
-  setText("battingTeam", battingTeamName());
-
-  setText("strikerRuns", scoreState.striker.runs);
-  setText("strikerBalls", scoreState.striker.balls);
-  setText("strikerSR", strikeRate(scoreState.striker.runs, scoreState.striker.balls));
-  setText("strikerName", scoreState.striker.name);
-  setText("strikerFours", scoreState.striker.fours);
-  setText("strikerSixes", scoreState.striker.sixes);
-
-  setText("nonStrikerRuns", scoreState.nonStriker.runs);
-  setText("nonStrikerBalls", scoreState.nonStriker.balls);
-  setText("nonStrikerSR", strikeRate(scoreState.nonStriker.runs, scoreState.nonStriker.balls));
-  setText("nonStrikerName", scoreState.nonStriker.name);
-  setText("nonStrikerFours", scoreState.nonStriker.fours);
-  setText("nonStrikerSixes", scoreState.nonStriker.sixes);
-
-  setText("bowlerName", scoreState.bowler.name);
-  setText("bowlerOvers", oversText(scoreState.bowler.balls));
-  setText("bowlerRuns", scoreState.bowler.runs);
-  setText("bowlerWickets", scoreState.bowler.wickets);
-  setText("bowlerEconomy", economy(scoreState.bowler.runs, scoreState.bowler.balls));
-
-  setText("totalFours", scoreState.totalFours);
-  setText("totalSixes", scoreState.totalSixes);
-  setText("extrasTotal", scoreState.extras.total);
-  setText("widesTotal", scoreState.extras.wides);
-  setText("noBallsTotal", scoreState.extras.noBalls);
-  setText("byesTotal", scoreState.extras.byes);
-  setText("legByesTotal", scoreState.extras.legByes);
-
-  setText("scoreA", `${scoreForSide("A")}/${wicketsForSide("A")}`);
-  setText("scoreB", `${scoreForSide("B")}/${wicketsForSide("B")}`);
-
-  renderCurrentOver();
-  renderDismissalHistory();
-  displayMatch();
-  updateButtonStates();
-  syncPlayerSelectors();
+function rotateStrike() {
+  const oldStriker = scoreState.striker;
+  scoreState.striker = scoreState.nonStriker;
+  scoreState.nonStriker = oldStriker;
 }
 
-/* ---------------- Undo ---------------- */
-
-function saveHistory() {
-  history.push(clone(scoreState));
-
-  if (history.length > 100) {
-    history.shift();
-  }
-
-  updateButtonStates();
-}
-
-async function undoLastBall() {
-  if (!canEditScore()) return;
-
-  if (!history.length) {
-    showMessage("इस session में Undo history उपलब्ध नहीं है।");
-    return;
-  }
-
-  scoreState = history.pop();
-  renderScorecard();
-
-  try {
-    await autoSave();
-    showMessage("Last action Undo हो गई।");
-  } catch (error) {
-    console.error(error);
-    showMessage("Undo हुआ, लेकिन Firebase save failed हुआ।");
-  }
-}
-
-/* ---------------- Ball helpers ---------------- */
-
-function recordBallDisplay(value) {
-  scoreState.currentOverRuns.push(String(value));
-}
-
-function swapBattersInternal() {
-  [scoreState.striker, scoreState.nonStriker] =
-    [scoreState.nonStriker, scoreState.striker];
-}
-
-function finishOverIfNeeded() {
-  if (scoreState.balls > 0 && scoreState.balls % 6 === 0) {
-    scoreState.currentOverRuns = [];
-    swapBattersInternal();
-    showMessage("Over पूरा हुआ। Strike बदल दी गई है।");
-  }
-}
-
-function canScore() {
-  if (!currentMatchRef || !matchLoaded) {
-    showMessage("Match अभी load नहीं हुआ।");
-    return false;
-  }
-
-  if (isCompleted() || isInningsCompleted()) {
-    showMessage("यह innings समाप्त हो चुकी है।");
-    return false;
-  }
-
-  if (scoreState.status === "Scheduled") {
-    scoreState.status = "Live";
-  }
-
-  if (scoreState.wickets >= 10) {
-    showMessage("10 wickets गिर चुके हैं। Innings समाप्त करें।");
-    return false;
-  }
-
-  return true;
-}
-
-/* ---------------- Normal runs ---------------- */
-
-async function addRuns(value) {
-  const runs = Number(value);
-
-  if (
-    !Number.isInteger(runs) ||
-    runs < 0 ||
-    runs > 7 ||
-    !canScore()
-  ) return;
-
-  saveHistory();
-
+function addTeamRuns(runs) {
   scoreState.runs += runs;
+}
+
+function addBowlerRuns(runs) {
+  ensureBowlerStats(scoreState.bowler.name);
+  scoreState.bowler.runs += runs;
+
+  const name = scoreState.bowler.name;
+  if (name) {
+    ensureBowlerStats(name);
+    scoreState.bowlingStats[name].runs += runs;
+  }
+}
+
+function addBowlerLegalBall() {
   scoreState.balls += 1;
 
-  scoreState.striker.runs += runs;
-  scoreState.striker.balls += 1;
+  if (scoreState.bowler.name) {
+    ensureBowlerStats(scoreState.bowler.name);
+    scoreState.bowler.balls += 1;
+    scoreState.bowlingStats[scoreState.bowler.name].balls += 1;
+  }
+}
 
-  scoreState.bowler.runs += runs;
-  scoreState.bowler.balls += 1;
+function addBatterBall(batter = scoreState.striker) {
+  if (!batter?.name) return;
+
+  ensurePlayerStats(batter.name);
+  batter.balls += 1;
+  scoreState.battingStats[batter.name].balls += 1;
+}
+
+function addBatterRuns(runs, batter = scoreState.striker) {
+  if (!batter?.name) return;
+
+  ensurePlayerStats(batter.name);
+  batter.runs += runs;
+  scoreState.battingStats[batter.name].runs += runs;
 
   if (runs === 4) {
-    scoreState.striker.fours++;
-    scoreState.totalFours++;
+    batter.fours += 1;
+    scoreState.battingStats[batter.name].fours += 1;
+    scoreState.totalFours += 1;
   }
 
   if (runs === 6) {
-    scoreState.striker.sixes++;
-    scoreState.totalSixes++;
+    batter.sixes += 1;
+    scoreState.battingStats[batter.name].sixes += 1;
+    scoreState.totalSixes += 1;
   }
-
-  recordBallDisplay(runs === 0 ? "•" : runs);
-
-  if (runs % 2 === 1) {
-    swapBattersInternal();
-  }
-
-  finishOverIfNeeded();
-  renderScorecard();
-  saveInBackground();
 }
 
-/* ---------------- Extras ---------------- */
-
-async function addExtra(type, amount = 1) {
-  if (!canScore()) return;
-
-  amount = Number(amount);
-
-  if (!Number.isInteger(amount) || amount < 1 || amount > 7) {
-    amount = 1;
-  }
-
-  if (!["wide", "noBall", "bye", "legBye"].includes(type)) return;
-
-  saveHistory();
-
-  if (type === "wide") {
-    scoreState.runs += amount;
-    scoreState.extras.wides += amount;
-    scoreState.extras.total += amount;
-    scoreState.bowler.runs += amount;
-
-    recordBallDisplay(
-      amount === 1 ? "Wd" : `Wd+${amount - 1}`
-    );
-
-    if ((amount - 1) % 2 === 1) {
-      swapBattersInternal();
-    }
-  }
-
-  if (type === "noBall") {
-    scoreState.runs++;
-    scoreState.extras.noBalls++;
-    scoreState.extras.total++;
-    scoreState.bowler.runs++;
-
-    recordBallDisplay("Nb");
-  }
-
-  if (type === "bye" || type === "legBye") {
-    scoreState.runs += amount;
-    scoreState.extras[type === "bye" ? "byes" : "legByes"] += amount;
-    scoreState.extras.total += amount;
-
-    scoreState.balls++;
-    scoreState.bowler.balls++;
-    scoreState.striker.balls++;
-
-    recordBallDisplay(
-      type === "bye"
-        ? (amount === 1 ? "B" : `B${amount}`)
-        : (amount === 1 ? "Lb" : `Lb${amount}`)
-    );
-
-    if (amount % 2 === 1) {
-      swapBattersInternal();
-    }
-  }
-
-  finishOverIfNeeded();
-  renderScorecard();
-  saveInBackground();
-}
-
-/* ---------------- Wicket dialog ---------------- */
-
-function createDismissalForm() {
-  let modal = $("dismissalModal");
-  if (modal) return modal;
-
-  modal = document.createElement("div");
-  modal.id = "dismissalModal";
-  modal.style.cssText =
-    "position:fixed;inset:0;background:#000b;z-index:20000;display:none;align-items:center;justify-content:center;padding:16px;overflow:auto;";
-
-  modal.innerHTML = `
-    <form id="dismissalForm" style="background:#fff;color:#172033;width:100%;max-width:480px;padding:22px;border-radius:14px;box-sizing:border-box;display:grid;gap:11px;max-height:92vh;overflow:auto">
-      <h2 style="margin:0">🏏 Record Wicket</h2>
-
-      <label for="dismissalType">Dismissal Type</label>
-      <select id="dismissalType" required style="padding:10px">
-        ${DISMISSAL_OPTIONS.map(t => `<option value="${t}">${t}</option>`).join("")}
-      </select>
-
-      <label for="dismissedBatter">Dismissed Batter</label>
-      <select id="dismissedBatter" required style="padding:10px">
-        <option value="striker">Striker</option>
-        <option value="nonStriker">Non-Striker</option>
-      </select>
-
-      <label for="dismissedBatterName">Batter</label>
-      <select id="dismissedBatterName" required style="padding:10px"></select>
-
-      <div id="catcherGroup" style="display:none">
-        <label for="catcherName">Catch Taken By</label>
-        <select id="catcherName" style="width:100%;padding:10px"></select>
-      </div>
-
-      <div id="runOutGroup" style="display:none">
-        <label for="runOutFielder">Run Out By</label>
-        <select id="runOutFielder" style="width:100%;padding:10px"></select>
-        <label for="runOutAssist">Assist By (optional)</label>
-        <select id="runOutAssist" style="width:100%;padding:10px"></select>
-      </div>
-
-      <div id="keeperGroup" style="display:none">
-        <label for="keeperName">Wicketkeeper</label>
-        <select id="keeperName" style="width:100%;padding:10px"></select>
-      </div>
-
-      <div id="otherDetailsGroup" style="display:none">
-        <label for="otherDismissalDetails">Additional Details</label>
-        <input id="otherDismissalDetails" placeholder="Optional details" style="padding:10px">
-      </div>
-
-      <label for="dismissalBowler">Bowler</label>
-      <select id="dismissalBowler" required style="padding:10px"></select>
-
-      <label for="wicketDeliveryType">Delivery Type</label>
-      <select id="wicketDeliveryType" style="padding:10px">
-        <option value="legal">Legal delivery</option>
-        <option value="wide">Wide delivery</option>
-        <option value="noBall">No-ball delivery</option>
-      </select>
-
-      <div id="wicketExtraRunsGroup" style="display:none">
-        <label for="wicketExtraRuns">Additional runs</label>
-        <input id="wicketExtraRuns" type="number" min="0" max="6" value="0" style="padding:10px">
-      </div>
-
-      <p id="dismissalCreditNote" style="font-size:13px;color:#475569;margin:0"></p>
-
-      <div style="display:flex;gap:10px">
-        <button type="button" id="cancelDismissal" style="flex:1;padding:11px">Cancel</button>
-        <button type="submit" style="flex:1;padding:11px;background:#15803d;color:white;border:0;border-radius:7px;font-weight:bold">Save Wicket</button>
-      </div>
-    </form>`;
-
-  document.body.appendChild(modal);
-  return modal;
-}
-
-function fillNamedSelect(id, names, placeholder, selected = "") {
-  const select = $(id);
-  if (!select) return;
-
-  select.replaceChildren();
-
-  const first = document.createElement("option");
-  first.value = "";
-  first.textContent = placeholder;
-  select.appendChild(first);
-
-  names.forEach(name => {
-    const option = document.createElement("option");
-    option.value = name;
-    option.textContent = name;
-    select.appendChild(option);
+function addBallLog(entry) {
+  scoreState.ballLog.push({
+    ...entry,
+    over: Math.floor(scoreState.balls / 6),
+    ball: (scoreState.balls % 6) + 1,
+    timestamp: new Date().toISOString()
   });
+}
 
-  if (names.includes(selected)) {
-    select.value = selected;
+function completeOverIfNeeded() {
+  if (scoreState.balls > 0 && scoreState.balls % 6 === 0) {
+    scoreState.currentOverRuns = [];
+    rotateStrike();
   }
 }
 
-function updateDismissalFields() {
-  const type = $("dismissalType").value;
-  const delivery = $("wicketDeliveryType").value;
-
-  $("catcherGroup").style.display =
-    type === "Caught" ? "block" : "none";
-
-  $("runOutGroup").style.display =
-    type === "Run Out" ? "block" : "none";
-
-  $("keeperGroup").style.display =
-    type === "Stumped" ? "block" : "none";
-
-  $("otherDetailsGroup").style.display = [
-    "Retired Hurt",
-    "Retired Out",
-    "Obstructing the Field",
-    "Timed Out",
-    "Hit the Ball Twice"
-  ].includes(type) ? "block" : "none";
-
-  $("catcherName").required = type === "Caught";
-  $("runOutFielder").required = type === "Run Out";
-  $("keeperName").required = type === "Stumped";
-
-  $("wicketExtraRunsGroup").style.display =
-    delivery === "legal" ? "none" : "block";
-
-  if (type === "Caught and Bowled") {
-    $("dismissalCreditNote").textContent =
-      "Bowler is also the catcher and receives wicket credit.";
-  } else if (BOWLER_CREDIT_DISMISSALS.has(type)) {
-    $("dismissalCreditNote").textContent =
-      "Bowler receives credit for this dismissal.";
-  } else {
-    $("dismissalCreditNote").textContent =
-      "Bowler does not receive credit for this dismissal.";
+function checkInningsLimit() {
+  if (scoreState.wickets >= 10 || scoreState.balls >= maxBalls()) {
+    scoreState.status = "COMPLETED";
+    showMessage("Innings completed. Confirm or start the next innings.", "success");
   }
 }
 
-function openDismissalForm() {
-  if (!canScore()) return;
+function refreshUI() {
+  setText("#totalRuns", scoreState.runs);
+  setText("#runs", scoreState.runs);
+  setText("#totalWickets", scoreState.wickets);
+  setText("#wickets", scoreState.wickets);
+  setText("#overs", oversText(scoreState.balls));
+  setText("#currentOvers", oversText(scoreState.balls));
+  setText("#currentBall", scoreState.balls % 6);
+  setText("#inningsNumber", scoreState.innings);
+  setText("#innings", scoreState.innings);
+  setText("#battingTeamName", getTeamName(scoreState.battingTeam));
+  setText("#currentOverRuns", scoreState.currentOverRuns.join(" "));
+  setText("#totalFours", scoreState.totalFours);
+  setText("#totalSixes", scoreState.totalSixes);
 
-  createDismissalForm();
+  setText("#strikerName", scoreState.striker.name || "Select striker");
+  setText("#strikerRuns", scoreState.striker.runs);
+  setText("#strikerBalls", scoreState.striker.balls);
+  setText("#strikerSR", strikeRate(scoreState.striker));
 
-  $("dismissalType").value = "Caught";
-  $("dismissedBatter").value = "striker";
-  $("wicketDeliveryType").value = "legal";
-  $("wicketExtraRuns").value = "0";
-  $("otherDismissalDetails").value = "";
+  setText("#nonStrikerName", scoreState.nonStriker.name || "Select non-striker");
+  setText("#nonStrikerRuns", scoreState.nonStriker.runs);
+  setText("#nonStrikerBalls", scoreState.nonStriker.balls);
+  setText("#nonStrikerSR", strikeRate(scoreState.nonStriker));
 
-  fillNamedSelect(
-    "dismissedBatterName",
-    [scoreState.striker.name, scoreState.nonStriker.name].filter(Boolean),
-    "Select dismissed batter",
-    scoreState.striker.name
+  setText("#bowlerName", scoreState.bowler.name || "Select bowler");
+  setText("#bowlerRuns", scoreState.bowler.runs);
+  setText("#bowlerBalls", scoreState.bowler.balls);
+  setText("#bowlerOvers", oversText(scoreState.bowler.balls));
+  setText("#bowlerWickets", scoreState.bowler.wickets);
+  setText("#bowlerEconomy", economy(scoreState.bowler));
+
+  setText("#wides", scoreState.extras.wides);
+  setText("#noBalls", scoreState.extras.noBalls);
+  setText("#byes", scoreState.extras.byes);
+  setText("#legByes", scoreState.extras.legByes);
+  setText("#totalExtras", scoreState.extras.total);
+
+  setText("#matchStatus", currentMatch?.status || "SCHEDULED");
+  setText("#matchResult", currentMatch?.result || "Match in progress");
+
+  refreshPlayerDropdowns();
+  renderScorecardTables();
+}
+
+function renderScorecardTables() {
+  renderTable(
+    "#battingTable tbody",
+    Object.values(scoreState.battingStats),
+    ["name", "runs", "balls", "fours", "sixes"],
+    ["Player", "Runs", "Balls", "4s", "6s"]
   );
 
-  const fielders = [...new Set([...team1Players, ...team2Players])];
-
-  fillNamedSelect("catcherName", fielders, "Select catcher");
-  fillNamedSelect("runOutFielder", fielders, "Select fielder");
-  fillNamedSelect("runOutAssist", fielders, "Select assist (optional)");
-  fillNamedSelect("keeperName", fielders, "Select wicketkeeper");
-
-  fillNamedSelect(
-    "dismissalBowler",
-    bowlingPlayers(),
-    "Select bowler",
-    scoreState.bowler.name
+  renderTable(
+    "#bowlingTable tbody",
+    Object.values(scoreState.bowlingStats),
+    ["name", "overs", "runs", "wickets", "economy"],
+    ["Bowler", "Overs", "Runs", "Wickets", "Economy"],
+    true
   );
-
-  $("dismissalType").onchange = updateDismissalFields;
-  $("wicketDeliveryType").onchange = updateDismissalFields;
-
-  $("dismissedBatter").onchange = () => {
-    const key = $("dismissedBatter").value;
-    $("dismissedBatterName").value = scoreState[key]?.name || "";
-  };
-
-  $("dismissalBowler").onchange = () => {
-    if ($("dismissalType").value === "Caught and Bowled") {
-      $("catcherName").value = $("dismissalBowler").value;
-    }
-  };
-
-  $("cancelDismissal").onclick = () => {
-    $("dismissalModal").style.display = "none";
-  };
-
-  updateDismissalFields();
-  $("dismissalModal").style.display = "flex";
-
-  $("dismissalForm").onsubmit = async event => {
-    event.preventDefault();
-
-    const type = $("dismissalType").value;
-    const batterKey = $("dismissedBatter").value;
-    const batterName = $("dismissedBatterName").value;
-    const bowlerName = $("dismissalBowler").value;
-    const deliveryType = $("wicketDeliveryType").value;
-
-    const extraRuns = Math.max(
-      0,
-      Math.min(6, Math.floor(num($("wicketExtraRuns").value)))
-    );
-
-    if (!batterName || !bowlerName) {
-      showMessage("Batter और bowler चुनें।");
-      return;
-    }
-
-    if (type === "Caught" && !$("catcherName").value) {
-      showMessage("Catcher चुनें।");
-      return;
-    }
-
-    if (type === "Run Out" && !$("runOutFielder").value) {
-      showMessage("Run-out fielder चुनें।");
-      return;
-    }
-
-    if (type === "Stumped" && !$("keeperName").value) {
-      showMessage("Wicketkeeper चुनें।");
-      return;
-    }
-
-    const details = {
-      type,
-      batterKey,
-      batterName,
-      bowler: bowlerName,
-      catcher: type === "Caught and Bowled"
-        ? bowlerName
-        : $("catcherName").value,
-      runOutFielder: $("runOutFielder").value,
-      runOutAssist: $("runOutAssist").value,
-      wicketkeeper: $("keeperName").value,
-      otherDetails: $("otherDismissalDetails").value.trim(),
-      bowlerCredited: BOWLER_CREDIT_DISMISSALS.has(type),
-      deliveryType,
-      extraRuns,
-      innings: scoreState.innings,
-      runsAtDismissal: scoreState.runs,
-      timestamp: new Date().toISOString()
-    };
-
-    $("dismissalModal").style.display = "none";
-    await recordDismissal(details);
-  };
 }
 
-/* ---------------- Record wicket ---------------- */
+function renderTable(selector, rows, fields, headers, bowling = false) {
+  const body = $(selector);
+  if (!body) return;
 
-async function recordDismissal(details) {
-  if (!canScore()) return;
+  body.replaceChildren();
 
-  const batter = scoreState[details.batterKey];
+  rows.forEach(row => {
+    const tr = document.createElement("tr");
 
-  if (!batter) {
-    showMessage("Dismissed batter नहीं मिला।");
-    return;
-  }
+    fields.forEach(field => {
+      const td = document.createElement("td");
 
-  saveHistory();
+      let value = row[field] ?? 0;
+      if (field === "overs") value = oversText(row.balls);
+      if (field === "economy") value = economy(row);
 
-  batter.name = details.batterName;
-  batter.out = true;
+      td.textContent = String(value);
+      tr.appendChild(td);
+    });
 
-  scoreState.wickets++;
-  scoreState.bowler.name = details.bowler;
-
-  if (details.deliveryType === "wide") {
-    const runs = 1 + details.extraRuns;
-
-    scoreState.runs += runs;
-    scoreState.extras.wides += runs;
-    scoreState.extras.total += runs;
-    scoreState.bowler.runs += runs;
-
-    recordBallDisplay(
-      details.extraRuns ? `Wd+${details.extraRuns}` : "Wd"
-    );
-  } else if (details.deliveryType === "noBall") {
-    const runs = 1 + details.extraRuns;
-
-    scoreState.runs += runs;
-    scoreState.extras.noBalls++;
-    scoreState.extras.total++;
-    scoreState.bowler.runs += runs;
-
-    recordBallDisplay(
-      details.extraRuns ? `Nb+${details.extraRuns}` : "Nb"
-    );
-  } else {
-    scoreState.balls++;
-    scoreState.bowler.balls++;
-
-    recordBallDisplay("W");
-  }
-
-  if (details.bowlerCredited) {
-    scoreState.bowler.wickets++;
-  }
-
-  details.over = oversText(scoreState.balls);
-  scoreState.dismissals.push(details);
-  scoreState[details.batterKey] = createBatter("New Batter");
-
-  if (scoreState.wickets >= 10) {
-    scoreState.status = "Innings Completed";
-  }
-
-  finishOverIfNeeded();
-  renderScorecard();
-
-  try {
-    await autoSave();
-
-    showMessage(
-      `${details.batterName} out: ${details.type}. Score saved.`
-    );
-  } catch (error) {
-    console.error(error);
-    showMessage("Wicket दर्ज हुआ, लेकिन Firebase save failed हुआ।");
-  }
+    body.appendChild(tr);
+  });
 }
-
-/* ---------------- Swap strike ---------------- */
-
-async function swapBatters() {
-  if (!canScore()) return;
-
-  saveHistory();
-  swapBattersInternal();
-  renderScorecard();
-  saveInBackground();
-}
-
-/* ---------------- Save payload ---------------- */
 
 function makeInningsSnapshot() {
   return {
-    innings: scoreState.innings,
-    battingTeam: scoreState.battingTeam,
-    battingTeamName: teamName(scoreState.battingTeam),
-    runs: scoreState.runs,
-    wickets: scoreState.wickets,
-    balls: scoreState.balls,
+    ...clone(scoreState),
     overs: oversText(scoreState.balls),
-    striker: clone(scoreState.striker),
-    nonStriker: clone(scoreState.nonStriker),
-    bowler: clone(scoreState.bowler),
-    extras: clone(scoreState.extras),
-    totalFours: scoreState.totalFours,
-    totalSixes: scoreState.totalSixes,
-    currentOverRuns: clone(scoreState.currentOverRuns),
-    dismissals: clone(scoreState.dismissals || []),
-    status: scoreState.status
+    totalRuns: scoreState.runs,
+    totalWickets: scoreState.wickets,
+    legalBalls: scoreState.balls
   };
 }
 
-function makeSavePayload() {
-  const snapshot = makeInningsSnapshot();
+function calculateSideScores() {
+  const first = inningsOne || currentMatch?.innings1 || null;
+  const second = inningsTwo || currentMatch?.innings2 || null;
 
-  const payload = {
-    scorecard: snapshot,
+  const scoreFor = (team) => {
+    const totals = [];
+
+    if (first?.battingTeam === team) totals.push(num(first.runs));
+    if (second?.battingTeam === team) totals.push(num(second.runs));
+
+    if (scoreState.battingTeam === team) {
+      if (!second || scoreState.innings === 1) {
+        if (!first) return scoreState.runs;
+      } else {
+        return scoreState.runs;
+      }
+    }
+
+    return totals.length ? totals.reduce((a, b) => a + b, 0) : 0;
+  };
+
+  return {
+    scoreA: scoreFor("A"),
+    scoreB: scoreFor("B")
+  };
+}
+
+function getResult() {
+  if (!inningsOne || !inningsTwo) {
+    return {
+      winner: "",
+      result: "First innings completed; second innings pending."
+    };
+  }
+
+  const firstRuns = num(inningsOne.runs);
+  const secondRuns = num(inningsTwo.runs);
+  const chasingTeam = inningsTwo.battingTeam;
+  const defendingTeam = inningsOne.battingTeam;
+
+  if (secondRuns > firstRuns) {
+    const wicketsLeft = Math.max(0, 10 - num(inningsTwo.wickets));
+    return {
+      winner: getTeamName(chasingTeam),
+      result: `${getTeamName(chasingTeam)} won by ${wicketsLeft} wicket${wicketsLeft === 1 ? "" : "s"}.`
+    };
+  }
+
+  if (secondRuns < firstRuns) {
+    const margin = firstRuns - secondRuns;
+    return {
+      winner: getTeamName(defendingTeam),
+      result: `${getTeamName(defendingTeam)} won by ${margin} run${margin === 1 ? "" : "s"}.`
+    };
+  }
+
+  return {
+    winner: "",
+    result: "Match tied."
+  };
+}
+
+function makeSavePayload(status = "LIVE") {
+  const sides = calculateSideScores();
+
+  return {
+    status,
+    scorecard: makeInningsSnapshot(),
     innings: scoreState.innings,
+    currentInnings: scoreState.innings,
+    currentOver: Math.floor(scoreState.balls / 6),
+    currentBall: scoreState.balls % 6,
+    totalRuns: scoreState.runs,
+    totalWickets: scoreState.wickets,
     currentRuns: scoreState.runs,
     currentWickets: scoreState.wickets,
     currentOvers: oversText(scoreState.balls),
-    currentBall: scoreState.balls,
-    totalRuns: scoreState.runs,
-    totalWickets: scoreState.wickets,
-    status: scoreState.status,
+    scoreA: sides.scoreA,
+    scoreB: sides.scoreB,
+    updatedAt: serverTimestamp()
+  };
+}
+
+async function persistScore(status = "LIVE", extra = {}) {
+  if (!matchRef) return;
+
+  const payload = {
+    ...makeSavePayload(status),
+    ...extra,
     updatedAt: serverTimestamp()
   };
 
-  if (scoreState.battingTeam === "A") {
-    payload.scoreA = `${scoreState.runs}/${scoreState.wickets}`;
-  } else {
-    payload.scoreB = `${scoreState.runs}/${scoreState.wickets}`;
-  }
+  await updateDoc(matchRef, payload);
 
-  return payload;
+  currentMatch = {
+    ...currentMatch,
+    ...extra,
+    ...payload,
+    status
+  };
 }
 
-/* ---------------- Firebase autosave ---------------- */
-
 async function autoSave() {
-  if (!currentMatchRef) {
-    throw new Error("Match reference is not ready.");
-  }
+  if (!matchRef || !currentMatch) return;
 
   if (saving) {
     saveAgain = true;
@@ -1446,429 +836,833 @@ async function autoSave() {
   saving = true;
 
   try {
-    do {
-      saveAgain = false;
+    const status = isCompleted()
+      ? "COMPLETED"
+      : scoreState.status === "COMPLETED"
+        ? "LIVE"
+        : "LIVE";
 
-      const payload = makeSavePayload();
-      const snapshot = payload.scorecard;
-
-      await updateDoc(currentMatchRef, payload);
-
-      currentMatch = {
-        ...currentMatch,
-        ...payload,
-        scorecard: snapshot
-      };
-    } while (saveAgain);
+    await persistScore(status);
+    showMessage("Score saved successfully.", "success");
+  } catch (error) {
+    console.error("Score autosave failed:", error);
+    showMessage(
+      "Autosave failed. Check your internet/Firebase permissions and press Save.",
+      "error"
+    );
   } finally {
     saving = false;
+
+    if (saveAgain) {
+      saveAgain = false;
+      autoSave();
+    }
   }
 }
 
-function saveInBackground() {
-  // Queue saves so rapid button clicks don't overlap Firestore writes.
-  saveQueue = saveQueue
-    .then(() => autoSave())
-    .catch(error => {
-      console.error("Score save failed:", error);
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(autoSave, 350);
+}
 
-      showMessage(
-        "Score save नहीं हुआ। Internet और Firebase rules जाँचें।"
-      );
+function updatePlayerOnDismissal(name, type) {
+  const batter =
+    scoreState.striker.name === name
+      ? scoreState.striker
+      : scoreState.nonStriker.name === name
+        ? scoreState.nonStriker
+        : null;
+
+  if (!batter) return;
+
+  batter.out = true;
+  batter.dismissal = type;
+
+  ensurePlayerStats(name);
+  scoreState.battingStats[name].out = true;
+  scoreState.battingStats[name].dismissal = type;
+}
+
+function recordWicketCredit(type) {
+  if (!BOWLER_WICKET_TYPES.has(type)) return;
+
+  scoreState.bowler.wickets += 1;
+
+  const bowlerName = scoreState.bowler.name;
+  if (bowlerName) {
+    ensureBowlerStats(bowlerName);
+    scoreState.bowlingStats[bowlerName].wickets += 1;
+  }
+}
+
+function showDismissalDialog() {
+  const dialog = $("#dismissalDialog");
+
+  if (dialog) {
+    dialog.style.display = "block";
+    dialog.setAttribute("aria-hidden", "false");
+    return;
+  }
+
+  const types = [
+    "Bowled",
+    "Caught",
+    "LBW",
+    "Run Out",
+    "Stumped",
+    "Hit Wicket",
+    "Caught and Bowled",
+    "Retired Hurt",
+    "Retired Out",
+    "Obstructing the Field",
+    "Timed Out",
+    "Hit the Ball Twice"
+  ];
+
+  const wrapper = document.createElement("div");
+  wrapper.id = "dismissalDialog";
+  wrapper.style.cssText =
+    "position:fixed;inset:0;background:#0009;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;";
+
+  const panel = document.createElement("div");
+  panel.style.cssText =
+    "background:white;color:#111;padding:20px;border-radius:12px;width:min(500px,100%);max-height:90vh;overflow:auto;";
+
+  const title = document.createElement("h2");
+  title.textContent = "Record Dismissal";
+  panel.appendChild(title);
+
+  const typeSelect = document.createElement("select");
+  typeSelect.id = "dismissalType";
+  typeSelect.style.cssText = "width:100%;padding:10px;margin:8px 0;";
+
+  types.forEach(type => {
+    const option = document.createElement("option");
+    option.value = type;
+    option.textContent = type;
+    typeSelect.appendChild(option);
+  });
+
+  panel.appendChild(typeSelect);
+
+  const batterSelect = document.createElement("select");
+  batterSelect.id = "dismissedBatter";
+  batterSelect.style.cssText = "width:100%;padding:10px;margin:8px 0;";
+
+  [scoreState.striker.name, scoreState.nonStriker.name]
+    .filter(Boolean)
+    .forEach(name => {
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = name;
+      batterSelect.appendChild(option);
     });
 
-  return saveQueue;
+  panel.appendChild(batterSelect);
+
+  const deliverySelect = document.createElement("select");
+  deliverySelect.id = "dismissalDeliveryType";
+  deliverySelect.style.cssText = "width:100%;padding:10px;margin:8px 0;";
+
+  [
+    ["legal", "Legal delivery"],
+    ["wide", "Wide"],
+    ["noBall", "No-ball"]
+  ].forEach(([value, label]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    deliverySelect.appendChild(option);
+  });
+
+  panel.appendChild(deliverySelect);
+
+  const extraLabel = document.createElement("label");
+  extraLabel.textContent = "Completed runs on this delivery (excluding penalty):";
+  extraLabel.style.display = "block";
+  panel.appendChild(extraLabel);
+
+  const extraInput = document.createElement("input");
+  extraInput.id = "dismissalRuns";
+  extraInput.type = "number";
+  extraInput.min = "0";
+  extraInput.max = "6";
+  extraInput.value = "0";
+  extraInput.style.cssText = "width:100%;padding:10px;margin:8px 0;";
+  panel.appendChild(extraInput);
+
+  const help = document.createElement("p");
+  help.textContent =
+    "For caught dismissals, select catcher if your existing HTML provides #catcherSelect. Verify run-out ends and completed runs with the umpire.";
+  panel.appendChild(help);
+
+  const actions = document.createElement("div");
+  actions.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;";
+
+  const confirm = document.createElement("button");
+  confirm.type = "button";
+  confirm.textContent = "Confirm Wicket";
+  confirm.addEventListener("click", () => {
+    const type = typeSelect.value;
+    const batter = batterSelect.value;
+    const delivery = deliverySelect.value;
+    const runs = Math.max(0, Math.min(6, num(extraInput.value)));
+
+    wrapper.remove();
+    recordDismissal(type, batter, {
+      delivery,
+      completedRuns: runs
+    });
+  });
+
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.textContent = "Cancel";
+  cancel.addEventListener("click", () => wrapper.remove());
+
+  actions.append(confirm, cancel);
+  panel.appendChild(actions);
+  wrapper.appendChild(panel);
+  document.body.appendChild(wrapper);
 }
 
-async function manualSave() {
-  try {
-    await saveQueue;
-    await autoSave();
-    showMessage("Score Firebase में save हो गया।");
-  } catch (error) {
-    console.error(error);
-    showMessage("Save failed। Firebase connection जाँचें।");
-  }
-}
+function recordDismissal(type, dismissedName, options = {}) {
+  if (!canScore()) return;
 
-/* ---------------- Innings management ---------------- */
+  const delivery = options.delivery || "legal";
+  const completedRuns = Math.max(0, num(options.completedRuns));
 
-async function startSecondInnings() {
-  if (!currentMatchRef || !matchLoaded) return;
-
-  if (isCompleted()) {
-    showMessage("Match पहले ही Completed है।");
+  if (!dismissedName) {
+    showMessage("Select the dismissed batter.", "warning");
     return;
   }
 
-  if (scoreState.innings !== 1) {
-    showMessage("Second innings पहले से शुरू है।");
+  if (delivery === "noBall" && !NO_BALL_ALLOWED_DISMISSALS.has(type)) {
+    showMessage(
+      `On a no-ball, ${type} is not a valid dismissal in the standard Laws. Choose a permitted dismissal.`,
+      "warning"
+    );
     return;
   }
 
-  if (scoreState.status === "Scheduled") {
-    showMessage("पहले मैच में scoring शुरू करें।");
+  if (delivery === "wide" && !WIDE_ALLOWED_DISMISSALS.has(type)) {
+    showMessage(
+      `On a wide, ${type} is not a valid dismissal in the standard Laws. Choose a permitted dismissal.`,
+      "warning"
+    );
     return;
   }
 
   if (
-    scoreState.balls === 0 &&
-    scoreState.runs === 0 &&
-    scoreState.wickets === 0 &&
-    !confirm("पहली innings खाली है। क्या फिर भी आगे बढ़ना है?")
+    type === "Retired Hurt" ||
+    type === "Retired Out" ||
+    type === "Timed Out"
   ) {
-    return;
-  }
-
-  const firstInnings = makeInningsSnapshot();
-  firstInnings.status = "Innings Completed";
-
-  const firstSide = scoreState.battingTeam;
-  const secondSide = firstSide === "A" ? "B" : "A";
-
-  const firstScore = `${firstInnings.runs}/${firstInnings.wickets}`;
-
-  // Keep the first innings snapshot and begin the second innings.
-  scoreState = createInitialState(2, secondSide);
-  history = [];
-
-  const secondSnapshot = makeInningsSnapshot();
-
-  try {
-    await updateDoc(currentMatchRef, {
-      innings1: firstInnings,
-      innings: 2,
-      scorecard: secondSnapshot,
-      currentRuns: 0,
-      currentWickets: 0,
-      currentOvers: "0.0",
-      currentBall: 0,
-      status: "Live",
-      scoreA: firstSide === "A"
-        ? firstScore
-        : (currentMatch.scoreA || "0/0"),
-      scoreB: firstSide === "B"
-        ? firstScore
-        : (currentMatch.scoreB || "0/0"),
-      updatedAt: serverTimestamp()
-    });
-
-    currentMatch.innings1 = firstInnings;
-    currentMatch.innings2 = null;
-    currentMatch.innings = 2;
-    currentMatch.status = "Live";
-    currentMatch.scorecard = secondSnapshot;
-    currentMatch.scoreA = firstSide === "A"
-      ? firstScore
-      : (currentMatch.scoreA || "0/0");
-    currentMatch.scoreB = firstSide === "B"
-      ? firstScore
-      : (currentMatch.scoreB || "0/0");
-
-    renderScorecard();
-    showMessage("Second innings शुरू हो गई।");
-  } catch (error) {
-    console.error(error);
-    showMessage("Second innings save नहीं हुई।");
-  }
-}
-
-/* ---------------- Winner and result ---------------- */
-
-function calculateWinner() {
-  const first = currentMatch.innings1;
-
-  if (!first || !Number.isFinite(Number(first.runs))) {
-    return {
-      winner: "",
-      result: "First innings score उपलब्ध नहीं है।"
-    };
-  }
-
-  const firstRuns = num(first.runs);
-  const secondRuns = num(scoreState.runs);
-  const secondWickets = num(scoreState.wickets);
-  const secondSide = scoreState.battingTeam;
-  const firstSide = first.battingTeam ||
-    (secondSide === "A" ? "B" : "A");
-
-  if (secondRuns === firstRuns) {
-    return {
-      winner: "",
-      result: "Match Tied"
-    };
-  }
-
-  if (secondRuns > firstRuns) {
-    const wicketsRemaining = Math.max(0, 10 - secondWickets);
-
-    return {
-      winner: teamName(secondSide),
-      result: `${teamName(secondSide)} won by ${wicketsRemaining} wickets`
-    };
-  }
-
-  return {
-    winner: teamName(firstSide),
-    result: `${teamName(firstSide)} won by ${firstRuns - secondRuns} runs`
-  };
-}
-
-async function endMatch() {
-  if (!currentMatchRef || !matchLoaded) return;
-
-  if (isCompleted()) {
-    showMessage("यह मैच पहले से Completed है।");
-    return;
-  }
-
-  if (scoreState.status === "Scheduled") {
-    showMessage("Scheduled match को पहले शुरू करें।");
-    return;
-  }
-
-  // End first innings only.
-  if (scoreState.innings === 1) {
-    if (!confirm("First innings समाप्त करें?")) return;
-
-    scoreState.status = "Innings Completed";
-
-    const firstInnings = makeInningsSnapshot();
-    firstInnings.status = "Innings Completed";
-
-    try {
-      await updateDoc(currentMatchRef, {
-        innings1: firstInnings,
-        scorecard: firstInnings,
-        innings: 1,
-        status: "Innings Completed",
-        scoreA: firstInnings.battingTeam === "A"
-          ? `${firstInnings.runs}/${firstInnings.wickets}`
-          : (currentMatch.scoreA || "0/0"),
-        scoreB: firstInnings.battingTeam === "B"
-          ? `${firstInnings.runs}/${firstInnings.wickets}`
-          : (currentMatch.scoreB || "0/0"),
-        updatedAt: serverTimestamp()
-      });
-
-      currentMatch.innings1 = firstInnings;
-      currentMatch.scorecard = firstInnings;
-      currentMatch.status = "Innings Completed";
-
-      renderScorecard();
-
+    if (type === "Retired Hurt") {
       showMessage(
-        "First innings समाप्त। अब Start Second Innings दबाएँ।"
+        "Retired Hurt is not a wicket. This scorer requires the umpire to manage the batter's return/replacement manually.",
+        "warning"
       );
-    } catch (error) {
-      console.error(error);
-      showMessage("First innings save नहीं हुई।");
-    }
-
-    return;
-  }
-
-  if (!currentMatch.innings1) {
-    showMessage(
-      "First innings record नहीं मिला। Result सेव करने से पहले उसे जाँचें।"
-    );
-    return;
-  }
-
-  if (!confirm("Match समाप्त करके result save करें?")) return;
-
-  const secondInnings = makeInningsSnapshot();
-  secondInnings.status = "Completed";
-
-  const previousStatus = scoreState.status;
-  scoreState.status = "Completed";
-
-  const result = calculateWinner();
-
-  const firstInnings = {
-    ...currentMatch.innings1,
-    status: "Innings Completed"
-  };
-
-  const firstSide = firstInnings.battingTeam ||
-    (scoreState.battingTeam === "A" ? "B" : "A");
-
-  const secondSide = scoreState.battingTeam;
-
-  const firstScore = `${num(firstInnings.runs)}/${num(firstInnings.wickets)}`;
-  const secondScore = `${num(secondInnings.runs)}/${num(secondInnings.wickets)}`;
-
-  const scoreA = firstSide === "A" ? firstScore : secondScore;
-  const scoreB = firstSide === "B" ? firstScore : secondScore;
-
-  try {
-    await updateDoc(currentMatchRef, {
-      innings1: firstInnings,
-      innings2: secondInnings,
-      scorecard: secondInnings,
-      innings: 2,
-      currentRuns: secondInnings.runs,
-      currentWickets: secondInnings.wickets,
-      currentOvers: secondInnings.overs,
-      currentBall: secondInnings.balls,
-      status: "Completed",
-      result: result.result,
-      winner: result.winner,
-      scoreA,
-      scoreB,
-      updatedAt: serverTimestamp()
-    });
-
-    currentMatch.innings1 = firstInnings;
-    currentMatch.innings2 = secondInnings;
-    currentMatch.scorecard = secondInnings;
-    currentMatch.innings = 2;
-    currentMatch.status = "Completed";
-    currentMatch.result = result.result;
-    currentMatch.winner = result.winner;
-    currentMatch.scoreA = scoreA;
-    currentMatch.scoreB = scoreB;
-
-    scoreState.status = "Completed";
-    renderScorecard();
-
-    showMessage(`✅ Match Completed: ${result.result}`);
-  } catch (error) {
-    scoreState.status = previousStatus;
-
-    console.error(error);
-    renderScorecard();
-
-    showMessage(
-      "Match result save नहीं हुआ। Internet और Firebase rules जाँचें।"
-    );
-  }
-}
-
-/* ---------------- Next match ---------------- */
-
-async function openNextMatch() {
-  if (!tournamentId) return;
-
-  try {
-    const snap = await getDocs(
-      collection(db, "tournaments", tournamentId, "matches")
-    );
-
-    const matches = [...snap.docs].sort((a, b) => {
-      return num(a.data()?.matchNumber) - num(b.data()?.matchNumber);
-    });
-
-    const index = matches.findIndex(item => item.id === matchId);
-
-    if (index < 0 || index + 1 >= matches.length) {
-      showMessage("यह आखिरी match है या कोई अगला match नहीं है।");
       return;
     }
 
-    const next = matches[index + 1];
+    if (type === "Retired Out" || type === "Timed Out") {
+      // These are dismissals, but special replacement/ball rules may apply.
+      // Confirm the official decision with the umpire before proceeding.
+    }
+  }
 
-    location.href =
-      `./scorecard.html?id=${encodeURIComponent(tournamentId)}` +
-      `&matchId=${encodeURIComponent(next.id)}`;
+  snapshotForUndo();
+
+  const dismissed =
+    scoreState.striker.name === dismissedName
+      ? scoreState.striker
+      : scoreState.nonStriker;
+
+  const otherBatter =
+    scoreState.striker.name === dismissedName
+      ? scoreState.nonStriker
+      : scoreState.striker;
+
+  if (delivery === "wide") {
+    const penalty = 1;
+    const totalWideRuns = penalty + completedRuns;
+
+    scoreState.runs += totalWideRuns;
+    scoreState.extras.wides += totalWideRuns;
+    scoreState.extras.total += totalWideRuns;
+    scoreState.bowler.runs += totalWideRuns;
+
+    if (scoreState.bowler.name) {
+      ensureBowlerStats(scoreState.bowler.name);
+      scoreState.bowlingStats[scoreState.bowler.name].runs += totalWideRuns;
+      scoreState.bowler.wides += totalWideRuns;
+      scoreState.bowlingStats[scoreState.bowler.name].wides += totalWideRuns;
+    }
+  } else if (delivery === "noBall") {
+    const penalty = 1;
+    const totalNoBallRuns = penalty + completedRuns;
+
+    scoreState.runs += totalNoBallRuns;
+    scoreState.extras.noBalls += 1;
+    scoreState.extras.total += 1;
+    scoreState.bowler.runs += totalNoBallRuns;
+
+    if (scoreState.bowler.name) {
+      ensureBowlerStats(scoreState.bowler.name);
+      scoreState.bowlingStats[scoreState.bowler.name].runs += totalNoBallRuns;
+      scoreState.bowler.noBalls += 1;
+      scoreState.bowlingStats[scoreState.bowler.name].noBalls += 1;
+    }
+  } else {
+    addBowlerLegalBall();
+  }
+
+  if (completedRuns % 2 === 1) rotateStrike();
+
+  // Retired Out and Timed Out are dismissals; bowler does not receive credit.
+  updatePlayerOnDismissal(dismissedName, type);
+
+  scoreState.wickets += 1;
+
+  recordWicketCredit(type);
+
+  scoreState.dismissals.push({
+    batter: dismissedName,
+    type,
+    bowler: scoreState.bowler.name,
+    runs: completedRuns,
+    delivery,
+    wicketNumber: scoreState.wickets,
+    over: oversText(scoreState.balls)
+  });
+
+  scoreState.fallOfWickets.push({
+    wicket: scoreState.wickets,
+    score: scoreState.runs,
+    batter: dismissedName,
+    overs: oversText(scoreState.balls)
+  });
+
+  const newBatter = findUnusedBatter([
+    dismissedName,
+    otherBatter.name
+  ]);
+
+  const replacement = createBatter(newBatter);
+
+  if (scoreState.striker.name === dismissedName) {
+    scoreState.striker = replacement;
+  } else if (scoreState.nonStriker.name === dismissedName) {
+    scoreState.nonStriker = replacement;
+  }
+
+  if (newBatter) ensurePlayerStats(newBatter);
+
+  addBallLog({
+    type: "wicket",
+    dismissal: type,
+    batter: dismissedName,
+    completedRuns,
+    delivery,
+    total: scoreState.runs
+  });
+
+  completeOverIfNeeded();
+  checkInningsLimit();
+  refreshUI();
+  scheduleSave();
+
+  showMessage(`${dismissedName} — ${type}`, "success");
+}
+
+function addRuns(runs) {
+  if (!canScore()) return;
+
+  const value = Math.max(0, Math.min(6, num(runs)));
+  snapshotForUndo();
+
+  addTeamRuns(value);
+  addBatterRuns(value);
+  addBatterBall(scoreState.striker);
+  addBowlerRuns(value);
+  addBowlerLegalBall();
+
+  scoreState.currentOverRuns.push(String(value));
+
+  if (value % 2 === 1) rotateStrike();
+
+  addBallLog({
+    type: "runs",
+    runs: value,
+    batter: scoreState.striker.name,
+    total: scoreState.runs
+  });
+
+  completeOverIfNeeded();
+  checkInningsLimit();
+  refreshUI();
+  scheduleSave();
+}
+
+function addExtra(type, amount = 1) {
+  if (!canScore()) return;
+
+  const value = Math.max(1, Math.min(6, num(amount)));
+  snapshotForUndo();
+
+  if (type === "wide") {
+    // A wide includes the one-run penalty. Additional completed runs
+    // should be entered via a dedicated wide-runs control if needed.
+    scoreState.runs += value;
+    scoreState.extras.wides += value;
+    scoreState.extras.total += value;
+
+    scoreState.bowler.runs += value;
+    scoreState.bowler.wides += value;
+
+    const name = scoreState.bowler.name;
+    if (name) {
+      ensureBowlerStats(name);
+      scoreState.bowlingStats[name].runs += value;
+      scoreState.bowlingStats[name].wides += value;
+    }
+
+    if ((value - 1) % 2 === 1) rotateStrike();
+
+    addBallLog({ type: "wide", runs: value, total: scoreState.runs });
+  } else if (type === "noBall") {
+    // Standard no-ball button records the one-run penalty only.
+    // Batter runs off a no-ball require a separate explicit scoring action.
+    scoreState.runs += 1;
+    scoreState.extras.noBalls += 1;
+    scoreState.extras.total += 1;
+
+    scoreState.bowler.runs += 1;
+    scoreState.bowler.noBalls += 1;
+
+    const name = scoreState.bowler.name;
+    if (name) {
+      ensureBowlerStats(name);
+      scoreState.bowlingStats[name].runs += 1;
+      scoreState.bowlingStats[name].noBalls += 1;
+    }
+
+    addBallLog({ type: "noBall", runs: 1, total: scoreState.runs });
+  } else if (type === "bye" || type === "legBye") {
+    scoreState.runs += value;
+
+    if (type === "bye") {
+      scoreState.extras.byes += value;
+    } else {
+      scoreState.extras.legByes += value;
+    }
+
+    scoreState.extras.total += value;
+    addBowlerLegalBall();
+
+    if (value % 2 === 1) rotateStrike();
+
+    addBallLog({
+      type,
+      runs: value,
+      total: scoreState.runs
+    });
+  } else {
+    showMessage("Unknown extra type.", "error");
+    return;
+  }
+
+  scoreState.currentOverRuns.push(type);
+  completeOverIfNeeded();
+  checkInningsLimit();
+  refreshUI();
+  scheduleSave();
+}
+
+function undoLastAction() {
+  if (!history.length) {
+    showMessage("No action available to undo.", "warning");
+    return;
+  }
+
+  const previous = history.pop();
+
+  scoreState = previous.scoreState;
+  inningsOne = previous.inningsOne;
+  inningsTwo = previous.inningsTwo;
+
+  if (previous.currentMatch) {
+    currentMatch.status = previous.currentMatch.status || currentMatch.status;
+    currentMatch.winner = previous.currentMatch.winner || "";
+    currentMatch.result = previous.currentMatch.result || "";
+  }
+
+  refreshUI();
+  scheduleSave();
+  showMessage("Last scoring action undone.", "success");
+}
+
+function swapStrike() {
+  if (!currentMatch || isCompleted()) return;
+
+  snapshotForUndo();
+  rotateStrike();
+  refreshUI();
+  scheduleSave();
+}
+
+async function startSecondInnings() {
+  if (!currentMatch || isCompleted()) return;
+
+  if (scoreState.innings !== 1) {
+    showMessage("Second innings has already started.", "warning");
+    return;
+  }
+
+  if (!inningsFinished()) {
+    const confirmed = confirm(
+      "First innings has not reached its over/wicket limit. End it and start the second innings?"
+    );
+
+    if (!confirmed) return;
+  }
+
+  snapshotForUndo();
+
+  scoreState.status = "COMPLETED";
+  inningsOne = makeInningsSnapshot();
+
+  const secondTeam = inningsOne.battingTeam === "A" ? "B" : "A";
+  inningsTwo = null;
+
+  scoreState = createInnings(2, secondTeam);
+
+  const battingNames = playerNames(teamPlayers[secondTeam]);
+  const bowlingNames = playerNames(
+    teamPlayers[secondTeam === "A" ? "B" : "A"]
+  );
+
+  scoreState.striker = createBatter(battingNames[0] || "");
+  scoreState.nonStriker = createBatter(battingNames[1] || "");
+  scoreState.bowler = createBowler(bowlingNames[0] || "");
+
+  inningsTwo = null;
+  history = [];
+
+  try {
+    await persistScore("LIVE", {
+      innings1: inningsOne,
+      innings2: null,
+      winner: "",
+      result: "Second innings in progress."
+    });
+
+    refreshUI();
+    showMessage("Second innings started.", "success");
   } catch (error) {
     console.error(error);
-    showMessage("Next match खोलने में समस्या हुई।");
+    showMessage("Could not save second innings. Check Firebase permissions.", "error");
   }
 }
 
-/* ---------------- Buttons and navigation ---------------- */
+async function endMatch() {
+  if (!currentMatch || isCompleted()) return;
+
+  if (scoreState.innings === 1) {
+    const confirmed = confirm(
+      "End the first innings? You can then start the second innings."
+    );
+
+    if (!confirmed) return;
+
+    snapshotForUndo();
+    scoreState.status = "COMPLETED";
+    inningsOne = makeInningsSnapshot();
+
+    try {
+      await persistScore("LIVE", {
+        innings1: inningsOne,
+        innings2: null,
+        winner: "",
+        result: "First innings completed."
+      });
+
+      refreshUI();
+      showMessage(
+        "First innings completed. Select Start Second Innings.",
+        "success"
+      );
+    } catch (error) {
+      console.error(error);
+      showMessage("Could not save innings. Please retry.", "error");
+    }
+
+    return;
+  }
+
+  const confirmed = confirm(
+    "Complete this match and publish the result?"
+  );
+
+  if (!confirmed) return;
+
+  snapshotForUndo();
+
+  scoreState.status = "COMPLETED";
+  inningsTwo = makeInningsSnapshot();
+
+  const resultData = getResult();
+  const sides = calculateSideScores();
+
+  try {
+    await persistScore("COMPLETED", {
+      innings1: inningsOne,
+      innings2: inningsTwo,
+      winner: resultData.winner,
+      result: resultData.result,
+      scoreA: sides.scoreA,
+      scoreB: sides.scoreB,
+      completedAt: serverTimestamp()
+    });
+
+    currentMatch.status = "COMPLETED";
+    currentMatch.winner = resultData.winner;
+    currentMatch.result = resultData.result;
+
+    refreshUI();
+    showMessage(resultData.result, "success");
+  } catch (error) {
+    console.error(error);
+    showMessage("Match result could not be saved. Please retry.", "error");
+  }
+}
+
+async function saveNow() {
+  try {
+    syncSelectedPlayers();
+    await autoSave();
+  } catch (error) {
+    console.error(error);
+    showMessage("Manual save failed.", "error");
+  }
+}
+
+async function loadTournamentAndMatch() {
+  if (!tournamentId || !matchId) {
+    showMessage(
+      "Tournament ID or Match ID missing. Open the scorecard from the schedule page.",
+      "error"
+    );
+    return;
+  }
+
+  try {
+    const tournamentRef = doc(db, "tournaments", tournamentId);
+    const matchDocumentRef = doc(
+      db,
+      "tournaments",
+      tournamentId,
+      "matches",
+      matchId
+    );
+
+    const [tournamentSnap, matchSnap] = await Promise.all([
+      getDoc(tournamentRef),
+      getDoc(matchDocumentRef)
+    ]);
+
+    if (!tournamentSnap.exists()) {
+      throw new Error("Tournament document not found.");
+    }
+
+    if (!matchSnap.exists()) {
+      throw new Error("Match document not found.");
+    }
+
+    tournament = {
+      id: tournamentSnap.id,
+      ...tournamentSnap.data()
+    };
+
+    currentMatch = {
+      id: matchSnap.id,
+      ...matchSnap.data()
+    };
+
+    matchRef = matchDocumentRef;
+
+    await loadTeamPlayers();
+
+    const storedStatus = normaliseStatus(currentMatch.status);
+
+    inningsOne = currentMatch.innings1
+      ? normaliseInnings(
+          currentMatch.innings1,
+          1,
+          currentMatch.innings1.battingTeam || "A"
+        )
+      : null;
+
+    inningsTwo = currentMatch.innings2
+      ? normaliseInnings(
+          currentMatch.innings2,
+          2,
+          currentMatch.innings2.battingTeam ||
+            (inningsOne?.battingTeam === "A" ? "B" : "A")
+        )
+      : null;
+
+    const savedScorecard = currentMatch.scorecard;
+
+    if (savedScorecard) {
+      scoreState = normaliseInnings(
+        savedScorecard,
+        num(savedScorecard.innings) || 1,
+        savedScorecard.battingTeam || "A"
+      );
+    } else if (inningsTwo) {
+      scoreState = normaliseInnings(inningsTwo, 2, inningsTwo.battingTeam);
+    } else if (inningsOne) {
+      scoreState = normaliseInnings(inningsOne, 1, inningsOne.battingTeam);
+    } else {
+      const battingTeam = currentMatch.firstBattingTeam || "A";
+      scoreState = createInnings(1, battingTeam);
+    }
+
+    // Keep terminal match status consistent with the saved innings.
+    if (storedStatus === "COMPLETED") {
+      currentMatch.status = "COMPLETED";
+    } else if (scoreState.status === "COMPLETED" && scoreState.innings === 1) {
+      currentMatch.status = "LIVE";
+    } else {
+      currentMatch.status = storedStatus;
+    }
+
+    refreshPlayerDropdowns();
+    refreshUI();
+
+    if (currentMatch.status === "COMPLETED") {
+      showMessage("Match completed. Scoring is locked.", "info");
+    } else {
+      showMessage("Scorecard loaded.", "success");
+    }
+
+    initialized = true;
+  } catch (error) {
+    console.error("Scorecard initialization failed:", error);
+    showMessage(
+      `Scorecard load failed: ${error.message || "Unknown error"}`,
+      "error"
+    );
+  }
+}
 
 function setupButtons() {
-  document.querySelectorAll(".run-btn").forEach(button => {
+  $$(".run-btn").forEach(button => {
     button.addEventListener("click", () => {
       addRuns(button.dataset.runs);
     });
   });
 
-  if ($("wideBtn")) {
-    $("wideBtn").addEventListener("click", () => addExtra("wide", 1));
-  }
+  $("#wideBtn")?.addEventListener("click", () => addExtra("wide", 1));
+  $("#noBallBtn")?.addEventListener("click", () => addExtra("noBall", 1));
+  $("#byeBtn")?.addEventListener("click", () => addExtra("bye", 1));
+  $("#legByeBtn")?.addEventListener("click", () => addExtra("legBye", 1));
 
-  if ($("noBallBtn")) {
-    $("noBallBtn").addEventListener("click", () => addExtra("noBall", 1));
-  }
+  $("#wicketBtn")?.addEventListener("click", showDismissalDialog);
+  $("#undoBtn")?.addEventListener("click", undoLastAction);
+  $("#swapBtn")?.addEventListener("click", swapStrike);
+  $("#saveBtn")?.addEventListener("click", saveNow);
+  $("#endMatchBtn")?.addEventListener("click", endMatch);
+  $("#startSecondInningsBtn")?.addEventListener(
+    "click",
+    startSecondInnings
+  );
 
-  if ($("byeBtn")) {
-    $("byeBtn").addEventListener("click", () => addExtra("bye", 1));
-  }
-
-  if ($("legByeBtn")) {
-    $("legByeBtn").addEventListener("click", () => addExtra("legBye", 1));
-  }
-
-  if ($("wicketBtn")) {
-    $("wicketBtn").addEventListener("click", openDismissalForm);
-  }
-
-  if ($("undoBtn")) {
-    $("undoBtn").addEventListener("click", undoLastBall);
-  }
-
-  if ($("swapBtn")) {
-    $("swapBtn").addEventListener("click", swapBatters);
-  }
-
-  if ($("saveBtn")) {
-    $("saveBtn").addEventListener("click", manualSave);
-  }
-
-  if ($("endMatchBtn")) {
-    $("endMatchBtn").addEventListener("click", endMatch);
-  }
-
-  if ($("startSecondInningsBtn")) {
-    $("startSecondInningsBtn").addEventListener(
-      "click",
-      startSecondInnings
-    );
-  }
-
-  if ($("nextMatchBtn")) {
-    $("nextMatchBtn").addEventListener("click", openNextMatch);
-  }
-
-  [
-    ["tournamentLink", "tournament.html"],
-    ["scheduleLink", "schedule.html"],
-    ["resultsLink", "results.html"],
-    ["pointsLink", "points.html"]
-  ].forEach(([id, page]) => {
-    const link = $(id);
-
-    if (link) {
-      link.href =
-        `./${page}?id=${encodeURIComponent(tournamentId)}`;
-    }
+  $("#nextMatchBtn")?.addEventListener("click", () => {
+    location.href = `schedule.html?id=${encodeURIComponent(tournamentId)}`;
   });
-}
 
-/* ---------------- Initialize ---------------- */
+  $("#strikerSelect")?.addEventListener("change", event => {
+    const name = event.target.value;
 
-async function initScorecard() {
-  setupButtons();
-
-  try {
-    const loaded = await loadTournamentAndMatch();
-
-    if (!loaded) {
-      updateButtonStates();
+    if (name && name === scoreState.nonStriker.name) {
+      showMessage("Striker and non-striker must be different players.", "warning");
+      event.target.value = scoreState.striker.name || "";
       return;
     }
 
-    showMessage("APL Scorecard ready");
-  } catch (error) {
-    console.error("Scorecard initialization failed:", error);
+    scoreState.striker.name = name;
+    ensurePlayerStats(name);
+    refreshUI();
+    scheduleSave();
+  });
 
-    showMessage(
-      "Scorecard load नहीं हुआ। Firebase config, internet और database rules जाँचें।"
-    );
-  }
+  $("#nonStrikerSelect")?.addEventListener("change", event => {
+    const name = event.target.value;
+
+    if (name && name === scoreState.striker.name) {
+      showMessage("Striker and non-striker must be different players.", "warning");
+      event.target.value = scoreState.nonStriker.name || "";
+      return;
+    }
+
+    scoreState.nonStriker.name = name;
+    ensurePlayerStats(name);
+    refreshUI();
+    scheduleSave();
+  });
+
+  $("#bowlerSelect")?.addEventListener("change", event => {
+    const name = event.target.value;
+
+    if (name && name === scoreState.bowler.name) return;
+
+    if (name) {
+      snapshotForUndo();
+      scoreState.bowler = scoreState.bowlingStats[name]
+        ? clone(scoreState.bowlingStats[name])
+        : createBowler(name);
+
+      ensureBowlerStats(name);
+      refreshUI();
+      scheduleSave();
+    }
+  });
+
+  $("#dismissalCancel")?.addEventListener("click", () => {
+    const dialog = $("#dismissalDialog");
+    if (dialog) dialog.style.display = "none";
+  });
+
+  $("#dismissalConfirm")?.addEventListener("click", () => {
+    const type = $("#dismissalType")?.value;
+    const batter = $("#dismissedBatter")?.value;
+
+    if (type && batter) recordDismissal(type, batter);
+  });
 }
 
-initScorecard();
+function setupNavigation() {
+  const links = {
+    "#tournamentLink": "tournament.html",
+    "#scheduleLink": "schedule.html",
+    "#resultsLink": "results.html",
+    "#pointsLink": "points.html"
+  };
+
+  Object.entries(links).forEach(([selector, page]) => {
+    $(selector)?.addEventListener("click", event => {
+      event.preventDefault();
+      location.href =
+        `${page}?id=${encodeURIComponent(tournamentId)}`;
+    });
+  });
+}
+
+setupButtons();
+setupNavigation();
+
+showMessage("Loading APL scorecard...", "info");
+loadTournamentAndMatch();
