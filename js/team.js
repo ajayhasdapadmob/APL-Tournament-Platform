@@ -1,3 +1,4 @@
+```javascript
 // ========================================
 // TEAM.JS
 // APL TOURNAMENT PLATFORM
@@ -12,9 +13,20 @@ import {
     getDocs
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-
 console.log("🔥 TEAM JS LOADED");
 
+// ========================================
+// PAGE FILES
+// IMPORTANT: Use the exact filenames
+// that exist in your GitHub repository.
+// ========================================
+
+const PAGES = {
+    tournament: "./dashboard.html",
+    registration: "./registration.html",
+    schedule: "./schedule.html",
+    points: "./points.html"
+};
 
 // ========================================
 // ELEMENTS
@@ -47,196 +59,336 @@ const scheduleLink =
 const pointsLink =
     document.getElementById("pointsLink");
 
-
 // ========================================
 // GET TOURNAMENT ID
 // ========================================
 
 function getTournamentId() {
-
-    // Current URL
-    const currentURL =
-        window.location.href;
-
-    console.log(
-        "🌐 Current URL:",
-        currentURL
+    const params = new URLSearchParams(
+        window.location.search
     );
-
-
-    // URL search
-    const search =
-        window.location.search;
-
-    console.log(
-        "🔎 URL Search:",
-        search
-    );
-
-
-    // Read URL parameters
-    const params =
-        new URLSearchParams(search);
-
 
     let id =
-        params.get("id");
+        params.get("id") ||
+        params.get("tournamentId") ||
+        localStorage.getItem("selectedTournamentId") ||
+        localStorage.getItem("tournamentId");
 
-
-    console.log(
-        "🔎 URL id:",
-        id
-    );
-
-
-    // Support tournamentId also
-    if (!id) {
-
-        id =
-            params.get("tournamentId");
-
-    }
-
-
-    console.log(
-        "🔎 URL tournamentId:",
-        id
-    );
-
-
-    // LocalStorage
-    if (!id) {
-
-        id =
-            localStorage.getItem(
-                "selectedTournamentId"
-            );
-
-        console.log(
-            "💾 Local selectedTournamentId:",
-            id
-        );
-
-    }
-
-
-    // LocalStorage second
-    if (!id) {
-
-        id =
-            localStorage.getItem(
-                "tournamentId"
-            );
-
-        console.log(
-            "💾 Local tournamentId:",
-            id
-        );
-
-    }
-
-
-    // Clean
     if (id) {
-
-        id =
-            String(id)
-                .trim();
-
+        id = String(id).trim();
     }
 
-
-    console.log(
-        "🏆 FINAL TEAMS TOURNAMENT ID:",
-        id
-    );
-
+    console.log("🏆 Tournament ID:", id);
 
     return id || null;
-
 }
 
+const tournamentId = getTournamentId();
 
 // ========================================
-// TOURNAMENT ID
+// ESCAPE HTML
 // ========================================
 
-const tournamentId =
-    getTournamentId();
-
+function escapeHTML(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
 
 // ========================================
-// NO TOURNAMENT ID
+// SET PAGE LINKS
 // ========================================
 
-if (!tournamentId) {
+function setupLinks() {
+    if (!tournamentId) return;
 
-    console.error(
-        "❌ Tournament ID Missing"
-    );
+    const id = encodeURIComponent(tournamentId);
 
+    if (tournamentLink) {
+        tournamentLink.href =
+            `${PAGES.tournament}?id=${id}`;
+    }
 
+    if (registrationLink) {
+        registrationLink.href =
+            `${PAGES.registration}?id=${id}`;
+    }
+
+    if (scheduleLink) {
+        scheduleLink.href =
+            `${PAGES.schedule}?id=${id}`;
+    }
+
+    if (pointsLink) {
+        pointsLink.href =
+            `${PAGES.points}?id=${id}`;
+    }
+
+    console.log("🔗 Navigation links configured");
+}
+
+// ========================================
+// MISSING TOURNAMENT MESSAGE
+// ========================================
+
+function showMissingTournament() {
     if (tournamentNameElement) {
-
         tournamentNameElement.textContent =
             "No Tournament Selected";
-
     }
-
 
     if (tournamentIdElement) {
-
-        tournamentIdElement.textContent =
-            "-";
-
+        tournamentIdElement.textContent = "-";
     }
-
 
     if (venueElement) {
-
-        venueElement.textContent =
-            "-";
-
+        venueElement.textContent = "-";
     }
-
 
     if (totalTeamsElement) {
-
-        totalTeamsElement.textContent =
-            "0";
-
+        totalTeamsElement.textContent = "0";
     }
-
 
     if (teamListElement) {
-
-        teamListElement.className =
-            "empty";
-
-        teamListElement.innerHTML = `
-            ❌ Tournament ID Missing
-            <br><br>
-            Please open Teams from Dashboard.
-        `;
-
+        teamListElement.className = "empty";
+        teamListElement.textContent =
+            "Tournament ID missing. Please open this page from the tournament dashboard.";
     }
-
 }
 
+// ========================================
+// LOAD TOURNAMENT
+// ========================================
+
+async function loadTournament() {
+    try {
+        console.log(
+            "🏆 Loading tournament:",
+            tournamentId
+        );
+
+        const tournamentRef = doc(
+            db,
+            "tournaments",
+            tournamentId
+        );
+
+        const tournamentSnap =
+            await getDoc(tournamentRef);
+
+        if (!tournamentSnap.exists()) {
+            if (tournamentNameElement) {
+                tournamentNameElement.textContent =
+                    "Tournament Not Found";
+            }
+
+            if (tournamentIdElement) {
+                tournamentIdElement.textContent =
+                    tournamentId;
+            }
+
+            if (teamListElement) {
+                teamListElement.className = "empty";
+                teamListElement.textContent =
+                    "Tournament not found. Please check the tournament link.";
+            }
+
+            return;
+        }
+
+        const tournament = tournamentSnap.data();
+
+        const name =
+            tournament.tournamentName ||
+            tournament.name ||
+            tournament.title ||
+            "Tournament";
+
+        const venue =
+            tournament.venue ||
+            tournament.location ||
+            "-";
+
+        if (tournamentNameElement) {
+            tournamentNameElement.textContent = name;
+        }
+
+        if (tournamentIdElement) {
+            tournamentIdElement.textContent =
+                tournamentId;
+        }
+
+        if (venueElement) {
+            venueElement.textContent = venue;
+        }
+
+        await loadTeams();
+
+        console.log("✅ Tournament page loaded");
+    } catch (error) {
+        console.error("❌ Tournament load error:", error);
+
+        if (teamListElement) {
+            teamListElement.className = "empty";
+            teamListElement.textContent =
+                "Unable to load tournament: " +
+                (error.message || "Unknown error");
+        }
+    }
+}
 
 // ========================================
-// TOURNAMENT ID FOUND
+// LOAD REGISTERED TEAMS
 // ========================================
 
-else {
+async function loadTeams() {
+    try {
+        console.log("👥 Loading registered teams...");
 
-    console.log(
-        "✅ Tournament ID FOUND:",
-        tournamentId
-    );
+        const teamsRef = collection(
+            db,
+            "tournaments",
+            tournamentId,
+            "teams"
+        );
 
+        const snapshot = await getDocs(teamsRef);
 
-    // Save immediately
+        const teams = snapshot.docs.map(teamDoc => ({
+            id: teamDoc.id,
+            ...teamDoc.data()
+        }));
+
+        if (totalTeamsElement) {
+            totalTeamsElement.textContent =
+                String(teams.length);
+        }
+
+        if (!teamListElement) return;
+
+        teamListElement.innerHTML = "";
+
+        if (teams.length === 0) {
+            teamListElement.className = "empty";
+            teamListElement.textContent =
+                "No registered teams yet. Use Register Team to register a team.";
+            return;
+        }
+
+        teamListElement.className = "team-list";
+
+        teams.forEach((team, index) => {
+            const teamName =
+                team.teamName ||
+                team.name ||
+                team.team ||
+                "Unnamed Team";
+
+            const captain =
+                team.captainName ||
+                team.captain ||
+                "Not provided";
+
+            const mobile =
+                team.mobile ||
+                team.phone ||
+                "Not provided";
+
+            const city =
+                team.city ||
+                team.area ||
+                "Not provided";
+
+            const status =
+                team.status ||
+                "Pending";
+
+            const players = Array.isArray(team.players)
+                ? team.players
+                : [];
+
+            const card = document.createElement("div");
+            card.className = "team-card";
+
+            card.innerHTML = `
+                <h3>🏏 Team ${index + 1}</h3>
+
+                <p>
+                    <b>Team Name:</b>
+                    ${escapeHTML(teamName)}
+                </p>
+
+                <p>
+                    👤 <b>Captain:</b>
+                    ${escapeHTML(captain)}
+                </p>
+
+                <p>
+                    📱 <b>Mobile:</b>
+                    ${escapeHTML(mobile)}
+                </p>
+
+                <p>
+                    🏙️ <b>City:</b>
+                    ${escapeHTML(city)}
+                </p>
+
+                <p>
+                    👥 <b>Players:</b>
+                    ${
+                        players.length
+                            ? players.map(player =>
+                                escapeHTML(player)
+                              ).join(", ")
+                            : "Not provided"
+                    }
+                </p>
+
+                <p>
+                    🆔 <b>Team ID:</b>
+                    ${escapeHTML(team.id)}
+                </p>
+
+                <span class="status">
+                    ${escapeHTML(status)}
+                </span>
+            `;
+
+            teamListElement.appendChild(card);
+        });
+
+        console.log(
+            "✅ Registered teams displayed:",
+            teams.length
+        );
+    } catch (error) {
+        console.error("❌ Teams load error:", error);
+
+        if (totalTeamsElement) {
+            totalTeamsElement.textContent = "0";
+        }
+
+        if (teamListElement) {
+            teamListElement.className = "empty";
+            teamListElement.textContent =
+                "Unable to load registered teams: " +
+                (error.message || "Unknown error");
+        }
+    }
+}
+
+// ========================================
+// INITIALIZE PAGE
+// ========================================
+
+setupLinks();
+
+if (!tournamentId) {
+    showMissingTournament();
+} else {
     localStorage.setItem(
         "selectedTournamentId",
         tournamentId
@@ -247,524 +399,10 @@ else {
         tournamentId
     );
 
-
-    // Display ID immediately
     if (tournamentIdElement) {
-
         tournamentIdElement.textContent =
             tournamentId;
-
     }
 
-
-    // Load tournament
     loadTournament();
-
-}
-
-
-// ========================================
-// LOAD TOURNAMENT
-// ========================================
-
-async function loadTournament() {
-
-    try {
-
-        console.log(
-            "🏆 Loading tournament:",
-            tournamentId
-        );
-
-
-        const tournamentRef =
-            doc(
-                db,
-                "tournaments",
-                tournamentId
-            );
-
-
-        const tournamentSnap =
-            await getDoc(
-                tournamentRef
-            );
-
-
-        if (!tournamentSnap.exists()) {
-
-            console.error(
-                "❌ Tournament not found:",
-                tournamentId
-            );
-
-
-            if (tournamentNameElement) {
-
-                tournamentNameElement.textContent =
-                    "Tournament Not Found";
-
-            }
-
-
-            if (tournamentIdElement) {
-
-                tournamentIdElement.textContent =
-                    tournamentId;
-
-            }
-
-
-            if (teamListElement) {
-
-                teamListElement.className =
-                    "empty";
-
-                teamListElement.innerHTML = `
-                    ❌ Tournament not found.
-                `;
-
-            }
-
-
-            return;
-
-        }
-
-
-        const tournament =
-            tournamentSnap.data();
-
-
-        console.log(
-            "✅ Tournament:",
-            tournament
-        );
-
-
-        const name =
-            tournament.tournamentName ||
-            tournament.name ||
-            tournament.title ||
-            "Tournament";
-
-
-        const venue =
-            tournament.venue ||
-            tournament.location ||
-            "-";
-
-
-        // Display name
-        if (tournamentNameElement) {
-
-            tournamentNameElement.textContent =
-                name;
-
-        }
-
-
-        // Display ID
-        if (tournamentIdElement) {
-
-            tournamentIdElement.textContent =
-                tournamentId;
-
-        }
-
-
-        // Display venue
-        if (venueElement) {
-
-            venueElement.textContent =
-                venue;
-
-        }
-
-
-        // Load teams
-        await loadTeams();
-
-
-        // Setup links
-        setupLinks();
-
-
-        console.log(
-            "🔗 Team page links ready"
-        );
-
-
-        console.log(
-            "✅ TEAM PAGE COMPLETELY LOADED"
-        );
-
-    }
-
-
-    catch (error) {
-
-        console.error(
-            "❌ TEAM PAGE ERROR:",
-            error
-        );
-
-
-        if (teamListElement) {
-
-            teamListElement.className =
-                "empty";
-
-            teamListElement.innerHTML = `
-                ❌ Unable to load Teams.
-                <br><br>
-                ${escapeHTML(
-                    error.message || "Unknown error"
-                )}
-            `;
-
-        }
-
-    }
-
-}
-
-
-// ========================================
-// LOAD TEAMS
-// ========================================
-
-async function loadTeams() {
-
-    try {
-
-        console.log(
-            "👥 Loading teams..."
-        );
-
-
-        const teamsRef =
-            collection(
-                db,
-                "tournaments",
-                tournamentId,
-                "teams"
-            );
-
-
-        const snapshot =
-            await getDocs(
-                teamsRef
-            );
-
-
-        console.log(
-            "👥 Tournament teams:",
-            snapshot.size
-        );
-
-
-        const teams =
-            snapshot.docs.map(
-                teamDoc => ({
-
-                    id:
-                        teamDoc.id,
-
-                    ...teamDoc.data()
-
-                })
-            );
-
-
-        // Count
-        if (totalTeamsElement) {
-
-            totalTeamsElement.textContent =
-                teams.length;
-
-        }
-
-
-        // No teams
-        if (teams.length === 0) {
-
-            if (teamListElement) {
-
-                teamListElement.className =
-                    "empty";
-
-                teamListElement.innerHTML = `
-                    👥 No registered teams yet.
-                `;
-
-            }
-
-            return;
-
-        }
-
-
-        // Clear
-        if (teamListElement) {
-
-            teamListElement.className =
-                "team-list";
-
-            teamListElement.innerHTML =
-                "";
-
-        }
-
-
-        // Display teams
-        teams.forEach(
-            (team, index) => {
-
-                const teamName =
-                    team.teamName ||
-                    team.name ||
-                    team.team ||
-                    "Unnamed Team";
-
-
-                const captain =
-                    team.captainName ||
-                    team.captain ||
-                    "Not provided";
-
-
-                const mobile =
-                    team.mobile ||
-                    team.phone ||
-                    "Not provided";
-
-
-                const city =
-                    team.city ||
-                    team.area ||
-                    "Not provided";
-
-
-                const status =
-                    team.status ||
-                    "Pending";
-
-
-                let players = [];
-
-
-                if (
-                    Array.isArray(
-                        team.players
-                    )
-                ) {
-
-                    players =
-                        team.players;
-
-                }
-
-
-                const card =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                card.className =
-                    "team-card";
-
-
-                card.innerHTML = `
-
-                    <h3>
-                        🏏 Team ${index + 1}
-                    </h3>
-
-                    <p>
-                        <b>Team Name:</b>
-                        ${escapeHTML(teamName)}
-                    </p>
-
-                    <p>
-                        👤 <b>Captain:</b>
-                        ${escapeHTML(captain)}
-                    </p>
-
-                    <p>
-                        📱 <b>Mobile:</b>
-                        ${escapeHTML(mobile)}
-                    </p>
-
-                    <p>
-                        🏙️ <b>City:</b>
-                        ${escapeHTML(city)}
-                    </p>
-
-                    <p>
-                        👥 <b>Players:</b>
-                        ${
-                            players.length
-                            ?
-                            players
-                                .map(
-                                    player =>
-                                        escapeHTML(
-                                            String(player)
-                                        )
-                                )
-                                .join(", ")
-                            :
-                            "Not provided"
-                        }
-                    </p>
-
-                    <p>
-                        🆔 <b>Team ID:</b>
-                        ${escapeHTML(team.id)}
-                    </p>
-
-                    <span class="status">
-                        ${escapeHTML(status)}
-                    </span>
-
-                `;
-
-
-                if (teamListElement) {
-
-                    teamListElement.appendChild(
-                        card
-                    );
-
-                }
-
-            }
-        );
-
-
-        console.log(
-            "✅ Teams displayed:",
-            teams.length
-        );
-
-    }
-
-
-    catch (error) {
-
-        console.error(
-            "❌ TEAM LOAD ERROR:",
-            error
-        );
-
-
-        if (totalTeamsElement) {
-
-            totalTeamsElement.textContent =
-                "0";
-
-        }
-
-
-        if (teamListElement) {
-
-            teamListElement.className =
-                "empty";
-
-            teamListElement.innerHTML = `
-                ❌ Unable to load registered teams.
-                <br><br>
-                ${escapeHTML(
-                    error.message || "Unknown error"
-                )}
-            `;
-
-        }
-
-    }
-
-}
-
-
-// ========================================
-// LINKS
-// ========================================
-
-function setupLinks() {
-
-    const id =
-        encodeURIComponent(
-            tournamentId
-        );
-
-
-    if (tournamentLink) {
-
-        tournamentLink.href =
-            `dashboard.html?id=${id}`;
-
-    }
-
-
-    if (registrationLink) {
-
-        registrationLink.href =
-            `registration.html?id=${id}`;
-
-    }
-
-
-    if (scheduleLink) {
-
-        scheduleLink.href =
-            `schedule.html?id=${id}`;
-
-    }
-
-
-    if (pointsLink) {
-
-        pointsLink.href =
-            `points.html?id=${id}`;
-
-    }
-
-}
-
-
-// ========================================
-// ESCAPE HTML
-// ========================================
-
-function escapeHTML(value) {
-
-    return String(value)
-
-        .replaceAll(
-            "&",
-            "&amp;"
-        )
-
-        .replaceAll(
-            "<",
-            "&lt;"
-        )
-
-        .replaceAll(
-            ">",
-            "&gt;"
-        )
-
-        .replaceAll(
-            '"',
-            "&quot;"
-        )
-
-        .replaceAll(
-            "'",
-            "&#039;"
-        );
-
 }
