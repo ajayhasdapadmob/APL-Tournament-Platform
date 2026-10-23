@@ -1,276 +1,124 @@
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Admin Panel - APL Tournament Platform</title>
-
-<link rel="stylesheet" href="css/style.css">
-
-<style>
-
-.admin-container {
-    max-width: 1100px;
-    margin: auto;
-}
-
-.admin-header {
-    background: white;
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 20px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-}
-
-#tournamentSelect {
-    width: 100%;
-    padding: 13px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-    box-sizing: border-box;
-}
-
-.stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-    margin-bottom: 20px;
-}
-
-.stat-card {
-    background: white;
-    padding: 18px;
-    border-radius: 12px;
-    text-align: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.07);
-}
-
-.stat-card h2 {
-    margin: 8px 0 0;
-    font-size: 28px;
-}
-
-.team-card {
-    background: white;
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-}
-
-.team-card h3 {
-    margin-top: 0;
-}
-
-.team-card p {
-    margin: 8px 0;
-}
-
-.players-box {
-    background: #f8fafc;
-    padding: 12px;
-    border-radius: 8px;
-    margin-top: 10px;
-}
-
-.status {
-    font-weight: bold;
-    padding: 10px;
-    border-radius: 7px;
-    background: #f3f4f6;
-}
-
-.action-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-    margin-top: 15px;
-}
-
-.action-buttons button {
-    padding: 9px 12px;
-    border: none;
-    border-radius: 7px;
-    color: white;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.pending-btn { background: #d97706; }
-.approved-btn { background: #059669; }
-.rejected-btn { background: #dc2626; }
-.paid-btn { background: #047857; }
-.hold-btn { background: #7c3aed; }
-.cancel-btn { background: #4b5563; }
-.delete-btn { background: #991b1b; }
-
-.empty {
-    background: white;
-    padding: 30px;
-    border-radius: 15px;
-    text-align: center;
-}
-
-#adminMessage {
-    margin-bottom: 15px;
-    padding: 12px;
-    border-radius: 8px;
-    text-align: center;
-    font-weight: bold;
-}
-
-.success {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.error {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.loading {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-</style>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APL Tournament Admin</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #172033;
+    }
+    .container { max-width: 1100px; margin: auto; }
+    .header, .panel {
+      background: white;
+      padding: 20px;
+      margin-bottom: 18px;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px #0000000c;
+    }
+    h1 { margin-top: 0; color: #087f3c; }
+    h2, h3 { margin-top: 0; }
+    select, button {
+      padding: 11px 14px;
+      border-radius: 7px;
+      border: 1px solid #cbd5e1;
+      font-size: 15px;
+    }
+    select { width: 100%; max-width: 550px; background: white; }
+    button { cursor: pointer; font-weight: 600; }
+    button:disabled { opacity: .6; cursor: wait; }
+    .primary { background: #087f3c; color: white; border: 0; }
+    .danger { background: #b91c1c; color: white; border: 0; }
+    .warning { background: #fff7ed; border: 1px solid #fed7aa; }
+    .muted { color: #64748b; font-size: 14px; }
+    .nav { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+    .nav a { color: #087f3c; font-weight: bold; text-decoration: none; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+    .stat {
+      background: white;
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+    }
+    .stat strong { display: block; font-size: 25px; margin-top: 8px; }
+    .team-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 16px;
+      margin: 12px 0;
+      background: white;
+    }
+    .team-card h3 { margin-bottom: 8px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .status-btn { background: #e2e8f0; border: 0; }
+    .status-btn.active { background: #087f3c; color: white; }
+    .empty { padding: 20px; text-align: center; color: #64748b; }
+    #message { white-space: pre-wrap; margin-top: 12px; }
+    @media(max-width: 600px) {
+      body { padding: 10px; }
+      .header, .panel { padding: 15px; }
+      .actions button { flex: 1 1 40%; }
+    }
+  </style>
 </head>
-
 <body>
+  <main class="container">
+    <section class="header">
+      <h1>🏏 APL Tournament Admin</h1>
+      <p>Manage tournaments, teams and registration statuses.</p>
+      <div class="nav">
+        <a href="index.html">Dashboard</a>
+        <a href="my-tournaments.html">My Tournaments</a>
+        <a href="recycle-bin.html">🗑️ Recycle Bin</a>
+      </div>
+    </section>
 
-<header class="top-header">
+    <section class="panel">
+      <h2>Select Tournament</h2>
+      <select id="tournamentSelect">
+        <option value="">Loading tournaments...</option>
+      </select>
 
-    <div class="logo">🏏</div>
+      <div class="warning panel" style="margin-top:18px; margin-bottom:0;">
+        <h3>🗑️ Tournament Actions</h3>
+        <p class="muted">
+          Tournament ko Recycle Bin mein bhejne par uska main record mark hoga.
+          Teams aur matches ki subcollections ko delete nahi kiya jayega.
+        </p>
+        <button id="recycleTournamentBtn" class="danger" type="button">
+          Move Tournament to Recycle Bin
+        </button>
+      </div>
+      <p id="message" role="status"></p>
+    </section>
 
-    <div>
-        <h1>Admin Panel</h1>
-        <p>APL Tournament Platform</p>
-    </div>
+    <section class="stats">
+      <div class="stat">Total Teams<strong id="totalTeams">0</strong></div>
+      <div class="stat">Pending<strong id="pendingTeams">0</strong></div>
+      <div class="stat">Approved<strong id="approvedTeams">0</strong></div>
+      <div class="stat">Rejected<strong id="rejectedTeams">0</strong></div>
+      <div class="stat">Paid<strong id="paidTeams">0</strong></div>
+      <div class="stat">On Hold<strong id="holdTeams">0</strong></div>
+      <div class="stat">Cancelled<strong id="cancelledTeams">0</strong></div>
+    </section>
 
-</header>
+    <section class="panel">
+      <h2>Registered Teams</h2>
+      <div id="teamList" class="empty">Select a tournament to view teams.</div>
+    </section>
+  </main>
 
-
-<main class="home-container">
-
-<div class="admin-container">
-
-
-<div class="admin-header">
-
-    <h2>⚙️ Tournament Management</h2>
-
-    <p>Select a tournament to manage registered teams.</p>
-
-    <select id="tournamentSelect">
-
-        <option value="">
-            -- Select Tournament --
-        </option>
-
-    </select>
-
-</div>
-
-
-<div id="adminMessage"></div>
-
-
-<div class="stats">
-
-
-    <div class="stat-card">
-        👥 Total Teams
-        <h2 id="totalTeams">0</h2>
-    </div>
-
-
-    <div class="stat-card">
-        ⏳ Pending
-        <h2 id="pendingTeams">0</h2>
-    </div>
-
-
-    <div class="stat-card">
-        ✅ Approved
-        <h2 id="approvedTeams">0</h2>
-    </div>
-
-
-    <div class="stat-card">
-        ❌ Rejected
-        <h2 id="rejectedTeams">0</h2>
-    </div>
-
-
-    <div class="stat-card">
-        💰 Paid
-        <h2 id="paidTeams">0</h2>
-    </div>
-
-
-    <div class="stat-card">
-        ⏸️ On Hold
-        <h2 id="holdTeams">0</h2>
-    </div>
-
-
-    <div class="stat-card">
-        🚫 Cancelled
-        <h2 id="cancelledTeams">0</h2>
-    </div>
-
-
-</div>
-
-
-<div id="teamList">
-
-    <div class="empty">
-        ⏳ Loading...
-    </div>
-
-</div>
-
-
-<br>
-
-
-<div style="text-align:center;">
-
-    <a href="dashboard.html" class="btn">
-        ⬅ Dashboard
-    </a>
-
-    <a href="my-tournaments.html" class="btn">
-        🏆 My Tournaments
-    </a>
-
-</div>
-
-
-</div>
-
-</main>
-
-
-<footer>
-
-<p>
-    🏏 APL Tournament Platform
-</p>
-
-</footer>
-
-
-<script type="module" src="js/admin.js"></script>
-
+  <script type="module" src="js/admin.js"></script>
 </body>
-
 </html>
