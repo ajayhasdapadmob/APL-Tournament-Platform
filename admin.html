@@ -5,8 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>APL Tournament Admin</title>
+
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       padding: 20px;
@@ -14,7 +16,9 @@
       background: #f1f5f9;
       color: #172033;
     }
+
     .container { max-width: 1100px; margin: auto; }
+
     .header, .panel {
       background: white;
       padding: 20px;
@@ -22,49 +26,112 @@
       border-radius: 12px;
       box-shadow: 0 3px 12px #0000000c;
     }
+
     h1 { margin-top: 0; color: #087f3c; }
     h2, h3 { margin-top: 0; }
-    select, button {
+
+    select, input, button {
       padding: 11px 14px;
       border-radius: 7px;
       border: 1px solid #cbd5e1;
       font-size: 15px;
     }
-    select { width: 100%; max-width: 550px; background: white; }
+
+    select, input {
+      width: 100%;
+      max-width: 550px;
+      background: white;
+    }
+
     button { cursor: pointer; font-weight: 600; }
     button:disabled { opacity: .6; cursor: wait; }
+
     .primary { background: #087f3c; color: white; border: 0; }
     .danger { background: #b91c1c; color: white; border: 0; }
     .warning { background: #fff7ed; border: 1px solid #fed7aa; }
     .muted { color: #64748b; font-size: 14px; }
-    .nav { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
-    .nav a { color: #087f3c; font-weight: bold; text-decoration: none; }
+
+    .nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+
+    .nav a {
+      color: #087f3c;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
     .stats {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 12px;
       margin: 18px 0;
     }
+
     .stat {
       background: white;
       padding: 16px;
       border-radius: 10px;
       border: 1px solid #e2e8f0;
     }
-    .stat strong { display: block; font-size: 25px; margin-top: 8px; }
-    .team-card {
+
+    .stat strong {
+      display: block;
+      font-size: 25px;
+      margin-top: 8px;
+    }
+
+    .team-card, .registration-card {
       border: 1px solid #e2e8f0;
       border-radius: 10px;
       padding: 16px;
       margin: 12px 0;
       background: white;
+      overflow-wrap: anywhere;
     }
-    .team-card h3 { margin-bottom: 8px; }
-    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+    .team-card h3, .registration-card h3 { margin-bottom: 8px; }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
     .status-btn { background: #e2e8f0; border: 0; }
     .status-btn.active { background: #087f3c; color: white; }
+
     .empty { padding: 20px; text-align: center; color: #64748b; }
-    #message { white-space: pre-wrap; margin-top: 12px; }
+    #message, #legacyMessage { white-space: pre-wrap; margin-top: 12px; }
+
+    .registration-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .registration-grid input { max-width: none; }
+
+    .tag {
+      display: inline-block;
+      padding: 4px 9px;
+      border-radius: 20px;
+      background: #ecfdf5;
+      color: #166534;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .tag.pending { background: #fff7ed; color: #9a3412; }
+    .tag.rejected { background: #fef2f2; color: #b91c1c; }
+
+    .table-wrap { overflow-x: auto; }
+
     @media(max-width: 600px) {
       body { padding: 10px; }
       .header, .panel { padding: 15px; }
@@ -72,11 +139,14 @@
     }
   </style>
 </head>
+
 <body>
   <main class="container">
+
     <section class="header">
       <h1>🏏 APL Tournament Admin</h1>
-      <p>Manage tournaments, teams and registration statuses.</p>
+      <p>Manage tournaments, teams and APL League registrations.</p>
+
       <div class="nav">
         <a href="index.html">Dashboard</a>
         <a href="my-tournaments.html">My Tournaments</a>
@@ -84,8 +154,10 @@
       </div>
     </section>
 
+    <!-- Existing tournament management -->
     <section class="panel">
       <h2>Select Tournament</h2>
+
       <select id="tournamentSelect">
         <option value="">Loading tournaments...</option>
       </select>
@@ -96,13 +168,16 @@
           Tournament ko Recycle Bin mein bhejne par uska main record mark hoga.
           Teams aur matches ki subcollections ko delete nahi kiya jayega.
         </p>
+
         <button id="recycleTournamentBtn" class="danger" type="button">
           Move Tournament to Recycle Bin
         </button>
       </div>
+
       <p id="message" role="status"></p>
     </section>
 
+    <!-- Existing team statistics -->
     <section class="stats">
       <div class="stat">Total Teams<strong id="totalTeams">0</strong></div>
       <div class="stat">Pending<strong id="pendingTeams">0</strong></div>
@@ -115,8 +190,78 @@
 
     <section class="panel">
       <h2>Registered Teams</h2>
-      <div id="teamList" class="empty">Select a tournament to view teams.</div>
+      <p class="muted">
+        Ye selected Tournament Platform ke teams hain.
+      </p>
+      <div id="teamList" class="empty">
+        Select a tournament to view teams.
+      </div>
     </section>
+
+    <!-- New section: legacy APL registrations, read-only -->
+    <section class="panel" id="legacyRegistrationsSection">
+      <h2>📋 APL League Registrations</h2>
+
+      <p class="muted">
+        Ye registrations purane APL Cricket League Firebase database se
+        read ki jayengi. Is section se purana registration data edit ya delete
+        nahi hoga.
+      </p>
+
+      <div class="registration-grid">
+        <input
+          id="legacySearch"
+          type="search"
+          placeholder="Search team, captain, mobile or Registration ID"
+          aria-label="Search APL League registrations"
+        >
+
+        <select id="legacyStatusFilter" aria-label="Filter registrations by status">
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="paid">Paid</option>
+          <option value="unpaid">Unpaid</option>
+          <option value="on hold">On Hold</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+
+      <div class="actions">
+        <button id="refreshLegacyBtn" class="primary" type="button">
+          Refresh Registrations
+        </button>
+      </div>
+
+      <p id="legacyMessage" role="status" aria-live="polite">
+        Registrations abhi load nahi hui hain.
+      </p>
+
+      <div class="stats">
+        <div class="stat">
+          APL Registrations
+          <strong id="legacyTotal">0</strong>
+        </div>
+        <div class="stat">
+          Pending
+          <strong id="legacyPending">0</strong>
+        </div>
+        <div class="stat">
+          Approved
+          <strong id="legacyApproved">0</strong>
+        </div>
+        <div class="stat">
+          Paid
+          <strong id="legacyPaid">0</strong>
+        </div>
+      </div>
+
+      <div id="legacyRegistrationList" class="empty">
+        Loading APL League registrations...
+      </div>
+    </section>
+
   </main>
 
   <script type="module" src="js/admin.js"></script>
