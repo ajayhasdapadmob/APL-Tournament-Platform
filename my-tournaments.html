@@ -548,16 +548,19 @@
 
     <!-- CREATE -->
 
-    <section class="create-area">
+    
+<section class="create-area">
+    <a href="create-tournament.html" class="create-button">
+        ➕ Create New Tournament
+    </a>
 
-        <a
-            href="create-tournament.html"
-            class="create-button"
-        >
-            ➕ Create New Tournament
-        </a>
+    <a href="recycle-bin.html"
+       class="create-button"
+       style="background:#475569;margin-top:10px;">
+        🗑️ Open Recycle Bin
+    </a>
+</section>
 
-    </section>
 
 
 
@@ -785,15 +788,14 @@ async function loadTournaments(user) {
                 }
 
 
-                tournaments.push({
+               if (data.isDeleted === true || data.deleted === true) {
+    return;
+}
 
-                    id:
-                        tournamentDoc.id,
-
-                    ...data
-
-                });
-
+tournaments.push({
+    id: tournamentDoc.id,
+    ...data
+});
             }
         );
 
