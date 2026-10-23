@@ -1,5 +1,5 @@
 
-import { auth, db } from "../firebase.js";
+import { auth, db, legacyDb } from "../firebase.js";
 
 import {
   collection,
@@ -8,21 +8,32 @@ import {
   updateDoc
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-import {
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { onAuthStateChanged } from
+  "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
 const tournamentSelect = document.getElementById("tournamentSelect");
 const teamList = document.getElementById("teamList");
 const recycleButton = document.getElementById("recycleTournamentBtn");
 const message = document.getElementById("message");
 
+const legacyList = document.getElementById("legacyRegistrationList");
+const legacyMessage = document.getElementById("legacyMessage");
+const legacySearch = document.getElementById("legacySearch");
+const legacyStatusFilter = document.getElementById("legacyStatusFilter");
+const refreshLegacyBtn = document.getElementById("refreshLegacyBtn");
+
 let activeTournaments = [];
 let currentLoadToken = 0;
+let legacyRegistrations = [];
 
 function showMessage(text, isError = false) {
   message.textContent = text;
   message.style.color = isError ? "#b91c1c" : "#087f3c";
+}
+
+function showLegacyMessage(text, isError = false) {
+  legacyMessage.textContent = text;
+  legacyMessage.style.color = isError ? "#b91c1c" : "#087f3c";
 }
 
 function setCount(id, value) {
@@ -32,13 +43,8 @@ function setCount(id, value) {
 
 function resetTeamStats() {
   [
-    "totalTeams",
-    "pendingTeams",
-    "approvedTeams",
-    "rejectedTeams",
-    "paidTeams",
-    "holdTeams",
-    "cancelledTeams"
+    "totalTeams", "pendingTeams", "approvedTeams",
+    "rejectedTeams", "paidTeams", "holdTeams", "cancelledTeams"
   ].forEach(id => setCount(id, 0));
 }
 
@@ -47,14 +53,14 @@ function isRecycled(data) {
 }
 
 function getTournamentName(data, id) {
-  return data.name ||
-    data.tournamentName ||
-    data.title ||
-    `Tournament ${id}`;
+  return data.name || data.tournamentName || data.title || `Tournament ${id}`;
 }
+
+/* ---------------- TOURNAMENTS ---------------- */
 
 async function loadTournaments(preferredId = "") {
   tournamentSelect.innerHTML = "";
+
   const loadingOption = document.createElement("option");
   loadingOption.value = "";
   loadingOption.textContent = "Loading tournaments...";
@@ -65,10 +71,7 @@ async function loadTournaments(preferredId = "") {
 
     activeTournaments = snapshot.docs
       .filter(item => !isRecycled(item.data()))
-      .map(item => ({
-        id: item.id,
-        ...item.data()
-      }));
+      .map(item => ({ id: item.id, ...item.data() }));
 
     tournamentSelect.innerHTML = "";
 
@@ -82,10 +85,7 @@ async function loadTournaments(preferredId = "") {
 
     activeTournaments.forEach(tournament => {
       tournamentSelect.add(
-        new Option(
-          getTournamentName(tournament, tournament.id),
-          tournament.id
-        )
+        new Option(getTournamentName(tournament, tournament.id), tournament.id)
       );
     });
 
@@ -114,6 +114,8 @@ async function loadTournaments(preferredId = "") {
   }
 }
 
+/* ---------------- EXISTING TOURNAMENT TEAMS ---------------- */
+
 async function loadTeams(tournamentId) {
   const token = ++currentLoadToken;
   resetTeamStats();
@@ -128,7 +130,6 @@ async function loadTeams(tournamentId) {
   teamList.textContent = "Loading teams...";
 
   try {
-    // Check the tournament still exists and is not recycled.
     const tournament = activeTournaments.find(item => item.id === tournamentId);
 
     if (!tournament || isRecycled(tournament)) {
@@ -185,12 +186,12 @@ async function loadTeams(tournamentId) {
     }
 
     teamList.className = "";
-
     teams.forEach(team => {
       teamList.appendChild(createTeamCard(tournamentId, team));
     });
   } catch (error) {
     if (token !== currentLoadToken) return;
+
     console.error("Could not load teams:", error);
     teamList.className = "empty";
     teamList.textContent = "Teams load nahi hue: " + error.message;
@@ -202,8 +203,7 @@ function createTeamCard(tournamentId, team) {
   card.className = "team-card";
 
   const heading = document.createElement("h3");
-  heading.textContent =
-    team.teamName || team.name || team.clubName || "Unnamed Team";
+  heading.textContent = team.teamName || team.name || team.clubName || "Unnamed Team";
 
   const details = document.createElement("p");
   details.textContent =
@@ -214,14 +214,7 @@ function createTeamCard(tournamentId, team) {
   const actions = document.createElement("div");
   actions.className = "actions";
 
-  const statuses = [
-    "Pending",
-    "Approved",
-    "Rejected",
-    "Paid",
-    "On Hold",
-    "Cancelled"
-  ];
+  const statuses = ["Pending", "Approved", "Rejected", "Paid", "On Hold", "Cancelled"];
 
   statuses.forEach(status => {
     const button = document.createElement("button");
@@ -233,6 +226,7 @@ function createTeamCard(tournamentId, team) {
     }
 
     button.textContent = status;
+
     button.addEventListener("click", async () => {
       button.disabled = true;
 
@@ -255,7 +249,7 @@ function createTeamCard(tournamentId, team) {
     actions.appendChild(button);
   });
 
-  // Existing team-delete function remains separate from tournament recycle.
+  // Existing delete action retained. Confirmation is required.
   const deleteButton = document.createElement("button");
   deleteButton.type = "button";
   deleteButton.className = "danger";
@@ -275,9 +269,7 @@ function createTeamCard(tournamentId, team) {
         "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js"
       );
 
-      await deleteDoc(
-        doc(db, "tournaments", tournamentId, "teams", team.id)
-      );
+      await deleteDoc(doc(db, "tournaments", tournamentId, "teams", team.id));
 
       showMessage("Team deleted.");
       await loadTeams(tournamentId);
@@ -291,7 +283,6 @@ function createTeamCard(tournamentId, team) {
 
   actions.appendChild(deleteButton);
   card.append(heading, details, actions);
-
   return card;
 }
 
@@ -322,10 +313,10 @@ recycleButton.addEventListener("click", async () => {
   }
 
   const name = getTournamentName(tournament, tournamentId);
+
   const confirmed = confirm(
     `"${name}" ko Recycle Bin mein bhejna hai?\n\n` +
-    "Is action se tournament ka main record delete nahi hoga. " +
-    "Teams aur matches ki subcollections preserve rahengi."
+    "Teams aur matches ki subcollections delete nahi hongi."
   );
 
   if (!confirmed) return;
@@ -362,11 +353,209 @@ recycleButton.addEventListener("click", async () => {
   }
 });
 
+/* ---------------- LEGACY APL LEAGUE REGISTRATIONS ---------------- */
+/* Read-only: this section never writes to legacyDb. */
+
+function safeText(value) {
+  if (value === null || value === undefined || value === "") return "—";
+  return String(value);
+}
+
+function normalized(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function getLegacyStatus(registration) {
+  return registration.status || "Pending";
+}
+
+function updateLegacyStats(registrations) {
+  setCount("legacyTotal", registrations.length);
+
+  setCount(
+    "legacyPending",
+    registrations.filter(item => normalized(getLegacyStatus(item)) === "pending").length
+  );
+
+  setCount(
+    "legacyApproved",
+    registrations.filter(item => normalized(getLegacyStatus(item)) === "approved").length
+  );
+
+  setCount(
+    "legacyPaid",
+    registrations.filter(item =>
+      normalized(item.paymentStatus) === "paid" ||
+      normalized(item.paymentDone) === "paid" ||
+      normalized(item.paymentDone) === "yes"
+    ).length
+  );
+}
+
+function createInfoLine(label, value) {
+  const paragraph = document.createElement("p");
+  const strong = document.createElement("strong");
+  strong.textContent = label + ": ";
+  paragraph.append(strong, document.createTextNode(safeText(value)));
+  return paragraph;
+}
+
+function renderLegacyRegistrations() {
+  const searchTerm = normalized(legacySearch.value);
+  const statusFilter = normalized(legacyStatusFilter.value);
+
+  const filtered = legacyRegistrations.filter(registration => {
+    const searchable = [
+      registration.registrationId,
+      registration.teamId,
+      registration.teamName,
+      registration.captainName,
+      registration.mobile,
+      registration.whatsapp,
+      registration.email,
+      registration.area,
+      registration.status,
+      registration.paymentStatus,
+      registration.paymentDone
+    ].map(normalized).join(" ");
+
+    const matchesSearch = !searchTerm || searchable.includes(searchTerm);
+
+    const status = normalized(registration.status);
+    const paymentStatus = normalized(registration.paymentStatus);
+    const paymentDone = normalized(registration.paymentDone);
+
+    let matchesStatus = !statusFilter;
+
+    if (statusFilter === "paid") {
+      matchesStatus =
+        paymentStatus === "paid" ||
+        paymentDone === "paid" ||
+        paymentDone === "yes";
+    } else if (statusFilter === "unpaid") {
+      matchesStatus =
+        paymentStatus === "unpaid" ||
+        paymentDone === "no" ||
+        paymentDone === "unpaid";
+    } else if (statusFilter) {
+      matchesStatus =
+        status === statusFilter ||
+        (statusFilter === "on hold" && status === "hold");
+    }
+
+    return matchesSearch && matchesStatus;
+  });
+
+  updateLegacyStats(legacyRegistrations);
+  legacyList.replaceChildren();
+
+  if (filtered.length === 0) {
+    legacyList.className = "empty";
+    legacyList.textContent = legacyRegistrations.length
+      ? "Search/filter ke liye koi registration nahi mili."
+      : "Purane APL League database mein koi registration nahi mili.";
+    return;
+  }
+
+  legacyList.className = "";
+
+  filtered.forEach(registration => {
+    const card = document.createElement("article");
+    card.className = "registration-card";
+
+    const heading = document.createElement("h3");
+    heading.textContent = safeText(registration.teamName || "Unnamed Team");
+
+    const status = document.createElement("span");
+    status.className = "tag";
+
+    const statusValue = safeText(getLegacyStatus(registration));
+    status.textContent = "Registration: " + statusValue;
+
+    if (normalized(statusValue) === "pending") status.classList.add("pending");
+    if (normalized(statusValue) === "rejected") status.classList.add("rejected");
+
+    card.append(heading, status);
+
+    card.append(
+      createInfoLine("Registration ID", registration.registrationId),
+      createInfoLine("Team ID", registration.teamId),
+      createInfoLine("Captain", registration.captainName),
+      createInfoLine("Mobile", registration.mobile),
+      createInfoLine("WhatsApp", registration.whatsapp),
+      createInfoLine("Email", registration.email),
+      createInfoLine("Area", registration.area),
+      createInfoLine("Address", registration.address),
+      createInfoLine("Player Type", registration.playerType),
+      createInfoLine("Payment Status", registration.paymentStatus),
+      createInfoLine("Payment Details", registration.paymentDone),
+      createInfoLine("UPI", registration.upi)
+    );
+
+    legacyList.appendChild(card);
+  });
+
+  showLegacyMessage(
+    `Purane APL database se ${legacyRegistrations.length} registrations mili. ` +
+    `Is waqt ${filtered.length} result dikh rahe hain.`
+  );
+}
+
+async function loadLegacyRegistrations() {
+  refreshLegacyBtn.disabled = true;
+  legacyList.className = "empty";
+  legacyList.textContent = "Purane APL League database se registrations load ho rahi hain...";
+  showLegacyMessage("Loading registrations...");
+
+  try {
+    // IMPORTANT: Read from the old APL League project, not Platform db.
+    const snapshot = await getDocs(collection(legacyDb, "registrations"));
+
+    legacyRegistrations = snapshot.docs.map(item => ({
+      id: item.id,
+      ...item.data()
+    }));
+
+    // Newest registrations first when a Firestore timestamp exists.
+    legacyRegistrations.sort((a, b) => {
+      const timeA = a.createdAt?.toMillis?.() || 0;
+      const timeB = b.createdAt?.toMillis?.() || 0;
+      return timeB - timeA;
+    });
+
+    renderLegacyRegistrations();
+  } catch (error) {
+    console.error("Legacy registrations could not load:", error);
+
+    legacyList.className = "empty";
+    legacyList.textContent =
+      "APL League registrations load nahi hui.\n" +
+      "Firebase rules, network aur legacyDb configuration check karein.";
+
+    showLegacyMessage(
+      "Error: " + error.message +
+      "\nData delete ya migrate nahi kiya gaya hai.",
+      true
+    );
+  } finally {
+    refreshLegacyBtn.disabled = false;
+  }
+}
+
+legacySearch.addEventListener("input", renderLegacyRegistrations);
+legacyStatusFilter.addEventListener("change", renderLegacyRegistrations);
+refreshLegacyBtn.addEventListener("click", loadLegacyRegistrations);
+
+/* ---------------- ADMIN LOGIN ---------------- */
+
 onAuthStateChanged(auth, async user => {
   if (!user) {
     location.href = "login.html";
     return;
   }
 
-  await loadTournaments();
+  await Promise.all([
+    loadTournaments(),
+    loadLegacyRegistrations()
+  ]);
 });
