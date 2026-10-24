@@ -10,11 +10,12 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-/* =========================================
-   APL LIVE SCORING — COMPLETE REPLACEMENT
-   Tournament data: apl-tournament-platform
-   Registered players: ajay-premier-league-apl
-========================================= */
+/*
+ * APL LIVE SCORING
+ * - Existing tournaments and matches are preserved.
+ * - No registrations or matches are deleted.
+ * - Ball-by-ball scoring, undo, player selection and score saving.
+ */
 
 const $ = (id) => document.getElementById(id);
 
@@ -32,867 +33,1264 @@ const matchId =
   localStorage.getItem("aplMatchId") ||
   sessionStorage.getItem("aplMatchId");
 
-const rosterFields = [
+const state = {
+  match: null,
+  teams: [],
+  players: [],
+  innings: [],
+  inningsIndex: 0,
+  undo: [],
+  saving: false,
+  saveQueue: Promise.resolve(),
+  initialized: false
+};
+
+const PLAYER_FIELDS = [
   "captainName",
   ...Array.from({ length: 14 }, (_, i) => `player${i + 2}`)
 ];
 
-let matchData = {};
-let teams = [];
-let players = [];
-let innings = [];
-let inningsIndex = 0;
-let striker = "";
-let nonStriker = "";
-let bowler = "";
-let undoHistory = [];
-let loadingFinished = false;
-
-const status = (message) => {
-  const el = $("matchInfo");
-  if (el) el.textContent = message;
-};
-
-function normalise(value) {
-  return String(value || "")
-    .normalize("NFKD")
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "");
+function clean(value) {
+  return String(value ?? "").trim();
 }
 
-function unique(list) {
-  const seen = new Set();
-  return list.filter((item) => {
-    const key = normalise(item);
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+function norm(value) {
+  return clean(value).toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-function getTeamName(team) {
-  return team?.teamName ||
-    team?.name ||
-    team?.nameOfTeam ||
-    team?.title ||
-    team?.team ||
-    "";
+function esc(value) {
+  return clean(value).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[c]);
 }
 
-function getTeamId(team, id) {
-  return String(
+function currentInnings() {
+  return state.innings[state.inningsIndex] || null;
+}
+
+function getTeamId(team) {
+  return clean(
     team?.teamId ||
-    team?.id ||
     team?.teamID ||
-    id ||
+    team?.id ||
+    team?.team ||
     ""
   );
 }
 
-function ensurePlayerSelectors() {
-  let section = $("registeredPlayerSelectors");
+function getTeamName(team) {
+  return clean(
+    team?.teamName ||
+    team?.name ||
+    team?.team ||
+    team?.nameOfTeam ||
+    ""
+  );
+}
 
-  if (!section) {
-    section = document.createElement("section");
-    section.id = "registeredPlayerSelectors";
-    section.style.cssText =
-      "padding:16px;margin:16px 0;border:1px solid #ccc;border-radius:12px;background:#fff;color:#111";
+function getTeamFromMatch(match, side) {
+  const upper = side.toUpperCase();
 
-    const heading = document.createElement("h3");
-    heading.textContent = "👥 Select Registered Players";
-    section.appendChild(heading);
+  const id =
+    match[`team${upper}Id`] ||
+    match[`team${upper}ID`] ||
+    match[`team${upper}`] ||
+    match[`team${side}Id`] ||
+    "";
 
-    const anchor =
-      $("strikerRuns")?.closest("section") ||
-      $("battingTeam")?.parentElement ||
-      document.querySelector("main") ||
-      document.body;
+  const name =
+    match[`team${upper}Name`] ||
+    match[`team${side}Name`] ||
+    (typeof match[`team${upper}`] === "string"
+      ? match[`team${upper}`]
+      : "") ||
+    "";
 
-    anchor.parentNode.insertBefore(section, anchor.nextSibling);
-  }
-
-  const fields = [
-    ["strikerSelect", "⭐ Striker"],
-    ["nonStrikerSelect", "Non-Striker"],
-    ["bowlerSelect", "🎯 Current Bowler"]
-  ];
-
-  for (const [id, labelText] of fields) {
-    if ($(id)) continue;
-
-    const label = document.createElement("label");
-    label.htmlFor = id;
-    label.textContent = labelText;
-    label.style.cssText = "display:block;margin:12px 0 5px;font-weight:bold";
-
-    const select = document.createElement("select");
-    select.id = id;
-    select.style.cssText =
-      "display:block;width:100%;padding:10px;border:1px solid #999;border-radius:8px";
-
-    label.appendChild(document.createElement("span"));
-    section.appendChild(label);
-    section.appendChild(select);
-  }
-
-  let apply = $("applyPlayersBtn");
-  if (!apply) {
-    apply = document.createElement("button");
-    apply.id = "applyPlayersBtn";
-    apply.type = "button";
-    apply.textContent = "Apply Players";
-    apply.style.cssText =
-      "margin-top:12px;padding:10px 16px;cursor:pointer";
-    section.appendChild(apply);
-  }
-
-  apply.onclick = () => {
-    striker = $("strikerSelect")?.value || "";
-    nonStriker = $("nonStrikerSelect")?.value || "";
-    bowler = $("bowlerSelect")?.value || "";
-
-    if (!striker || !nonStriker || !bowler) {
-      alert("Striker, Non-Striker aur Bowler select kijiye.");
-      return;
-    }
-
-    if (striker === nonStriker) {
-      alert("Striker aur Non-Striker alag players hone chahiye.");
-      return;
-    }
-
-    render();
-    saveScore(false);
+  return {
+    id: clean(id),
+    name: clean(name)
   };
 }
 
-function getCurrentInnings() {
-  return innings[inningsIndex];
-}
-
-function teamForCurrentInnings() {
-  const inn = getCurrentInnings();
-  if (!inn) return null;
-
-  const teamId = String(inn.battingTeamId || "");
-  const teamName = String(inn.battingTeamName || "");
-
-  return teams.find((t) =>
-    (teamId && t.id === teamId) ||
-    (teamName && normalise(t.name) === normalise(teamName))
-  ) || null;
-}
-
-function fieldingTeamForCurrentInnings() {
-  const inn = getCurrentInnings();
-  if (!inn) return null;
-
-  const teamId = String(inn.bowlingTeamId || "");
-  const teamName = String(inn.bowlingTeamName || "");
-
-  return teams.find((t) =>
-    (teamId && t.id === teamId) ||
-    (teamName && normalise(t.name) === normalise(teamName))
-  ) || null;
-}
-
-function playersForTeam(team) {
-  if (!team) return [];
-
-  const teamName = normalise(team.name);
-  const teamId = String(team.id || "");
-
-  return unique(players
-    .filter((p) => {
-      const sameId =
-        teamId &&
-        [p.teamId, p.registrationTeamId, p.registeredTeamId, p.aplTeamId]
-          .some((id) => id && String(id) === teamId);
-
-      const sameName =
-        teamName &&
-        [p.teamName, p.registeredTeamName, p.registrationTeamName]
-          .some((name) => name && normalise(name) === teamName);
-
-      return sameId || sameName;
-    })
-    .map((p) => p.name));
-}
-
-async function loadTeams() {
-  const snap = await getDocs(
-    collection(db, "tournaments", tournamentId, "teams")
+function teamMatches(player, team) {
+  const playerTeamId = norm(
+    player.teamId ||
+    player.teamID ||
+    player.registeredTeamId ||
+    player.team ||
+    ""
   );
 
-  teams = snap.docs.map((d) => {
-    const data = d.data();
-    return {
-      ...data,
-      id: d.id,
-      name: getTeamName(data) || d.id
-    };
-  });
+  const playerTeamName = norm(
+    player.teamName ||
+    player.registeredTeamName ||
+    player.team ||
+    ""
+  );
 
-  return teams;
-}
-
-function addRosterPlayers(data, docId) {
-  const teamName =
-    data.teamName ||
-    data.registeredTeamName ||
-    data.registrationTeamName ||
-    data.team ||
-    "";
-
-  const teamId =
-    data.teamId ||
-    data.registrationTeamId ||
-    data.registeredTeamId ||
-    data.aplTeamId ||
-    "";
-
-  for (const field of rosterFields) {
-    const name = String(data[field] || "").trim();
-
-    if (!name) continue;
-
-    players.push({
-      name,
-      teamName,
-      teamId: String(teamId),
-      registrationTeamId: String(data.registrationTeamId || ""),
-      registeredTeamId: String(data.registeredTeamId || ""),
-      aplTeamId: String(data.aplTeamId || ""),
-      sourceDocumentId: docId
-    });
-  }
-
-  // Also support documents that store one player per document.
-  const singleName =
-    data.playerName ||
-    data.fullName ||
-    data.name ||
-    "";
-
-  if (singleName) {
-    players.push({
-      name: String(singleName).trim(),
-      teamName,
-      teamId: String(teamId),
-      registrationTeamId: String(data.registrationTeamId || ""),
-      registeredTeamId: String(data.registeredTeamId || ""),
-      aplTeamId: String(data.aplTeamId || ""),
-      sourceDocumentId: docId
-    });
-  }
-}
-
-async function loadRegisteredPlayers() {
-  players = [];
-
-  // APL League registrations are stored in the LEGACY Firebase project.
-  const snap = await getDocs(collection(legacyDb, "players"));
-
-  snap.forEach((d) => addRosterPlayers(d.data(), d.id));
-
-  // Support registrations saved directly in the Tournament Platform too.
-  try {
-    const tournamentPlayers = await getDocs(
-      collection(db, "tournaments", tournamentId, "players")
-    );
-
-    tournamentPlayers.forEach((d) => addRosterPlayers(d.data(), d.id));
-  } catch (error) {
-    console.warn("Tournament players collection unavailable:", error.message);
-  }
-
-  players = players.filter((p) => p.name);
-  players = players.filter((p, index, arr) =>
-    arr.findIndex((x) =>
-      normalise(x.name) === normalise(p.name) &&
-      normalise(x.teamName) === normalise(p.teamName)
-    ) === index
+  return (
+    (team.id && playerTeamId && playerTeamId === norm(team.id)) ||
+    (team.name && playerTeamName &&
+      playerTeamName === norm(team.name))
   );
 }
 
-function makeSelectOptions(select, list, placeholder, selected) {
-  if (!select) return;
+function setMessage(message, isError = false) {
+  const el = $("playerMessage") || $("playerLoadMessage");
 
-  select.replaceChildren();
-
-  const first = document.createElement("option");
-  first.value = "";
-  first.textContent = placeholder;
-  select.appendChild(first);
-
-  list.forEach((name) => {
-    const option = document.createElement("option");
-    option.value = name;
-    option.textContent = name;
-    if (name === selected) option.selected = true;
-    select.appendChild(option);
-  });
-
-  if (selected && !list.includes(selected)) {
-    const option = document.createElement("option");
-    option.value = selected;
-    option.textContent = selected;
-    option.selected = true;
-    select.appendChild(option);
+  if (el) {
+    el.textContent = message;
+    el.style.color = isError ? "#dc2626" : "";
   }
+
+  console[isError ? "error" : "log"](message);
 }
 
-function refreshPlayerDropdowns() {
-  ensurePlayerSelectors();
+function setMatchHeading(message) {
+  const info = $("matchInfo");
+  if (!info) return;
 
-  const batTeam = teamForCurrentInnings();
-  const bowlTeam = fieldingTeamForCurrentInnings();
-
-  const batters = playersForTeam(batTeam);
-  const bowlers = playersForTeam(bowlTeam);
-
-  makeSelectOptions(
-    $("strikerSelect"),
-    batters,
-    batters.length ? "Select striker" : "No registered players found for batting team",
-    striker
-  );
-
-  makeSelectOptions(
-    $("nonStrikerSelect"),
-    batters,
-    batters.length ? "Select non-striker" : "No registered players found for batting team",
-    nonStriker
-  );
-
-  makeSelectOptions(
-    $("bowlerSelect"),
-    bowlers,
-    bowlers.length ? "Select bowler" : "No registered players found for bowling team",
-    bowler
-  );
-
-  const section = $("registeredPlayerSelectors");
-  if (section) {
-    let message = $("playerLoadMessage");
-
-    if (!message) {
-      message = document.createElement("p");
-      message.id = "playerLoadMessage";
-      section.appendChild(message);
-    }
-
-    message.textContent = players.length
-      ? `Registered players found: ${players.length}. Batting team: ${batTeam?.name || "not identified"}; Bowling team: ${bowlTeam?.name || "not identified"}.`
-      : "APL League ke players nahi mile. Firebase project, collection aur permissions check karein.";
-  }
+  // Do not replace matchInfo.textContent: it contains other IDs.
+  const heading = info.querySelector("h2");
+  if (heading) heading.textContent = message;
 }
 
-function makeNewInnings(battingTeam, bowlingTeam) {
+function oversText(balls) {
+  const n = Math.max(0, Number(balls) || 0);
+  return `${Math.floor(n / 6)}.${n % 6}`;
+}
+
+function strikeRate(runs, balls) {
+  return balls > 0 ? ((runs / balls) * 100).toFixed(2) : "0.00";
+}
+
+function economy(runs, balls) {
+  return balls > 0 ? ((runs * 6) / balls).toFixed(2) : "0.00";
+}
+
+function makeInnings(team, index) {
   return {
-    battingTeamId: battingTeam?.id || "",
-    battingTeamName: battingTeam?.name || "Team A",
-    bowlingTeamId: bowlingTeam?.id || "",
-    bowlingTeamName: bowlingTeam?.name || "Team B",
+    inningsNumber: index + 1,
+    battingTeamId: team.id || "",
+    battingTeamName: team.name || "",
     runs: 0,
     wickets: 0,
     legalBalls: 0,
+    extras: {
+      wides: 0,
+      noBalls: 0,
+      byes: 0,
+      legByes: 0,
+      penalty: 0
+    },
     batters: {},
     bowlers: {},
     deliveries: [],
     fallOfWickets: [],
     yetToBat: [],
+    strikerId: "",
+    nonStrikerId: "",
+    bowlerId: "",
     completed: false
   };
 }
 
-function ensurePlayerStats(inn) {
-  if (!inn.batters) inn.batters = {};
-  if (!inn.bowlers) inn.bowlers = {};
-  if (!inn.deliveries) inn.deliveries = [];
-  if (!inn.fallOfWickets) inn.fallOfWickets = [];
+function ensureInnings(inn) {
+  if (!inn.extras) {
+    inn.extras = {
+      wides: 0,
+      noBalls: 0,
+      byes: 0,
+      legByes: 0,
+      penalty: 0
+    };
+  }
 
-  [striker, nonStriker].filter(Boolean).forEach((name) => {
-    if (!inn.batters[name]) {
-      inn.batters[name] = {
-        runs: 0, balls: 0, fours: 0, sixes: 0, out: false, dismissal: ""
-      };
+  for (const key of ["wides", "noBalls", "byes", "legByes", "penalty"]) {
+    if (!Number.isFinite(Number(inn.extras[key]))) {
+      inn.extras[key] = 0;
+    }
+  }
+
+  inn.runs = Number(inn.runs) || 0;
+  inn.wickets = Number(inn.wickets) || 0;
+  inn.legalBalls = Number(inn.legalBalls) || 0;
+  inn.batters ||= {};
+  inn.bowlers ||= {};
+  inn.deliveries ||= [];
+  inn.fallOfWickets ||= [];
+  inn.yetToBat ||= [];
+  return inn;
+}
+
+function ensureBatter(inn, id, name) {
+  const key = clean(id || name);
+  if (!key) return null;
+
+  if (!inn.batters[key]) {
+    inn.batters[key] = {
+      playerId: key,
+      name: clean(name) || key,
+      runs: 0,
+      balls: 0,
+      fours: 0,
+      sixes: 0,
+      out: false,
+      dismissal: ""
+    };
+  }
+
+  return inn.batters[key];
+}
+
+function ensureBowler(inn, id, name) {
+  const key = clean(id || name);
+  if (!key) return null;
+
+  if (!inn.bowlers[key]) {
+    inn.bowlers[key] = {
+      playerId: key,
+      name: clean(name) || key,
+      runs: 0,
+      wickets: 0,
+      legalBalls: 0,
+      wides: 0,
+      noBalls: 0
+    };
+  }
+
+  return inn.bowlers[key];
+}
+
+function getSelectedPlayer(selectId) {
+  const select = $(selectId);
+  if (!select || !select.value) return null;
+
+  return state.players.find(
+    (p) => p.id === select.value
+  ) || null;
+}
+
+function fillSelect(selectId, players, selectedValue = "") {
+  const select = $(selectId);
+  if (!select) return;
+
+  const previous = selectedValue || select.value;
+
+  select.innerHTML =
+    '<option value="">-- Select Player --</option>' +
+    players.map((p) =>
+      `<option value="${esc(p.id)}">${esc(p.name)}</option>`
+    ).join("");
+
+  if (players.some((p) => p.id === previous)) {
+    select.value = previous;
+  }
+}
+
+function getBattingTeam() {
+  const inn = currentInnings();
+  if (!inn) return null;
+
+  return state.teams.find(
+    (t) =>
+      (inn.battingTeamId &&
+        norm(getTeamId(t)) === norm(inn.battingTeamId)) ||
+      (inn.battingTeamName &&
+        norm(getTeamName(t)) === norm(inn.battingTeamName))
+  ) || null;
+}
+
+function getBowlingTeam() {
+  const inn = currentInnings();
+  if (!inn) return null;
+
+  const batting = getBattingTeam();
+
+  return state.teams.find(
+    (t) => t !== batting
+  ) || null;
+}
+
+function refreshPlayerDropdowns() {
+  const battingTeam = getBattingTeam();
+  const bowlingTeam = getBowlingTeam();
+
+  const battingPlayers = state.players.filter(
+    (p) => battingTeam && teamMatches(p, {
+      id: getTeamId(battingTeam),
+      name: getTeamName(battingTeam)
+    })
+  );
+
+  const bowlingPlayers = state.players.filter(
+    (p) => bowlingTeam && teamMatches(p, {
+      id: getTeamId(bowlingTeam),
+      name: getTeamName(bowlingTeam)
+    })
+  );
+
+  // Keep selections where possible.
+  const strikerValue = $("strikerSelect")?.value || "";
+  const nonStrikerValue = $("nonStrikerSelect")?.value || "";
+  const bowlerValue = $("bowlerSelect")?.value || "";
+
+  fillSelect("strikerSelect", battingPlayers, strikerValue);
+  fillSelect("nonStrikerSelect", battingPlayers, nonStrikerValue);
+  fillSelect("bowlerSelect", bowlingPlayers, bowlerValue);
+
+  if (!battingPlayers.length || !bowlingPlayers.length) {
+    setMessage(
+      "Players match nahi hue. Registration records mein team name aur player name check karein.",
+      true
+    );
+  }
+}
+
+function addPlayer(name, teamName, teamId, sourceId = "") {
+  name = clean(name);
+  if (!name) return;
+
+  const team = state.teams.find((t) =>
+    (teamId && norm(getTeamId(t)) === norm(teamId)) ||
+    (teamName && norm(getTeamName(t)) === norm(teamName))
+  );
+
+  const resolvedTeamId = getTeamId(team) || clean(teamId);
+  const resolvedTeamName = getTeamName(team) || clean(teamName);
+
+  const existing = state.players.find((p) =>
+    norm(p.name) === norm(name) &&
+    (
+      norm(p.teamId) === norm(resolvedTeamId) ||
+      norm(p.teamName) === norm(resolvedTeamName)
+    )
+  );
+
+  if (existing) return;
+
+  const id = sourceId
+    ? `${sourceId}_${norm(name)}`
+    : `${norm(resolvedTeamId || resolvedTeamName)}_${norm(name)}`;
+
+  state.players.push({
+    id,
+    name,
+    teamId: resolvedTeamId,
+    teamName: resolvedTeamName
+  });
+}
+
+function readRegistration(data, documentId) {
+  const teamName = clean(
+    data.teamName ||
+    data.registeredTeamName ||
+    data.team ||
+    data.nameOfTeam ||
+    data.clubName ||
+    ""
+  );
+
+  const teamId = clean(
+    data.teamId ||
+    data.registeredTeamId ||
+    data.teamID ||
+    ""
+  );
+
+  // Registrations can store an array of player objects.
+  for (const field of [
+    "players",
+    "playerList",
+    "teamPlayers",
+    "registeredPlayers"
+  ]) {
+    if (Array.isArray(data[field])) {
+      data[field].forEach((item) => {
+        if (typeof item === "string") {
+          addPlayer(item, teamName, teamId, documentId);
+        } else if (item && typeof item === "object") {
+          addPlayer(
+            item.playerName || item.fullName || item.name,
+            item.teamName || teamName,
+            item.teamId || teamId,
+            documentId
+          );
+        }
+      });
+    }
+  }
+
+  // Legacy registration documents may use player1...player15.
+  PLAYER_FIELDS.forEach((field) => {
+    const value = data[field];
+
+    if (typeof value === "string") {
+      addPlayer(value, teamName, teamId, documentId);
+    } else if (value && typeof value === "object") {
+      addPlayer(
+        value.playerName || value.fullName || value.name,
+        value.teamName || teamName,
+        value.teamId || teamId,
+        documentId
+      );
     }
   });
 
-  if (bowler && !inn.bowlers[bowler]) {
-    inn.bowlers[bowler] = {
-      runs: 0, wickets: 0, legalBalls: 0, wides: 0, noBalls: 0, maidens: 0
-    };
-  }
+  // Single-player registration document.
+  addPlayer(
+    data.playerName || data.fullName || data.name,
+    teamName,
+    teamId,
+    documentId
+  );
 }
 
-function snapshot() {
-  undoHistory.push(JSON.stringify({
-    innings,
-    inningsIndex,
-    striker,
-    nonStriker,
-    bowler
+async function loadTeams() {
+  const snapshot = await getDocs(
+    collection(db, "tournaments", tournamentId, "teams")
+  );
+
+  state.teams = snapshot.docs.map((d) => ({
+    id: d.id,
+    ...d.data()
   }));
 
-  if (undoHistory.length > 30) undoHistory.shift();
+  return state.teams;
 }
 
-function oversText(balls) {
-  return `${Math.floor(balls / 6)}.${balls % 6}`;
-}
+async function loadRegisteredPlayers() {
+  state.players = [];
 
-function strikeRate(runs, balls) {
-  return balls ? (runs * 100 / balls).toFixed(2) : "0.00";
-}
+  // Tournament-specific player documents.
+  try {
+    const snapshot = await getDocs(
+      collection(db, "tournaments", tournamentId, "players")
+    );
 
-function economy(runs, balls) {
-  return balls ? (runs * 6 / balls).toFixed(2) : "0.00";
-}
+    snapshot.forEach((d) => {
+      const data = d.data();
+      const teamName = clean(
+        data.teamName || data.team || data.registeredTeamName
+      );
+      const teamId = clean(
+        data.teamId || data.registeredTeamId
+      );
 
-function updateText(id, value) {
-  const el = $(id);
-  if (el) el.textContent = value;
-}
+      addPlayer(
+        data.playerName || data.fullName || data.name,
+        teamName,
+        teamId,
+        d.id
+      );
 
-function render() {
-  const inn = getCurrentInnings();
-  if (!inn) return;
+      PLAYER_FIELDS.forEach((field) => {
+        const value = data[field];
+        if (typeof value === "string") {
+          addPlayer(value, teamName, teamId, d.id);
+        }
+      });
+    });
+  } catch (error) {
+    console.warn("Tournament players collection not available:", error);
+  }
 
-  ensurePlayerStats(inn);
+  // Legacy registrations: preserve the existing source database.
+  try {
+    const snapshot = await getDocs(
+      collection(legacyDb, "registrations")
+    );
 
-  updateText("matchId", matchId || "Match ID missing");
-  updateText("battingTeam", inn.battingTeamName || "Team A");
-  updateText("score", `${inn.runs}/${inn.wickets}`);
-  updateText("overs", `${oversText(inn.legalBalls)} Overs`);
-  updateText(
-    "crr",
-    `CRR: ${inn.legalBalls ? (inn.runs * 6 / inn.legalBalls).toFixed(2) : "0.00"}`
-  );
+    snapshot.forEach((d) => readRegistration(d.data(), d.id));
+  } catch (error) {
+    console.warn("Legacy registrations could not be loaded:", error);
+  }
 
-  const batter1 = inn.batters[striker] || {};
-  const batter2 = inn.batters[nonStriker] || {};
-  const bowl = inn.bowlers[bowler] || {};
+  // Some older projects may also have a players collection.
+  try {
+    const snapshot = await getDocs(
+      collection(legacyDb, "players")
+    );
 
-  updateText("strikerRuns", batter1.runs || 0);
-  updateText("strikerBalls", batter1.balls || 0);
-  updateText("strikerSR", strikeRate(batter1.runs || 0, batter1.balls || 0));
-
-  updateText("nonStrikerRuns", batter2.runs || 0);
-  updateText("nonStrikerBalls", batter2.balls || 0);
-  updateText("nonStrikerSR", strikeRate(batter2.runs || 0, batter2.balls || 0));
-
-  updateText("bowlerName", bowler || "Select bowler");
-  updateText("bowlerOvers", oversText(bowl.legalBalls || 0));
-  updateText("bowlerRuns", bowl.runs || 0);
-  updateText("bowlerWickets", bowl.wickets || 0);
-
-  updateText(
-    "currentOver",
-    (inn.deliveries || []).slice(-6).map((d) => d.label).join(" ") || "-"
-  );
+    snapshot.forEach((d) => readRegistration(d.data(), d.id));
+  } catch (error) {
+    console.warn("Legacy players collection not available:", error);
+  }
 
   refreshPlayerDropdowns();
-  renderScorecardTables(inn);
+
+  if (state.players.length) {
+    setMessage(`${state.players.length} registered player(s) loaded.`);
+  } else {
+    setMessage(
+      "Players nahi mile. Firebase rules aur registration field names check karein.",
+      true
+    );
+  }
 }
 
-function renderScorecardTables(inn) {
-  const bats = Object.entries(inn.batters || {});
-  const bowls = Object.entries(inn.bowlers || {});
+function normalizeExistingInnings(raw, index) {
+  const inn = ensureInnings({
+    ...makeInnings(
+      {
+        id: raw.battingTeamId || "",
+        name: raw.battingTeamName || ""
+      },
+      index
+    ),
+    ...raw
+  });
 
-  let battingTable = $("battingScorecardTable");
-  let bowlingTable = $("bowlingScorecardTable");
-
-  if (!battingTable) {
-    const heading = [...document.querySelectorAll("h2,h3")]
-      .find((e) => /batting scorecard/i.test(e.textContent));
-
-    if (heading) {
-      battingTable = document.createElement("table");
-      battingTable.id = "battingScorecardTable";
-      heading.insertAdjacentElement("afterend", battingTable);
-    }
-  }
-
-  if (!bowlingTable) {
-    const heading = [...document.querySelectorAll("h2,h3")]
-      .find((e) => /bowling scorecard/i.test(e.textContent));
-
-    if (heading) {
-      bowlingTable = document.createElement("table");
-      bowlingTable.id = "bowlingScorecardTable";
-      heading.insertAdjacentElement("afterend", bowlingTable);
-    }
-  }
-
-  if (battingTable) {
-    battingTable.innerHTML =
-      "<thead><tr><th>Batter</th><th>Dismissal</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th></tr></thead>";
-
-    const body = document.createElement("tbody");
-
-    bats.forEach(([name, s]) => {
-      const row = document.createElement("tr");
-      [
-        name,
-        s.dismissal || (s.out ? "Out" : "Not out"),
-        s.runs || 0,
-        s.balls || 0,
-        s.fours || 0,
-        s.sixes || 0,
-        strikeRate(s.runs || 0, s.balls || 0)
-      ].forEach((v) => {
-        const cell = document.createElement("td");
-        cell.textContent = v;
-        row.appendChild(cell);
-      });
-      body.appendChild(row);
-    });
-
-    battingTable.appendChild(body);
-  }
-
-  if (bowlingTable) {
-    bowlingTable.innerHTML =
-      "<thead><tr><th>Bowler</th><th>O</th><th>R</th><th>W</th><th>Wd</th><th>NB</th><th>Eco</th></tr></thead>";
-
-    const body = document.createElement("tbody");
-
-    bowls.forEach(([name, s]) => {
-      const row = document.createElement("tr");
-      [
-        name,
-        oversText(s.legalBalls || 0),
-        s.runs || 0,
-        s.wickets || 0,
-        s.wides || 0,
-        s.noBalls || 0,
-        economy(s.runs || 0, s.legalBalls || 0)
-      ].forEach((v) => {
-        const cell = document.createElement("td");
-        cell.textContent = v;
-        row.appendChild(cell);
-      });
-      body.appendChild(row);
-    });
-
-    bowlingTable.appendChild(body);
-  }
+  if (!Array.isArray(inn.deliveries)) inn.deliveries = [];
+  return inn;
 }
 
 async function loadMatch() {
   if (!tournamentId || !matchId) {
-    throw new Error("URL mein tournamentId ya matchId missing hai.");
-  }
-
-  const ref = doc(db, "tournaments", tournamentId, "matches", matchId);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) {
     throw new Error(
-      "Match document Firestore mein nahi mila: tournaments/" +
-      tournamentId + "/matches/" + matchId
+      "Tournament ID ya Match ID missing hai. Schedule se match open karein."
     );
   }
 
-  matchData = { ...snap.data(), id: snap.id };
+  localStorage.setItem("aplTournamentId", tournamentId);
+  localStorage.setItem("aplMatchId", matchId);
 
-  if (Array.isArray(matchData.innings) && matchData.innings.length) {
-    innings = matchData.innings;
-    inningsIndex = Math.min(
-      Number(matchData.currentInningsIndex || 0),
-      innings.length - 1
-    );
-  } else if (matchData.scorecard && Array.isArray(matchData.scorecard.innings)) {
-    innings = matchData.scorecard.innings;
-    inningsIndex = Number(matchData.scorecard.currentInningsIndex || 0);
-  } else {
-    const teamAId = String(
-      matchData.teamAId || matchData.team1Id ||
-      matchData.homeTeamId || matchData.battingTeamId || ""
-    );
-
-    const teamBId = String(
-      matchData.teamBId || matchData.team2Id ||
-      matchData.awayTeamId || matchData.bowlingTeamId || ""
-    );
-
-    const teamAName = matchData.teamAName || matchData.team1Name ||
-      matchData.homeTeamName || matchData.teamA || "Team A";
-
-    const teamBName = matchData.teamBName || matchData.team2Name ||
-      matchData.awayTeamName || matchData.teamB || "Team B";
-
-    const a = teams.find((t) => t.id === teamAId ||
-      normalise(t.name) === normalise(teamAName));
-
-    const b = teams.find((t) => t.id === teamBId ||
-      normalise(t.name) === normalise(teamBName));
-
-    innings = [makeNewInnings(
-      a || { id: teamAId, name: teamAName },
-      b || { id: teamBId, name: teamBName }
-    )];
-
-    inningsIndex = 0;
-  }
-
-  if (!innings.length) {
-    throw new Error("Match mein innings data nahi hai.");
-  }
-
-  status(
-    `${matchData.teamAName || matchData.team1Name || "APL Match"} — ${matchData.status || "Ready"}`
+  const matchRef = doc(
+    db,
+    "tournaments",
+    tournamentId,
+    "matches",
+    matchId
   );
 
-  const link = $("tournamentLink");
-  if (link) link.href = `./index.html?tournamentId=${encodeURIComponent(tournamentId)}`;
+  const snap = await getDoc(matchRef);
 
-  const schedule = $("scheduleLink");
-  if (schedule) schedule.href =
-    `./schedule.html?tournamentId=${encodeURIComponent(tournamentId)}`;
-
-  const results = $("resultsLink");
-  if (results) results.href =
-    `./results.html?tournamentId=${encodeURIComponent(tournamentId)}`;
-
-  const points = $("pointsLink");
-  if (points) points.href =
-    `./points-table.html?tournamentId=${encodeURIComponent(tournamentId)}`;
-}
-
-async function saveScore(showMessage = true) {
-  if (!tournamentId || !matchId || !innings.length) return;
-
-  try {
-    const ref = doc(db, "tournaments", tournamentId, "matches", matchId);
-
-    await updateDoc(ref, {
-      innings,
-      currentInningsIndex: inningsIndex,
-      scorecard: {
-        innings,
-        currentInningsIndex: inningsIndex
-      },
-      scoreA: innings[0]?.runs || 0,
-      scoreB: innings[1]?.runs || 0,
-      status: getCurrentInnings()?.completed ? "Completed" : "Live",
-      updatedAt: serverTimestamp()
-    });
-
-    if (showMessage) alert("Score successfully saved.");
-  } catch (error) {
-    console.error("Score save failed:", error);
-    if (showMessage) {
-      alert("Score save nahi hua: " + error.message);
-    }
-  }
-}
-
-function recordBall(runs = 0, type = "normal") {
-  const inn = getCurrentInnings();
-
-  if (!inn || inn.completed) {
-    alert("Innings complete hai ya load nahi hui.");
-    return;
+  if (!snap.exists()) {
+    throw new Error("Match nahi mila. Match ID aur tournament check karein.");
   }
 
-  if (!striker || !nonStriker || !bowler) {
-    alert("Pehle striker, non-striker aur bowler select kijiye.");
-    return;
+  state.match = {
+    id: snap.id,
+    ...snap.data()
+  };
+
+  const match = state.match;
+  const teamA = getTeamFromMatch(match, "A");
+  const teamB = getTeamFromMatch(match, "B");
+
+  // Resolve stored match team references against tournament teams.
+  const resolvedA = state.teams.find((t) =>
+    (teamA.id && norm(getTeamId(t)) === norm(teamA.id)) ||
+    (teamA.name && norm(getTeamName(t)) === norm(teamA.name))
+  );
+
+  const resolvedB = state.teams.find((t) =>
+    (teamB.id && norm(getTeamId(t)) === norm(teamB.id)) ||
+    (teamB.name && norm(getTeamName(t)) === norm(teamB.name))
+  );
+
+  const fallbackA = {
+    id: teamA.id || getTeamId(resolvedA),
+    name: teamA.name || getTeamName(resolvedA)
+  };
+
+  const fallbackB = {
+    id: teamB.id || getTeamId(resolvedB),
+    name: teamB.name || getTeamName(resolvedB)
+  };
+
+  const inningsData =
+    match.innings ||
+    match.scorecard?.innings ||
+    [];
+
+  if (Array.isArray(inningsData) && inningsData.length) {
+    state.innings = inningsData.map(normalizeExistingInnings);
+  } else {
+    state.innings = [
+      makeInnings(fallbackA, 0)
+    ];
   }
 
-  snapshot();
-  ensurePlayerStats(inn);
+  state.inningsIndex = Math.min(
+    Number(match.currentInningsIndex) || 0,
+    Math.max(0, state.innings.length - 1)
+  );
 
-  const bat = inn.batters[striker];
-  const bowl = inn.bowlers[bowler];
+  // Keep current innings selected; no existing data is reset.
+  state.innings.forEach(ensureInnings);
 
-  const isWide = type === "wide";
-  const isNoBall = type === "noball";
-  const isBye = type === "bye";
-  const isLegBye = type === "legbye";
-  const legal = !isWide && !isNoBall;
-  const batterRuns = (isWide || isNoBall || isBye || isLegBye) ? 0 : runs;
+  if ($("matchId")) $("matchId").textContent = `Match ID: ${matchId}`;
 
-  let totalRuns = runs;
+  setMatchHeading(
+    `${fallbackA.name || "Team A"} vs ${fallbackB.name || "Team B"}`
+  );
 
-  if (isWide) {
-    totalRuns = Math.max(1, runs);
-    bowl.wides += 1;
+  if ($("inningsNumber")) {
+    $("inningsNumber").textContent =
+      `Innings ${state.inningsIndex + 1}`;
   }
 
-  if (isNoBall) {
-    totalRuns = Math.max(1, runs);
-    bowl.noBalls += 1;
-  }
+  const linkIds = [
+    "tournamentLink",
+    "scheduleLink",
+    "resultsLink",
+    "pointsLink"
+  ];
 
-  if (isBye || isLegBye) {
-    totalRuns = Math.max(1, runs);
-  }
+  linkIds.forEach((id) => {
+    const el = $(id);
+    if (!el) return;
 
-  inn.runs += totalRuns;
-  bowl.runs += totalRuns;
-
-  if (!isWide && !isNoBall && !isBye && !isLegBye) {
-    bat.runs += batterRuns;
-    bat.balls += 1;
-    if (batterRuns === 4) bat.fours += 1;
-    if (batterRuns === 6) bat.sixes += 1;
-  }
-
-  if (legal) {
-    inn.legalBalls += 1;
-    bowl.legalBalls += 1;
-  }
-
-  const label = isWide ? `Wd${totalRuns}` :
-    isNoBall ? `Nb${totalRuns}` :
-    isBye ? `B${totalRuns}` :
-    isLegBye ? `Lb${totalRuns}` : String(runs);
-
-  inn.deliveries.push({ label, runs: totalRuns, type, striker, bowler });
-
-  if (legal && totalRuns % 2 === 1) {
-    [striker, nonStriker] = [nonStriker, striker];
-  }
-
-  if (inn.legalBalls > 0 && inn.legalBalls % 6 === 0) {
-    [striker, nonStriker] = [nonStriker, striker];
-  }
+    const url = new URL(el.getAttribute("href") || "#", location.href);
+    url.searchParams.set("tournamentId", tournamentId);
+    el.href = url.toString();
+  });
 
   render();
 }
 
-function recordWicket() {
-  const inn = getCurrentInnings();
+function pushUndo() {
+  // Keep a bounded history to avoid unbounded memory use.
+  state.undo.push(JSON.stringify({
+    innings: state.innings,
+    inningsIndex: state.inningsIndex
+  }));
+
+  if (state.undo.length > 100) state.undo.shift();
+}
+
+function swapStrike(inn) {
+  const old = inn.strikerId;
+  inn.strikerId = inn.nonStrikerId;
+  inn.nonStrikerId = old;
+}
+
+function recordBall(runs = 0, type = "normal") {
+  const inn = currentInnings();
   if (!inn || inn.completed) return;
 
-  if (!striker || !bowler) {
-    alert("Pehle striker aur bowler select kijiye.");
+  const striker = getSelectedPlayer("strikerSelect");
+  const nonStriker = getSelectedPlayer("nonStrikerSelect");
+  const bowler = getSelectedPlayer("bowlerSelect");
+
+  if (!striker || !nonStriker || !bowler) {
+    setMessage("Pehle striker, non-striker aur bowler select karein.", true);
     return;
   }
 
-  snapshot();
-  ensurePlayerStats(inn);
+  if (striker.id === nonStriker.id) {
+    setMessage("Striker aur non-striker alag players hone chahiye.", true);
+    return;
+  }
 
-  inn.wickets += 1;
-  inn.legalBalls += 1;
-  inn.bowlers[bowler].legalBalls += 1;
-  inn.bowlers[bowler].wickets += 1;
+  pushUndo();
 
-  inn.batters[striker].balls += 1;
-  inn.batters[striker].out = true;
-  inn.batters[striker].dismissal = `b ${bowler}`;
+  inn.strikerId = striker.id;
+  inn.nonStrikerId = nonStriker.id;
+  inn.bowlerId = bowler.id;
+
+  const batter = ensureBatter(inn, striker.id, striker.name);
+  const bowlerStats = ensureBowler(inn, bowler.id, bowler.name);
+
+  runs = Math.max(0, Math.floor(Number(runs) || 0));
+
+  const delivery = {
+    runs: 0,
+    batterRuns: 0,
+    extras: 0,
+    extraType: "",
+    wicket: false,
+    legal: true,
+    strikerId: striker.id,
+    strikerName: striker.name,
+    bowlerId: bowler.id,
+    bowlerName: bowler.name,
+    timestamp: new Date().toISOString()
+  };
+
+  if (type === "wide") {
+    delivery.legal = false;
+    delivery.extraType = "wide";
+    delivery.extras = runs || 1;
+    delivery.runs = delivery.extras;
+
+    inn.extras.wides += delivery.extras;
+    bowlerStats.wides += delivery.extras;
+    bowlerStats.runs += delivery.runs;
+    inn.runs += delivery.runs;
+  } else if (type === "noball") {
+    delivery.legal = false;
+    delivery.extraType = "noBall";
+    delivery.extras = 1;
+    delivery.runs = delivery.extras + runs;
+
+    inn.extras.noBalls += 1;
+    bowlerStats.noBalls += 1;
+    bowlerStats.runs += delivery.runs;
+    inn.runs += delivery.runs;
+
+    if (runs > 0) {
+      batter.runs += runs;
+      delivery.batterRuns = runs;
+      if (runs === 4) batter.fours++;
+      if (runs === 6) batter.sixes++;
+    }
+
+    // No-ball counts as a ball faced, but not a legal ball.
+    batter.balls++;
+  } else if (type === "bye" || type === "legbye") {
+    delivery.extraType = type;
+    delivery.extras = runs || 1;
+    delivery.runs = delivery.extras;
+
+    if (type === "bye") inn.extras.byes += delivery.extras;
+    else inn.extras.legByes += delivery.extras;
+
+    inn.runs += delivery.runs;
+    bowlerStats.legalBalls++;
+    inn.legalBalls++;
+
+    // Byes/leg-byes do not count against the bowler.
+    batter.balls++;
+  } else {
+    delivery.runs = runs;
+    delivery.batterRuns = runs;
+
+    batter.runs += runs;
+    batter.balls++;
+    if (runs === 4) batter.fours++;
+    if (runs === 6) batter.sixes++;
+
+    inn.runs += runs;
+    bowlerStats.runs += runs;
+    bowlerStats.legalBalls++;
+    inn.legalBalls++;
+  }
+
+  // Change ends for odd completed runs.
+  if (delivery.runs % 2 === 1) swapStrike(inn);
+
+  // Over-end end change is applied after the sixth legal ball.
+  if (delivery.legal && inn.legalBalls > 0 && inn.legalBalls % 6 === 0) {
+    swapStrike(inn);
+  }
+
+  inn.deliveries.push(delivery);
+
+  const maxOvers = Number(state.match.overs || state.match.totalOvers || 0);
+  if (
+    (maxOvers > 0 && inn.legalBalls >= maxOvers * 6) ||
+    inn.wickets >= 10
+  ) {
+    inn.completed = true;
+  }
+
+  render();
+  queueSave();
+}
+
+function recordWicket() {
+  const inn = currentInnings();
+  if (!inn || inn.completed) return;
+
+  const striker = getSelectedPlayer("strikerSelect");
+  const nonStriker = getSelectedPlayer("nonStrikerSelect");
+  const bowler = getSelectedPlayer("bowlerSelect");
+
+  if (!striker || !bowler) {
+    setMessage("Wicket record karne se pehle striker aur bowler select karein.", true);
+    return;
+  }
+
+  pushUndo();
+
+  inn.strikerId = striker.id;
+  inn.nonStrikerId = nonStriker?.id || "";
+  inn.bowlerId = bowler.id;
+
+  const batter = ensureBatter(inn, striker.id, striker.name);
+  const bowlerStats = ensureBowler(inn, bowler.id, bowler.name);
+
+  inn.wickets++;
+  inn.legalBalls++;
+  bowlerStats.legalBalls++;
+  bowlerStats.wickets++;
+  batter.out = true;
+  batter.dismissal = "Wicket";
 
   inn.fallOfWickets.push({
     wicket: inn.wickets,
     score: inn.runs,
     overs: oversText(inn.legalBalls),
-    batter: striker
+    batter: striker.name
   });
 
-  inn.deliveries.push({ label: "W", type: "wicket", striker, bowler });
+  inn.deliveries.push({
+    runs: 0,
+    batterRuns: 0,
+    extras: 0,
+    extraType: "",
+    wicket: true,
+    legal: true,
+    dismissal: "Wicket",
+    strikerId: striker.id,
+    strikerName: striker.name,
+    bowlerId: bowler.id,
+    bowlerName: bowler.name,
+    timestamp: new Date().toISOString()
+  });
 
-  striker = "";
+  inn.strikerId = "";
+  if (inn.wickets >= 10) inn.completed = true;
+
+  if (inn.legalBalls > 0 && inn.legalBalls % 6 === 0) {
+    swapStrike(inn);
+  }
+
+  if ($("strikerSelect")) $("strikerSelect").value = "";
+
   render();
+  queueSave();
 }
 
-function bindButton(id, fn) {
+function undoLast() {
+  if (!state.undo.length) {
+    setMessage("Undo ke liye koi previous action nahi hai.");
+    return;
+  }
+
+  const previous = state.undo.pop();
+
+  try {
+    const parsed = JSON.parse(previous);
+    state.innings = parsed.innings;
+    state.inningsIndex = parsed.inningsIndex;
+    render();
+    queueSave();
+    setMessage("Last scoring action undo ho gaya.");
+  } catch (error) {
+    console.error(error);
+    setMessage("Undo nahi ho saka.", true);
+  }
+}
+
+function renderBattingTable(inn) {
+  const body = $("battingTableBody");
+  if (!body) return;
+
+  const batters = Object.values(inn.batters || {});
+
+  body.innerHTML = batters.map((b) => `
+    <tr>
+      <td>${esc(b.name)}${b.out ? " (out)" : " (not out)"}</td>
+      <td>${Number(b.runs) || 0}</td>
+      <td>${Number(b.balls) || 0}</td>
+      <td>${Number(b.fours) || 0}</td>
+      <td>${Number(b.sixes) || 0}</td>
+      <td>${strikeRate(Number(b.runs) || 0, Number(b.balls) || 0)}</td>
+    </tr>
+  `).join("");
+}
+
+function renderBowlingTable(inn) {
+  const body = $("bowlingTableBody");
+  if (!body) return;
+
+  body.innerHTML = Object.values(inn.bowlers || {}).map((b) => `
+    <tr>
+      <td>${esc(b.name)}</td>
+      <td>${oversText(b.legalBalls || 0)}</td>
+      <td>${Number(b.runs) || 0}</td>
+      <td>${Number(b.wickets) || 0}</td>
+      <td>${economy(Number(b.runs) || 0, Number(b.legalBalls) || 0)}</td>
+    </tr>
+  `).join("");
+}
+
+function renderList(id, items, formatter) {
   const el = $(id);
-  if (el) el.onclick = fn;
+  if (!el) return;
+
+  el.innerHTML = items.length
+    ? items.map((item) => `<li>${formatter(item)}</li>`).join("")
+    : "<li>None</li>";
 }
 
-function bindScoringButtons() {
-  document.querySelectorAll("[data-runs]").forEach((button) => {
-    button.onclick = () => recordBall(Number(button.dataset.runs || 0));
-  });
+function render() {
+  const inn = currentInnings();
+  if (!inn) return;
 
-  bindButton("wideBtn", () => recordBall(1, "wide"));
-  bindButton("noBallBtn", () => recordBall(1, "noball"));
-  bindButton("byeBtn", () => recordBall(1, "bye"));
-  bindButton("legByeBtn", () => recordBall(1, "legbye"));
-  bindButton("wicketBtn", recordWicket);
+  ensureInnings(inn);
 
-  bindButton("undoBtn", () => {
-    const previous = undoHistory.pop();
-    if (!previous) return alert("Undo ke liye score history nahi hai.");
+  if ($("inningsNumber")) {
+    $("inningsNumber").textContent = `Innings ${state.inningsIndex + 1}`;
+  }
 
-    const state = JSON.parse(previous);
-    innings = state.innings;
-    inningsIndex = state.inningsIndex;
-    striker = state.striker;
-    nonStriker = state.nonStriker;
-    bowler = state.bowler;
-    render();
-  });
+  if ($("battingTeam")) {
+    $("battingTeam").textContent = inn.battingTeamName || "Batting Team";
+  }
 
-  bindButton("swapBtn", () => {
-    [striker, nonStriker] = [nonStriker, striker];
-    render();
-  });
+  if ($("score")) {
+    $("score").textContent = `${inn.runs}/${inn.wickets}`;
+  }
 
-  bindButton("saveBtn", () => saveScore(true));
+  if ($("overs")) {
+    $("overs").textContent = oversText(inn.legalBalls);
+  }
 
-  bindButton("endMatchBtn", async () => {
-    const inn = getCurrentInnings();
-    if (!inn) return;
+  if ($("crr")) {
+    $("crr").textContent =
+      inn.legalBalls > 0
+        ? ((inn.runs * 6) / inn.legalBalls).toFixed(2)
+        : "0.00";
+  }
 
-    if (!confirm("Current innings ko complete mark karein?")) return;
+  const extras = inn.extras || {};
+  if ($("wides")) $("wides").textContent = extras.wides || 0;
+  if ($("noBalls")) $("noBalls").textContent = extras.noBalls || 0;
 
-    inn.completed = true;
-    await saveScore(false);
-    render();
-    alert("Innings completed.");
-  });
+  const striker = inn.batters?.[inn.strikerId];
+  const nonStriker = inn.batters?.[inn.nonStrikerId];
+  const bowler = inn.bowlers?.[inn.bowlerId];
 
-  bindButton("startSecondInningsBtn", async () => {
-    if (innings.length >= 2) {
-      inningsIndex = 1;
-      striker = "";
-      nonStriker = "";
-      bowler = "";
-      render();
-      return;
+  if ($("strikerName")) $("strikerName").textContent = striker?.name || "—";
+  if ($("strikerRuns")) $("strikerRuns").textContent = striker?.runs ?? 0;
+  if ($("strikerBalls")) $("strikerBalls").textContent = striker?.balls ?? 0;
+  if ($("strikerSR")) {
+    $("strikerSR").textContent = strikeRate(
+      striker?.runs || 0,
+      striker?.balls || 0
+    );
+  }
+
+  if ($("nonStrikerName")) $("nonStrikerName").textContent = nonStriker?.name || "—";
+  if ($("nonStrikerRuns")) $("nonStrikerRuns").textContent = nonStriker?.runs ?? 0;
+  if ($("nonStrikerBalls")) $("nonStrikerBalls").textContent = nonStriker?.balls ?? 0;
+  if ($("nonStrikerSR")) {
+    $("nonStrikerSR").textContent = strikeRate(
+      nonStriker?.runs || 0,
+      nonStriker?.balls || 0
+    );
+  }
+
+  if ($("bowlerName")) $("bowlerName").textContent = bowler?.name || "—";
+  if ($("bowlerOvers")) $("bowlerOvers").textContent = oversText(bowler?.legalBalls || 0);
+  if ($("bowlerRuns")) $("bowlerRuns").textContent = bowler?.runs ?? 0;
+  if ($("bowlerWickets")) $("bowlerWickets").textContent = bowler?.wickets ?? 0;
+  if ($("bowlerEconomy")) {
+    $("bowlerEconomy").textContent = economy(
+      bowler?.runs || 0,
+      bowler?.legalBalls || 0
+    );
+  }
+
+  if ($("teamFours")) {
+    $("teamFours").textContent = Object.values(inn.batters)
+      .reduce((sum, b) => sum + (Number(b.fours) || 0), 0);
+  }
+
+  if ($("totalFours")) {
+    $("totalFours").textContent = Object.values(inn.batters)
+      .reduce((sum, b) => sum + (Number(b.fours) || 0), 0);
+  }
+
+  if ($("totalSixes")) {
+    $("totalSixes").textContent = Object.values(inn.batters)
+      .reduce((sum, b) => sum + (Number(b.sixes) || 0), 0);
+  }
+
+  if ($("matchStatus")) {
+    $("matchStatus").textContent = inn.completed ? "Innings Completed" : "Live";
+  }
+
+  if ($("targetInfo")) {
+    const previous = state.innings[state.inningsIndex - 1];
+    $("targetInfo").textContent = previous
+      ? `Target: ${previous.runs + 1}`
+      : "";
+  }
+
+  if ($("currentOver")) {
+    const lastSix = (inn.deliveries || []).slice(-6);
+    $("currentOver").textContent = lastSix.map((d) => {
+      if (d.wicket) return "W";
+      if (d.extraType === "wide") return "Wd";
+      if (d.extraType === "noBall") return "Nb";
+      if (d.extraType === "bye") return `B${d.runs}`;
+      if (d.extraType === "legbye") return `Lb${d.runs}`;
+      return String(d.runs);
+    }).join("  ");
+  }
+
+  renderList(
+    "fallOfWicketsList",
+    inn.fallOfWickets || [],
+    (f) => `${f.wicket} - ${f.score} (${f.overs}), ${esc(f.batter)}`
+  );
+
+  renderList(
+    "yetToBatList",
+    inn.yetToBat || [],
+    (p) => esc(typeof p === "string" ? p : p.name || p.playerName || "")
+  );
+
+  renderBattingTable(inn);
+  renderBowlingTable(inn);
+}
+
+function buildScorePayload() {
+  const inn = currentInnings();
+
+  const teamA = getTeamFromMatch(state.match, "A");
+  const teamB = getTeamFromMatch(state.match, "B");
+
+  const innings = state.innings.map((item) => ({
+    ...item,
+    batters: { ...item.batters },
+    bowlers: { ...item.bowlers },
+    deliveries: [...item.deliveries],
+    fallOfWickets: [...item.fallOfWickets],
+    extras: { ...item.extras }
+  }));
+
+  const first = innings[0] || null;
+  const second = innings[1] || null;
+
+  let winner = state.match.winner || "";
+  let result = state.match.result || "";
+  let status = "Live";
+
+  if (first?.completed && second?.completed) {
+    status = "Completed";
+
+    if (first.runs > second.runs) {
+      winner = first.battingTeamName;
+      result = `${winner} won by ${first.runs - second.runs} runs`;
+    } else if (second.runs > first.runs) {
+      winner = second.battingTeamName;
+      result = `${winner} won by ${10 - second.wickets} wickets`;
+    } else {
+      winner = "";
+      result = "Scores tied";
     }
+  }
 
-    const first = getCurrentInnings();
-    if (!first) return;
+  const teamAScore = innings.find((item) =>
+    (teamA.id && norm(item.battingTeamId) === norm(teamA.id)) ||
+    (teamA.name && norm(item.battingTeamName) === norm(teamA.name))
+  );
 
-    const batting = teams.find((t) => t.id === first.bowlingTeamId) ||
-      { id: first.bowlingTeamId, name: first.bowlingTeamName };
+  const teamBScore = innings.find((item) =>
+    (teamB.id && norm(item.battingTeamId) === norm(teamB.id)) ||
+    (teamB.name && norm(item.battingTeamName) === norm(teamB.name))
+  );
 
-    const bowling = teams.find((t) => t.id === first.battingTeamId) ||
-      { id: first.battingTeamId, name: first.battingTeamName };
+  return {
+    innings,
+    currentInningsIndex: state.inningsIndex,
+    scorecard: { innings },
+    scoreA: teamAScore ? `${teamAScore.runs}/${teamAScore.wickets}` : (state.match.scoreA || "0/0"),
+    scoreB: teamBScore ? `${teamBScore.runs}/${teamBScore.wickets}` : (state.match.scoreB || "0/0"),
+    winner,
+    result,
+    status,
+    updatedAt: serverTimestamp()
+  };
+}
 
-    innings.push(makeNewInnings(batting, bowling));
-    inningsIndex = 1;
-    striker = "";
-    nonStriker = "";
-    bowler = "";
+async function saveScore(showMessage = true) {
+  if (!state.match || !tournamentId || !matchId) return;
+
+  const matchRef = doc(
+    db,
+    "tournaments",
+    tournamentId,
+    "matches",
+    matchId
+  );
+
+  state.saving = true;
+
+  try {
+    const payload = buildScorePayload();
+    await updateDoc(matchRef, payload);
+
+    state.match = {
+      ...state.match,
+      ...payload
+    };
+
+    if (showMessage) setMessage("Score successfully saved.");
+  } catch (error) {
+    console.error("Save score failed:", error);
+    setMessage(
+      "Score save nahi hua. Firebase permissions aur connection check karein.",
+      true
+    );
+  } finally {
+    state.saving = false;
+  }
+}
+
+function queueSave() {
+  state.saveQueue = state.saveQueue
+    .then(() => saveScore(false))
+    .catch((error) => console.error("Queued save error:", error));
+
+  return state.saveQueue;
+}
+
+function startSecondInnings() {
+  const first = currentInnings();
+
+  if (!first?.completed) {
+    setMessage("Pehle current innings complete karein.", true);
+    return;
+  }
+
+  if (state.innings.length >= 2) {
+    state.inningsIndex = 1;
     render();
-    await saveScore(false);
+    return;
+  }
+
+  const bowling = getBowlingTeam();
+
+  if (!bowling) {
+    setMessage("Doosri team identify nahi hui.", true);
+    return;
+  }
+
+  pushUndo();
+
+  state.innings.push(
+    makeInnings({
+      id: getTeamId(bowling),
+      name: getTeamName(bowling)
+    }, 1)
+  );
+
+  state.inningsIndex = 1;
+  state.undo = [];
+  refreshPlayerDropdowns();
+  render();
+  queueSave();
+}
+
+function endMatch() {
+  const inn = currentInnings();
+  if (!inn) return;
+
+  if (!confirm("Kya aap current innings complete karna chahte hain?")) {
+    return;
+  }
+
+  pushUndo();
+  inn.completed = true;
+
+  render();
+  queueSave();
+}
+
+function swapPlayers() {
+  const inn = currentInnings();
+  if (!inn) return;
+
+  pushUndo();
+  swapStrike(inn);
+
+  const striker = $("strikerSelect");
+  const nonStriker = $("nonStrikerSelect");
+
+  if (striker && nonStriker) {
+    const old = striker.value;
+    striker.value = nonStriker.value;
+    nonStriker.value = old;
+  }
+
+  render();
+  queueSave();
+}
+
+function applyPlayers() {
+  const inn = currentInnings();
+  if (!inn) return;
+
+  const striker = getSelectedPlayer("strikerSelect");
+  const nonStriker = getSelectedPlayer("nonStrikerSelect");
+  const bowler = getSelectedPlayer("bowlerSelect");
+
+  if (striker && nonStriker && striker.id === nonStriker.id) {
+    setMessage("Striker aur non-striker alag hone chahiye.", true);
+    return;
+  }
+
+  pushUndo();
+
+  if (striker) {
+    inn.strikerId = striker.id;
+    ensureBatter(inn, striker.id, striker.name);
+  }
+
+  if (nonStriker) {
+    inn.nonStrikerId = nonStriker.id;
+    ensureBatter(inn, nonStriker.id, nonStriker.name);
+  }
+
+  if (bowler) {
+    inn.bowlerId = bowler.id;
+    ensureBowler(inn, bowler.id, bowler.name);
+  }
+
+  render();
+  queueSave();
+}
+
+function bindEvents() {
+  document.querySelectorAll("[data-runs]").forEach((button) => {
+    button.addEventListener("click", () => {
+      recordBall(Number(button.dataset.runs) || 0, "normal");
+    });
   });
 
-  bindButton("nextMatchBtn", () => {
-    location.href = `./schedule.html?tournamentId=${encodeURIComponent(tournamentId || "")}`;
+  $("wideBtn")?.addEventListener("click", () => recordBall(1, "wide"));
+  $("noBallBtn")?.addEventListener("click", () => recordBall(0, "noball"));
+  $("byeBtn")?.addEventListener("click", () => recordBall(1, "bye"));
+  $("legByeBtn")?.addEventListener("click", () => recordBall(1, "legbye"));
+  $("wicketBtn")?.addEventListener("click", recordWicket);
+
+  $("undoBtn")?.addEventListener("click", undoLast);
+  $("swapBtn")?.addEventListener("click", swapPlayers);
+  $("saveBtn")?.addEventListener("click", () => saveScore(true));
+  $("endMatchBtn")?.addEventListener("click", endMatch);
+  $("startSecondInningsBtn")?.addEventListener("click", startSecondInnings);
+
+  $("nextMatchBtn")?.addEventListener("click", async () => {
+    await saveScore(true);
+    setMessage("Agla match Schedule page se select karein.");
   });
+
+  $("strikerSelect")?.addEventListener("change", applyPlayers);
+  $("nonStrikerSelect")?.addEventListener("change", applyPlayers);
+  $("bowlerSelect")?.addEventListener("change", applyPlayers);
 }
 
 async function init() {
-  ensurePlayerSelectors();
-  bindScoringButtons();
+  if (state.initialized) return;
+  state.initialized = true;
+
+  bindEvents();
 
   try {
-    status("Loading match and registered players...");
-
-    if (!db || !legacyDb) {
-      throw new Error("firebase.js mein db aur legacyDb export check karein.");
-    }
-
     if (!tournamentId || !matchId) {
-      throw new Error("URL mein tournamentId/matchId nahi mila.");
+      throw new Error(
+        "Tournament/Match ID missing. Schedule page se match open karein."
+      );
     }
 
     await loadTeams();
@@ -901,37 +1299,10 @@ async function init() {
 
     refreshPlayerDropdowns();
     render();
-
-    loadingFinished = true;
-    status(`Match loaded: ${matchData.status || "Ready"}`);
-    console.log("APL scoring loaded", {
-      tournamentId,
-      matchId,
-      teams: teams.length,
-      registeredPlayers: players.length
-    });
-
-    if (!players.length) {
-      console.warn(
-        "No registered players found. Check the legacyDb project and players collection."
-      );
-    }
   } catch (error) {
-    console.error("APL Live Scoring load error:", error);
-    status("Loading failed: " + error.message);
-
-    const section = $("registeredPlayerSelectors");
-    if (section) {
-      let message = $("playerLoadMessage");
-      if (!message) {
-        message = document.createElement("p");
-        message.id = "playerLoadMessage";
-        section.appendChild(message);
-      }
-      message.textContent = "Error: " + error.message;
-    }
-
-    alert("APL Live Scoring load error:\n" + error.message);
+    console.error("APL scorecard initialization failed:", error);
+    setMatchHeading("Unable to Load Match");
+    setMessage(error.message || "Scorecard load nahi hua.", true);
   }
 }
 
