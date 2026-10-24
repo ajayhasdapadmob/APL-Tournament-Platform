@@ -1,468 +1,189 @@
-// ========================================
-// CREATE TOURNAMENT JS
-// APL TOURNAMENT PLATFORM
-// ========================================
 
 import { db, auth } from "../firebase.js";
 
 import {
-    collection,
-    addDoc,
-    serverTimestamp
+  collection,
+  addDoc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 import {
-    onAuthStateChanged
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
+const state = {
+  user: null,
+  bound: false,
+  saving: false
+};
 
-console.log("🔥 CREATE TOURNAMENT JS STARTED");
+const $ = (id) => document.getElementById(id);
 
+function showMessage(message, type = "info") {
+  const box = $("message") || $("tournamentMessage");
 
-const form =
-    document.getElementById("tournamentForm");
-
-
-/* ========================================
-   CHECK FORM
-======================================== */
-
-if (!form) {
-
-    console.error(
-        "❌ tournamentForm NOT FOUND"
-    );
-
-} else {
-
-    console.log(
-        "✅ tournamentForm FOUND"
-    );
-
+  if (box) {
+    box.textContent = message;
+    box.style.color =
+      type === "error" ? "#dc2626" :
+      type === "success" ? "#15803d" :
+      "#334155";
+  } else {
+    alert(message);
+  }
 }
 
+function getValue(id) {
+  return $(id)?.value?.trim() || "";
+}
 
-/* ========================================
-   AUTH
-======================================== */
+function getNumber(id) {
+  const value = getValue(id);
+  if (value === "") return null;
 
-let currentUser = null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
 
+function validateForm() {
+  const name = getValue("tournamentName");
+  const venue = getValue("venue");
+  const startDate = getValue("startDate");
+  const endDate = getValue("endDate");
+  const totalTeams = getNumber("totalTeams");
+  const entryFee = getNumber("entryFee");
+  const winnerPrize = getNumber("winnerPrize");
+  const runnerPrize = getNumber("runnerPrize");
+  const format = getValue("format");
 
-onAuthStateChanged(
-    auth,
-    user => {
+  if (!name) return "Tournament ka naam bhariye.";
+  if (!venue) return "Venue bhariye.";
+  if (!startDate || !endDate) return "Start aur end date select kijiye.";
+  if (endDate < startDate) return "End date, start date se pehle nahi ho sakti.";
+  if (!totalTeams || !Number.isInteger(totalTeams) || totalTeams < 2) {
+    return "Total teams kam se kam 2 honi chahiye.";
+  }
 
-        if (user) {
-
-            currentUser = user;
-
-            console.log(
-                "✅ USER LOGGED IN:",
-                user.uid
-            );
-
-        } else {
-
-            console.warn(
-                "⚠️ USER NOT LOGGED IN"
-            );
-
-        }
-
+  for (const [label, value] of [
+    ["Entry fee", entryFee],
+    ["Winner prize", winnerPrize],
+    ["Runner-up prize", runnerPrize]
+  ]) {
+    if (value === null || value < 0) {
+      return `${label} sahi tarah bhariye.`;
     }
-);
+  }
 
+  if (!format) return "Tournament format select kijiye.";
 
-/* ========================================
-   FORM SUBMIT
-======================================== */
+  return null;
+}
 
-if (form) {
+async function createTournament(event) {
+  event.preventDefault();
 
-    form.addEventListener(
-        "submit",
-        async function (event) {
+  if (state.saving) return;
 
-            event.preventDefault();
+  if (!state.user) {
+    showMessage("Pehle admin account se login kijiye.", "error");
+    return;
+  }
 
+  const error = validateForm();
 
-            console.log(
-                "🚀 CREATE TOURNAMENT SUBMIT"
-            );
+  if (error) {
+    showMessage(error, "error");
+    return;
+  }
 
+  state.saving = true;
 
-            /* ================================
-               GET VALUES
-            ================================= */
-
-            const tournamentName =
-                document
-                    .getElementById(
-                        "tournamentName"
-                    )
-                    .value
-                    .trim();
-
-
-            const venue =
-                document
-                    .getElementById(
-                        "venue"
-                    )
-                    .value
-                    .trim();
-
-
-            const startDate =
-                document
-                    .getElementById(
-                        "startDate"
-                    )
-                    .value;
-
-
-            const endDate =
-                document
-                    .getElementById(
-                        "endDate"
-                    )
-                    .value;
-
-
-            const totalTeams =
-                Number(
-                    document
-                        .getElementById(
-                            "totalTeams"
-                        )
-                        .value || 0
-                );
-
-
-            const entryFee =
-                Number(
-                    document
-                        .getElementById(
-                            "entryFee"
-                        )
-                        .value || 0
-                );
-
-
-            const winnerPrize =
-                Number(
-                    document
-                        .getElementById(
-                            "winnerPrize"
-                        )
-                        .value || 0
-                );
-
-
-            const runnerPrize =
-                Number(
-                    document
-                        .getElementById(
-                            "runnerPrize"
-                        )
-                        .value || 0
-                );
-
-
-            const format =
-                document
-                    .getElementById(
-                        "format"
-                    )
-                    .value;
-
-
-            const contact =
-                document
-                    .getElementById(
-                        "contact"
-                    )
-                    .value
-                    .trim();
-
-
-            const email =
-                document
-                    .getElementById(
-                        "email"
-                    )
-                    .value
-                    .trim();
-
-
-            const description =
-                document
-                    .getElementById(
-                        "description"
-                    )
-                    .value
-                    .trim();
-
-
-            /* ================================
-               VALIDATION
-            ================================= */
-
-            if (!tournamentName) {
-
-                alert(
-                    "Please enter Tournament Name"
-                );
-
-                return;
-
-            }
-
-
-            if (!venue) {
-
-                alert(
-                    "Please enter Venue"
-                );
-
-                return;
-
-            }
-
-
-            if (!startDate) {
-
-                alert(
-                    "Please select Start Date"
-                );
-
-                return;
-
-            }
-
-
-            if (!endDate) {
-
-                alert(
-                    "Please select End Date"
-                );
-
-                return;
-
-            }
-
-
-            if (
-                new Date(endDate) <
-                new Date(startDate)
-            ) {
-
-                alert(
-                    "End Date cannot be before Start Date"
-                );
-
-                return;
-
-            }
-
-
-            /* ================================
-               BUTTON
-            ================================= */
-
-            const submitButton =
-                form.querySelector(
-                    'button[type="submit"]'
-                );
-
-
-            if (submitButton) {
-
-                submitButton.disabled =
-                    true;
-
-                submitButton.textContent =
-                    "⏳ Creating Tournament...";
-
-            }
-
-
-            try {
-
-                console.log(
-                    "🔥 Saving tournament to Firestore..."
-                );
-
-
-                /* ================================
-                   ORGANIZER ID
-                ================================= */
-
-                const organizerId =
-                    currentUser
-                    ? currentUser.uid
-                    : "TEST_ORGANIZER";
-
-
-                /* ================================
-                   TOURNAMENT DATA
-                ================================= */
-
-                const tournamentData = {
-
-                    tournamentName:
-                        tournamentName,
-
-                    venue:
-                        venue,
-
-                    startDate:
-                        startDate,
-
-                    endDate:
-                        endDate,
-
-                    totalTeams:
-                        totalTeams,
-
-                    entryFee:
-                        entryFee,
-
-                    winnerPrize:
-                        winnerPrize,
-
-                    runnerPrize:
-                        runnerPrize,
-
-                    format:
-                        format,
-
-                    contact:
-                        contact,
-
-                    email:
-                        email,
-
-                    description:
-                        description,
-
-                    organizerId:
-                        organizerId,
-
-                    status:
-                        "Upcoming",
-
-                    createdAt:
-                        serverTimestamp()
-
-                };
-
-
-                /* ================================
-                   CREATE TOURNAMENT
-                ================================= */
-
-                const tournamentsRef =
-                    collection(
-                        db,
-                        "tournaments"
-                    );
-
-
-                const tournamentDoc =
-                    await addDoc(
-                        tournamentsRef,
-                        tournamentData
-                    );
-
-
-                const tournamentId =
-                    tournamentDoc.id;
-
-
-                console.log(
-                    "✅ TOURNAMENT CREATED"
-                );
-
-
-                console.log(
-                    "🏆 Tournament ID:",
-                    tournamentId
-                );
-
-
-                /* ================================
-                   SAVE ID
-                ================================= */
-
-                localStorage.setItem(
-                    "tournamentId",
-                    tournamentId
-                );
-
-                localStorage.setItem(
-                    "selectedTournamentId",
-                    tournamentId
-                );
-
-                sessionStorage.setItem(
-                    "tournamentId",
-                    tournamentId
-                );
-
-                sessionStorage.setItem(
-                    "selectedTournamentId",
-                    tournamentId
-                );
-
-
-                /* ================================
-                   SUCCESS
-                ================================= */
-
-                alert(
-                    "✅ Tournament Created Successfully!\n\n" +
-                    "Tournament ID:\n" +
-                    tournamentId
-                );
-
-
-                /* ================================
-                   GO MY TOURNAMENTS
-                ================================= */
-
-                window.location.href =
-                    "my-tournaments.html";
-
-
-            } catch (error) {
-
-                console.error(
-                    "❌ CREATE TOURNAMENT ERROR:",
-                    error
-                );
-
-
-                alert(
-                    "❌ Tournament Create Failed\n\n" +
-                    error.message
-                );
-
-
-                if (submitButton) {
-
-                    submitButton.disabled =
-                        false;
-
-                    submitButton.textContent =
-                        "🏆 Create Tournament";
-
-                }
-
-            }
-
-        }
+  const submitButton =
+    $("createTournamentBtn") ||
+    $("submitBtn") ||
+    $("tournamentSubmitBtn") ||
+    document.querySelector(
+      "#tournamentForm button[type='submit']"
     );
 
+  if (submitButton) submitButton.disabled = true;
+
+  const name = getValue("tournamentName");
+
+  const tournamentData = {
+    name,
+    tournamentName: name,
+    venue: getValue("venue"),
+    startDate: getValue("startDate"),
+    endDate: getValue("endDate"),
+    totalTeams: getNumber("totalTeams"),
+    entryFee: getNumber("entryFee"),
+    winnerPrize: getNumber("winnerPrize"),
+    runnerPrize: getNumber("runnerPrize"),
+    format: getValue("format"),
+    contact: getValue("contact"),
+    email: getValue("email"),
+    description: getValue("description"),
+
+    status: "Upcoming",
+    createdBy: state.user.uid,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+
+    isDeleted: false,
+    deleted: false
+  };
+
+  try {
+    showMessage("Tournament save ho raha hai...");
+
+    // Naya document create hota hai.
+    // Koi purana tournament update ya delete nahi hota.
+    const newTournament = await addDoc(
+      collection(db, "tournaments"),
+      tournamentData
+    );
+
+    showMessage("Tournament successfully save ho gaya!", "success");
+
+    window.location.href =
+      `./my-tournaments.html?tournamentId=${encodeURIComponent(newTournament.id)}`;
+
+  } catch (error) {
+    console.error("Create tournament error:", error);
+
+    showMessage(
+      error.code === "permission-denied"
+        ? "Firebase permission denied. Firestore Rules aur admin login check kijiye."
+        : "Tournament save nahi hua. Internet aur Firebase settings check karke dobara try kijiye.",
+      "error"
+    );
+  } finally {
+    state.saving = false;
+    if (submitButton) submitButton.disabled = false;
+  }
 }
+
+onAuthStateChanged(auth, (user) => {
+  state.user = user;
+
+  if (!user) {
+    showMessage("Tournament banane ke liye pehle login kijiye.", "error");
+    return;
+  }
+
+  const form = $("tournamentForm");
+
+  if (!form) {
+    console.error("tournamentForm nahi mila. HTML form ID check kijiye.");
+    showMessage("Form nahi mila. create-tournament.html check kijiye.", "error");
+    return;
+  }
+
+  if (!state.bound) {
+    form.addEventListener("submit", createTournament);
+    state.bound = true;
+  }
+});
+
+console.log("Create Tournament JS loaded.");
