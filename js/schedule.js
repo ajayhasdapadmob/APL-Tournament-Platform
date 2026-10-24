@@ -1,4 +1,3 @@
-```javascript
 // ======================================================
 // APL TOURNAMENT PLATFORM — SCHEDULE.JS
 // Uses existing db export from ../firebase.js
@@ -715,4 +714,10 @@ async function init() {
   }
 }
 
-init();
+init().catch((error) => {
+  console.error("APL Schedule startup failed:", error);
+  showMessage(
+    `Schedule startup failed: ${error.message || error}`,
+    "error"
+  );
+});
