@@ -3,512 +3,419 @@ import { db } from "../firebase.js";
 
 import {
   collection,
+  getDocs,
   doc,
   getDoc,
-  getDocs,
   addDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-/* =========================================
-   APL TOURNAMENT PLATFORM - SCHEDULE
-   Deleted/recycled tournaments are hidden.
-   Existing matches are preserved.
-   ========================================= */
+const $ = (id) => document.getElementById(id);
 
-const tournamentSelect = document.getElementById("tournamentSelect");
-const tournamentNameEl = document.getElementById("tournamentName");
-const tournamentIdEl = document.getElementById("tournamentId");
-const venueEl = document.getElementById("venue");
-const matchesContainer = document.getElementById("matchList")
-  || document.getElementById("matchesList")
-  || document.getElementById("scheduleList");
+const params = new URLSearchParams(location.search);
 
-const generateButton = document.getElementById("generateMatchesBtn")
-  || document.getElementById("generateScheduleBtn");
+const state = {
+  tournaments: [],
+  teams: [],
+  matches: [],
+  tournamentId:
+    params.get("tournamentId") ||
+    params.get("id") ||
+    localStorage.getItem("aplTournamentId") ||
+    sessionStorage.getItem("aplTournamentId")
+};
 
-const refreshButton = document.getElementById("refreshScheduleBtn");
-
-let activeTournaments = [];
-let selectedTournamentId = "";
-let loading = false;
-
-function isRecycled(data) {
-  return data?.isDeleted === true || data?.deleted === true;
+function text(value) {
+  return String(value ?? "").trim();
 }
 
-function tournamentName(data, id) {
-  return data?.name ||
-    data?.tournamentName ||
-    data?.title ||
-    `Tournament ${id}`;
+function normalize(value) {
+  return text(value).toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function escapeHTML(value) {
+  return text(value).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[c]);
 }
 
 function showMessage(message, isError = false) {
+  const el = $("scheduleMessage") || $("message");
+
+  if (el) {
+    el.textContent = message;
+    el.style.color = isError ? "#dc2626" : "";
+  }
+
   console[isError ? "error" : "log"](message);
-
-  let element = document.getElementById("scheduleMessage");
-
-  if (!element) {
-    element = document.createElement("p");
-    element.id = "scheduleMessage";
-    element.setAttribute("role", "status");
-
-    if (matchesContainer?.parentElement) {
-      matchesContainer.parentElement.insertBefore(
-        element,
-        matchesContainer
-      );
-    } else {
-      document.body.appendChild(element);
-    }
-  }
-
-  element.textContent = message;
-  element.style.color = isError ? "#b91c1c" : "#087f3c";
 }
 
-function setText(id, value) {
-  const element = document.getElementById(id);
-  if (element) element.textContent = value ?? "";
+function teamName(team) {
+  return text(team.teamName || team.name || team.team || team.nameOfTeam);
 }
 
-function readSavedTournamentId() {
-  const params = new URLSearchParams(window.location.search);
-
-  return (
-    params.get("id") ||
-    params.get("tournamentId") ||
-    localStorage.getItem("selectedTournamentId") ||
-    localStorage.getItem("tournamentId") ||
-    sessionStorage.getItem("selectedTournamentId") ||
-    sessionStorage.getItem("tournamentId") ||
-    ""
-  );
+function teamId(team) {
+  return text(team.id || team.teamId || team.teamID);
 }
 
-function clearSavedTournamentId(id) {
-  for (const key of ["selectedTournamentId", "tournamentId"]) {
-    if (localStorage.getItem(key) === id) {
-      localStorage.removeItem(key);
-    }
-
-    if (sessionStorage.getItem(key) === id) {
-      sessionStorage.removeItem(key);
-    }
-  }
+function isDeleted(data) {
+  return data?.isDeleted === true || data?.deleted === true;
 }
 
-function setLoading(message) {
-  if (!matchesContainer) return;
+function isEligible(team) {
+  // Existing approved/paid teams are eligible.
+  // If no status field exists, retain the team as eligible.
+  const status = normalize(team.status || team.registrationStatus || "");
+  const payment = normalize(team.paymentStatus || "");
 
-  matchesContainer.replaceChildren();
+  if (["rejected", "cancelled", "canceled", "deleted"].includes(status)) {
+    return false;
+  }
 
-  const paragraph = document.createElement("p");
-  paragraph.textContent = message;
-  matchesContainer.appendChild(paragraph);
+  if (status === "pending" || status === "unapproved") return false;
+  if (payment === "unpaid" && status !== "approved") return false;
+
+  return Boolean(teamName(team));
 }
 
-function makeLink(label, url) {
-  const link = document.createElement("a");
-  link.textContent = label;
-  link.href = url;
-  link.className = "schedule-link";
-  return link;
-}
+async function loadTournaments() {
+  const select = $("tournamentSelect");
+  if (!select) return;
 
-/* =========================================
-   LOAD ACTIVE TOURNAMENTS
-   ========================================= */
+  const snap = await getDocs(collection(db, "tournaments"));
 
-async function loadTournaments(preferredId = "") {
-  if (!tournamentSelect) {
-    throw new Error("HTML mein tournamentSelect element nahi mila.");
-  }
+  state.tournaments = snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((t) => !isDeleted(t));
 
-  tournamentSelect.replaceChildren(
-    new Option("Loading tournaments...", "")
-  );
+  select.innerHTML =
+    '<option value="">-- Select Tournament --</option>' +
+    state.tournaments.map((t) => `
+      <option value="${escapeHTML(t.id)}">
+        ${escapeHTML(t.name || t.tournamentName || t.id)}
+      </option>
+    `).join("");
 
-  const snapshot = await getDocs(collection(db, "tournaments"));
-
-  // Important: Recycle Bin wale tournaments exclude honge.
-  activeTournaments = snapshot.docs
-    .filter(item => !isRecycled(item.data()))
-    .map(item => ({
-      id: item.id,
-      ...item.data()
-    }));
-
-  tournamentSelect.replaceChildren();
-
-  if (activeTournaments.length === 0) {
-    tournamentSelect.add(
-      new Option("No active tournaments", "")
-    );
-
-    selectedTournamentId = "";
-    setText("tournamentName", "No active tournaments");
-    setText("tournamentId", "-");
-    setText("venue", "-");
-    setLoading("Abhi koi active tournament available nahi hai.");
-
-    if (generateButton) generateButton.disabled = true;
-
-    return;
-  }
-
-  activeTournaments.forEach(tournament => {
-    tournamentSelect.add(
-      new Option(
-        tournamentName(tournament, tournament.id),
-        tournament.id
-      )
-    );
-  });
-
-  const wantedId = preferredId || readSavedTournamentId();
-
-  // Purana saved ID tabhi select hoga jab tournament abhi active ho.
-  const selected = activeTournaments.find(
-    item => item.id === wantedId
-  );
-
-  selectedTournamentId = selected
-    ? selected.id
-    : activeTournaments[0].id;
-
-  tournamentSelect.value = selectedTournamentId;
-
-  // Deleted tournament ki stale selection clear karein.
-  if (wantedId && !selected) {
-    clearSavedTournamentId(wantedId);
-  }
-
-  localStorage.setItem(
-    "selectedTournamentId",
-    selectedTournamentId
-  );
-  localStorage.setItem("tournamentId", selectedTournamentId);
-
-  if (generateButton) generateButton.disabled = false;
-
-  await loadSchedule(selectedTournamentId);
-}
-
-/* =========================================
-   LOAD SELECTED TOURNAMENT + MATCHES
-   ========================================= */
-
-async function loadSchedule(tournamentId) {
-  if (!tournamentId) {
-    setLoading("Please select an active tournament.");
-    return;
-  }
-
-  const tournament = activeTournaments.find(
-    item => item.id === tournamentId
-  );
-
-  if (!tournament || isRecycled(tournament)) {
-    clearSavedTournamentId(tournamentId);
-    showMessage("Ye tournament active list mein nahi hai.", true);
-    await loadTournaments();
-    return;
-  }
-
-  selectedTournamentId = tournamentId;
-  setLoading("Loading matches...");
-
-  try {
-    // Latest tournament document dobara check karein.
-    const tournamentRef = doc(db, "tournaments", tournamentId);
-    const tournamentSnapshot = await getDoc(tournamentRef);
-
-    if (
-      !tournamentSnapshot.exists() ||
-      isRecycled(tournamentSnapshot.data())
-    ) {
-      clearSavedTournamentId(tournamentId);
-      showMessage("Tournament delete/recycle ho chuka hai.");
-      await loadTournaments();
-      return;
-    }
-
-    const data = tournamentSnapshot.data();
-
-    setText("tournamentName", tournamentName(data, tournamentId));
-    setText("tournamentId", tournamentId);
-    setText("venue", data.venue || data.location || "-");
-
-    const matchesSnapshot = await getDocs(
-      collection(db, "tournaments", tournamentId, "matches")
-    );
-
-    renderMatches(matchesSnapshot.docs.map(item => ({
-      id: item.id,
-      ...item.data()
-    })));
-
-  } catch (error) {
-    console.error("Schedule load failed:", error);
-    setLoading("Matches load nahi hue: " + error.message);
-    showMessage("Schedule load nahi hua. Firebase Rules/connection check karein.", true);
+  if (state.tournamentId &&
+      state.tournaments.some((t) => t.id === state.tournamentId)) {
+    select.value = state.tournamentId;
+    await loadTournament(state.tournamentId);
   }
 }
 
-/* =========================================
-   DISPLAY MATCHES
-   ========================================= */
-
-function renderMatches(matches) {
-  if (!matchesContainer) {
-    showMessage("HTML mein match list container nahi mila.", true);
-    return;
-  }
-
-  matchesContainer.replaceChildren();
-
-  if (!matches.length) {
-    setLoading("Is tournament ke matches abhi nahi bane hain.");
-    return;
-  }
-
-  matches.sort((a, b) => {
-    const numberA = Number(a.matchNumber ?? a.matchNo ?? 999999);
-    const numberB = Number(b.matchNumber ?? b.matchNo ?? 999999);
-    return numberA - numberB;
-  });
-
-  matches.forEach(match => {
-    const card = document.createElement("article");
-    card.className = "match-card";
-
-    const heading = document.createElement("h3");
-    const teamA =
-      match.teamAName ||
-      match.team1Name ||
-      match.teamA ||
-      match.team1 ||
-      "Team A";
-
-    const teamB =
-      match.teamBName ||
-      match.team2Name ||
-      match.teamB ||
-      match.team2 ||
-      "Team B";
-
-    heading.textContent =
-      `Match ${match.matchNumber ?? match.matchNo ?? ""}: ${teamA} vs ${teamB}`;
-
-    const details = document.createElement("p");
-    details.textContent =
-      `Status: ${match.status || "Upcoming"}` +
-      (match.date ? ` | Date: ${match.date}` : "") +
-      (match.time ? ` | Time: ${match.time}` : "");
-
-    const actions = document.createElement("div");
-    actions.className = "actions";
-
-    const params = new URLSearchParams({
-      id: selectedTournamentId,
-      matchId: match.id
-    });
-
-    // Links existing project pages ko use karte hain.
-    actions.appendChild(
-      makeLink("Scorecard", `scorecard.html?${params.toString()}`)
-    );
-
-    actions.appendChild(
-      makeLink("Live Score", `live-score.html?${params.toString()}`)
-    );
-
-    card.append(heading, details, actions);
-    matchesContainer.appendChild(card);
-  });
-}
-
-/* =========================================
-   GENERATE MISSING ROUND-ROBIN MATCHES
-   Existing matches are NOT deleted.
-   Teams must already exist in this tournament.
-   ========================================= */
-
-async function generateMatches() {
-  if (loading) return;
-
-  const tournamentId = tournamentSelect?.value;
-
-  if (!tournamentId) {
-    showMessage("Pehle active tournament select karein.", true);
-    return;
-  }
-
-  const tournament = activeTournaments.find(
-    item => item.id === tournamentId
-  );
-
-  if (!tournament || isRecycled(tournament)) {
-    showMessage("Deleted tournament ke matches nahi ban sakte.", true);
-    await loadTournaments();
-    return;
-  }
-
-  const confirmed = confirm(
-    "Missing round-robin matches generate karne hain?\n\n" +
-    "Existing matches delete nahi honge."
-  );
-
-  if (!confirmed) return;
-
-  loading = true;
-  if (generateButton) generateButton.disabled = true;
-
-  try {
-    const latest = await getDoc(doc(db, "tournaments", tournamentId));
-
-    if (!latest.exists() || isRecycled(latest.data())) {
-      showMessage("Tournament active nahi hai.", true);
-      await loadTournaments();
-      return;
-    }
-
-    const teamsSnapshot = await getDocs(
-      collection(db, "tournaments", tournamentId, "teams")
-    );
-
-    const teams = teamsSnapshot.docs
-      .map(item => ({
-        id: item.id,
-        ...item.data()
-      }))
-      .filter(team =>
-        team.status
-          ? ["approved", "paid"].includes(
-              String(team.status).trim().toLowerCase()
-            )
-          : true
-      );
-
-    if (teams.length < 2) {
-      showMessage(
-        "Matches banane ke liye kam se kam 2 teams chahiye. " +
-        "Tournament ke Teams section ko check karein.",
-        true
-      );
-      return;
-    }
-
-    const matchesRef = collection(
-      db,
-      "tournaments",
-      tournamentId,
-      "matches"
-    );
-
-    const existingSnapshot = await getDocs(matchesRef);
-    const existingPairs = new Set();
-
-    existingSnapshot.docs.forEach(item => {
-      const match = item.data();
-      const a = match.teamAId || match.team1Id;
-      const b = match.teamBId || match.team2Id;
-
-      if (a && b) {
-        existingPairs.add([a, b].sort().join("__"));
-      }
-    });
-
-    let added = 0;
-    let nextNumber = existingSnapshot.size + 1;
-
-    for (let i = 0; i < teams.length; i++) {
-      for (let j = i + 1; j < teams.length; j++) {
-        const teamA = teams[i];
-        const teamB = teams[j];
-        const pairKey = [teamA.id, teamB.id].sort().join("__");
-
-        if (existingPairs.has(pairKey)) continue;
-
-        await addDoc(matchesRef, {
-          tournamentId,
-          matchNumber: nextNumber++,
-          teamAId: teamA.id,
-          teamBId: teamB.id,
-          teamAName: teamA.teamName || teamA.name || "Team A",
-          teamBName: teamB.teamName || teamB.name || "Team B",
-          team1Name: teamA.teamName || teamA.name || "Team A",
-          team2Name: teamB.teamName || teamB.name || "Team B",
-          status: "Upcoming",
-          date: "",
-          time: "",
-          createdAt: serverTimestamp(),
-          source: "schedule-generator"
-        });
-
-        existingPairs.add(pairKey);
-        added++;
-      }
-    }
-
-    showMessage(
-      added
-        ? `${added} naye matches banaye gaye. Existing matches safe hain.`
-        : "Koi missing match nahi tha. Existing schedule same hai."
-    );
-
-    await loadSchedule(tournamentId);
-
-  } catch (error) {
-    console.error("Generate matches failed:", error);
-    showMessage("Matches generate nahi hue: " + error.message, true);
-  } finally {
-    loading = false;
-    if (generateButton) generateButton.disabled = false;
-  }
-}
-
-/* =========================================
-   BUTTONS + INITIAL LOAD
-   ========================================= */
-
-tournamentSelect?.addEventListener("change", async () => {
-  const id = tournamentSelect.value;
-
+async function loadTournament(id) {
   if (!id) return;
 
-  selectedTournamentId = id;
-  localStorage.setItem("selectedTournamentId", id);
-  localStorage.setItem("tournamentId", id);
+  state.tournamentId = id;
+  localStorage.setItem("aplTournamentId", id);
+  sessionStorage.setItem("aplTournamentId", id);
 
-  await loadSchedule(id);
-});
-
-generateButton?.addEventListener("click", generateMatches);
-
-refreshButton?.addEventListener("click", async () => {
-  try {
-    await loadTournaments(tournamentSelect?.value || "");
-    showMessage("Schedule refresh ho gaya.");
-  } catch (error) {
-    showMessage("Refresh nahi hua: " + error.message, true);
+  const tournament = state.tournaments.find((t) => t.id === id);
+  if (!tournament) {
+    showMessage("Tournament nahi mila.", true);
+    return;
   }
-});
+
+  if ($("tournamentName")) {
+    $("tournamentName").textContent =
+      tournament.name || tournament.tournamentName || "Tournament Schedule";
+  }
+
+  if ($("tournamentId")) $("tournamentId").textContent = id;
+  if ($("venue")) $("venue").textContent = tournament.venue || "";
+
+  await Promise.all([loadTeams(id), loadMatches(id)]);
+  renderTeams();
+  renderMatches();
+}
+
+async function loadTeams(id) {
+  const snap = await getDocs(collection(db, "tournaments", id, "teams"));
+
+  state.teams = snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((t) => !isDeleted(t) && isEligible(t));
+
+  state.teams.sort((a, b) => teamName(a).localeCompare(teamName(b)));
+}
+
+async function loadMatches(id) {
+  const snap = await getDocs(collection(db, "tournaments", id, "matches"));
+
+  // Keep every existing match in memory, including completed matches.
+  state.matches = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+function renderTeams() {
+  const el = $("teamList") || $("teamsList");
+  if (!el) return;
+
+  if (!state.teams.length) {
+    el.innerHTML = "<p>No eligible teams found.</p>";
+    return;
+  }
+
+  el.innerHTML = state.teams.map((t, index) => `
+    <div class="team-card">
+      <strong>${index + 1}. ${escapeHTML(teamName(t))}</strong>
+    </div>
+  `).join("");
+}
+
+function matchPair(match) {
+  const a = normalize(
+    match.teamAId || match.team1Id || match.teamA || match.team1 || ""
+  );
+  const b = normalize(
+    match.teamBId || match.team2Id || match.teamB || match.team2 || ""
+  );
+
+  if (!a || !b) return null;
+  return [a, b].sort().join("__");
+}
+
+function expectedPair(a, b) {
+  return [normalize(teamId(a)), normalize(teamId(b))].sort().join("__");
+}
+
+function resolveMatchTeam(match, side) {
+  const upper = side.toUpperCase();
+  const number = side === "A" ? "1" : "2";
+
+  const id = text(
+    match[`team${upper}Id`] ||
+    match[`team${number}Id`] ||
+    match[`team${upper}`] ||
+    match[`team${number}`] ||
+    ""
+  );
+
+  const name = text(
+    match[`team${upper}Name`] ||
+    match[`team${number}Name`] ||
+    (typeof match[`team${upper}`] === "string" ? match[`team${upper}`] : "") ||
+    (typeof match[`team${number}`] === "string" ? match[`team${number}`] : "")
+  );
+
+  return { id, name };
+}
+
+function renderMatches() {
+  const el =
+    $("matchList") ||
+    $("matchesList") ||
+    $("scheduleList");
+
+  if (!el) return;
+
+  const matches = [...state.matches].sort((a, b) => {
+    const dateA = text(a.matchDate || a.date);
+    const dateB = text(b.matchDate || b.date);
+    return dateA.localeCompare(dateB) ||
+      text(a.matchNumber).localeCompare(text(b.matchNumber), undefined, { numeric: true });
+  });
+
+  if (!matches.length) {
+    el.innerHTML = "<p>No matches created yet.</p>";
+    return;
+  }
+
+  el.innerHTML = matches.map((m) => {
+    const a = resolveMatchTeam(m, "A");
+    const b = resolveMatchTeam(m, "B");
+
+    const nameA = a.name || state.teams.find((t) =>
+      normalize(teamId(t)) === normalize(a.id)
+    )?.let?.name || a.id || "Team A";
+
+    const nameB = b.name || state.teams.find((t) =>
+      normalize(teamId(t)) === normalize(b.id)
+    )?.let?.name || b.id || "Team B";
+
+    const status = text(m.status || "Upcoming");
+    const scoreA = text(m.scoreA || "0/0");
+    const scoreB = text(m.scoreB || "0/0");
+
+    return `
+      <article class="match-card">
+        <h3>Match ${escapeHTML(m.matchNumber || "")}</h3>
+        <p><strong>${escapeHTML(nameA)}</strong> vs
+           <strong>${escapeHTML(nameB)}</strong></p>
+        <p>${escapeHTML(m.matchDate || m.date || "Date not set")}
+           ${escapeHTML(m.matchTime || m.time || "")}</p>
+        <p>${escapeHTML(m.venue || m.matchVenue || "")}</p>
+        <p>Status: ${escapeHTML(status)}</p>
+        <p>${escapeHTML(scoreA)} — ${escapeHTML(scoreB)}</p>
+        <button type="button"
+          data-open-match="${escapeHTML(m.id)}">
+          Open Scorecard
+        </button>
+      </article>
+    `;
+  }).join("");
+
+  el.querySelectorAll("[data-open-match]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.openMatch;
+      localStorage.setItem("aplMatchId", id);
+      sessionStorage.setItem("aplMatchId", id);
+
+      const url = new URL("./scorecard.html", location.href);
+      url.searchParams.set("tournamentId", state.tournamentId);
+      url.searchParams.set("matchId", id);
+      location.href = url.toString();
+    });
+  });
+}
+
+async function generateMatches() {
+  const id = state.tournamentId;
+  if (!id) {
+    showMessage("Pehle tournament select karein.", true);
+    return;
+  }
+
+  if (state.teams.length < 2) {
+    showMessage("Fixtures ke liye kam se kam 2 eligible teams chahiye.", true);
+    return;
+  }
+
+  const existingPairs = new Set();
+
+  // Avoid creating duplicate fixtures. Existing records are not modified.
+  state.matches.forEach((match) => {
+    const pair = matchPair(match);
+    if (pair) existingPairs.add(pair);
+  });
+
+  const missing = [];
+
+  for (let i = 0; i < state.teams.length; i++) {
+    for (let j = i + 1; j < state.teams.length; j++) {
+      const a = state.teams[i];
+      const b = state.teams[j];
+      const pair = expectedPair(a, b);
+
+      if (!existingPairs.has(pair)) {
+        missing.push({ a, b, pair });
+        existingPairs.add(pair);
+      }
+    }
+  }
+
+  if (!missing.length) {
+    showMessage("Koi missing round-robin fixture nahi mila.");
+    return;
+  }
+
+  if (!confirm(
+    `${missing.length} missing fixture(s) create honge. Existing matches change nahi honge. Continue?`
+  )) {
+    return;
+  }
+
+  const matchesRef = collection(db, "tournaments", id, "matches");
+  let nextNumber = state.matches.reduce((max, m) => {
+    const n = Number(m.matchNumber);
+    return Number.isFinite(n) ? Math.max(max, n) : max;
+  }, 0) + 1;
+
+  let created = 0;
+
+  for (const item of missing) {
+    const a = item.a;
+    const b = item.b;
+
+    await addDoc(matchesRef, {
+      matchNumber: nextNumber++,
+      teamAId: teamId(a),
+      teamAName: teamName(a),
+      teamBId: teamId(b),
+      teamBName: teamName(b),
+      team1Id: teamId(a),
+      team1Name: teamName(a),
+      team2Id: teamId(b),
+      team2Name: teamName(b),
+      matchDate: "",
+      matchTime: "",
+      venue: "",
+      overs: 20,
+      status: "Upcoming",
+      scoreA: "0/0",
+      scoreB: "0/0",
+      winner: "",
+      result: "",
+      innings: [],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    created++;
+  }
+
+  await loadMatches(id);
+  renderMatches();
+
+  showMessage(`${created} new fixture(s) created. Existing matches were preserved.`);
+}
+
+function bindEvents() {
+  $("tournamentSelect")?.addEventListener("change", async (event) => {
+    try {
+      await loadTournament(event.target.value);
+    } catch (error) {
+      console.error(error);
+      showMessage("Tournament load nahi hua.", true);
+    }
+  });
+
+  const generateButton =
+    $("generateMatchesBtn") ||
+    $("generateScheduleBtn");
+
+  generateButton?.addEventListener("click", async () => {
+    try {
+      generateButton.disabled = true;
+      await generateMatches();
+    } catch (error) {
+      console.error("Fixture generation failed:", error);
+      showMessage(
+        "Fixtures create nahi hue. Firebase rules aur connection check karein.",
+        true
+      );
+    } finally {
+      generateButton.disabled = false;
+    }
+  });
+
+  $("refreshScheduleBtn")?.addEventListener("click", async () => {
+    try {
+      if (state.tournamentId) await loadTournament(state.tournamentId);
+      else await loadTournaments();
+
+      showMessage("Schedule refreshed.");
+    } catch (error) {
+      console.error(error);
+      showMessage("Schedule refresh nahi hua.", true);
+    }
+  });
+}
 
 async function init() {
-  try {
-    if (!matchesContainer) {
-      console.error(
-        "Schedule HTML mein match list container ka ID match nahi kar raha."
-      );
-    }
+  bindEvents();
 
+  try {
     await loadTournaments();
   } catch (error) {
     console.error("Schedule initialization failed:", error);
-    showMessage("Schedule start nahi hua: " + error.message, true);
+    showMessage(
+      "Schedule load nahi hua. Firebase configuration aur Firestore rules check karein.",
+      true
+    );
   }
 }
 
