@@ -1,0 +1,279 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#087f3c">
+  <title>APL Registered Teams</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b1110;
+      color: #f3f7f4;
+    }
+    header {
+      padding: 24px 16px;
+      text-align: center;
+      background: #075b30;
+    }
+    header h1 { margin: 0 0 8px; }
+    header p { margin: 0; }
+    main {
+      width: min(1000px, 94%);
+      margin: 24px auto;
+    }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    input, select, button {
+      font: inherit;
+      padding: 11px;
+      border-radius: 8px;
+      border: 1px solid #52645a;
+    }
+    input, select {
+      background: #18221d;
+      color: white;
+      flex: 1;
+      min-width: 150px;
+    }
+    button {
+      background: #08a045;
+      color: white;
+      border: 0;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .summary {
+      padding: 14px;
+      background: #18221d;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+    #teamList {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 14px;
+    }
+    .team-card {
+      background: #18221d;
+      border: 1px solid #30453a;
+      border-radius: 12px;
+      padding: 17px;
+      overflow-wrap: anywhere;
+    }
+    .team-card h2 {
+      margin: 0 0 12px;
+      color: #67e99b;
+      font-size: 20px;
+    }
+    .team-card p { line-height: 1.5; }
+    .status {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 20px;
+      background: #293b30;
+      font-size: 13px;
+    }
+    .empty {
+      padding: 24px;
+      background: #18221d;
+      border-radius: 10px;
+      grid-column: 1 / -1;
+      overflow-wrap: anywhere;
+    }
+    a { color: #8decb0; }
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #bdc9c1;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏏 APL Registered Teams</h1>
+    <p>Teams registered through APL Cricket League</p>
+  </header>
+
+  <main>
+    <div class="summary">
+      <strong>Tournament ID:</strong>
+      <span id="tournamentId">Loading...</span>
+      <p id="summaryText">Loading APL League registrations...</p>
+    </div>
+
+    <div class="toolbar">
+      <input id="searchInput" type="search"
+        placeholder="Search team or captain...">
+      <select id="statusFilter">
+        <option value="all">All registrations</option>
+        <option value="approved">Approved</option>
+        <option value="pending">Pending</option>
+        <option value="rejected">Rejected</option>
+      </select>
+      <button id="refreshBtn" type="button">Refresh Teams</button>
+    </div>
+
+    <div id="teamList">
+      <div class="empty">Loading teams...</div>
+    </div>
+  </main>
+
+  <footer>APL Tournament Platform</footer>
+
+  <script type="module">
+    import { legacyDb } from "./firebase.js";
+    import {
+      collection,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const params = new URLSearchParams(location.search);
+    const tournamentId =
+      params.get("id") || params.get("tournamentId") || "";
+
+    const list = document.getElementById("teamList");
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const summaryText = document.getElementById("summaryText");
+
+    document.getElementById("tournamentId").textContent =
+      tournamentId || "Not provided";
+
+    let registrations = [];
+
+    function value(v) {
+      return v === undefined || v === null || v === ""
+        ? "—" : String(v);
+    }
+
+    function normalize(v) {
+      return String(v || "").trim().toLowerCase();
+    }
+
+    function renderTeams() {
+      const search = normalize(searchInput.value);
+      const filter = statusFilter.value;
+
+      const filtered = registrations.filter(team => {
+        const name = normalize(team.teamName);
+        const captain = normalize(team.captainName);
+        const status = normalize(team.status || "pending");
+
+        const matchesSearch =
+          !search || name.includes(search) || captain.includes(search);
+
+        const matchesStatus =
+          filter === "all" || status === filter;
+
+        return matchesSearch && matchesStatus;
+      });
+
+      summaryText.textContent =
+        `${registrations.length} registrations found; ${filtered.length} shown.`;
+
+      list.replaceChildren();
+
+      if (!filtered.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = registrations.length
+          ? "No teams match this search or filter."
+          : "No APL League registrations found.";
+        list.appendChild(empty);
+        return;
+      }
+
+      filtered.forEach(team => {
+        const card = document.createElement("article");
+        card.className = "team-card";
+
+        const heading = document.createElement("h2");
+        heading.textContent = team.teamName || "Unnamed Team";
+
+        const status = document.createElement("span");
+        status.className = "status";
+        status.textContent = "Status: " + value(team.status || "Pending");
+
+        card.append(heading, status);
+
+        const fields = [
+          ["Captain", team.captainName],
+          ["Team ID", team.teamId],
+          ["Registration ID", team.registrationId],
+          ["Mobile", team.mobile || team.whatsapp],
+          ["Payment", team.paymentStatus || team.paymentDone]
+        ];
+
+        fields.forEach(([label, val]) => {
+          const p = document.createElement("p");
+          const strong = document.createElement("strong");
+          strong.textContent = label + ": ";
+          p.append(strong, document.createTextNode(value(val)));
+          card.appendChild(p);
+        });
+
+        list.appendChild(card);
+      });
+    }
+
+    async function loadTeams() {
+      refreshBtn.disabled = true;
+      list.replaceChildren();
+
+      const loading = document.createElement("div");
+      loading.className = "empty";
+      loading.textContent = "Loading APL League registrations...";
+      list.appendChild(loading);
+
+      try {
+        // Read only: existing APL League registration records are not changed.
+        const snapshot = await getDocs(
+          collection(legacyDb, "registrations")
+        );
+
+        registrations = snapshot.docs.map(item => ({
+          id: item.id,
+          ...item.data()
+        }));
+
+        registrations.sort((a, b) => {
+          const timeA = a.createdAt?.toMillis?.() || 0;
+          const timeB = b.createdAt?.toMillis?.() || 0;
+          return timeB - timeA;
+        });
+
+        renderTeams();
+      } catch (error) {
+        console.error("APL registration loading failed:", error);
+        list.replaceChildren();
+
+        const errorBox = document.createElement("div");
+        errorBox.className = "empty";
+        errorBox.textContent =
+          "Teams load nahi hui. Firebase connection/Firestore Rules check karein. Error: " +
+          error.message;
+        list.appendChild(errorBox);
+
+        summaryText.textContent = "Registration loading failed.";
+      } finally {
+        refreshBtn.disabled = false;
+      }
+    }
+
+    searchInput.addEventListener("input", renderTeams);
+    statusFilter.addEventListener("change", renderTeams);
+    refreshBtn.addEventListener("click", loadTeams);
+
+    loadTeams();
+  </script>
+</body>
+</html>
