@@ -1,6 +1,11 @@
-import {
-  db
-} from "../firebase.js";
+```javascript
+// ======================================================
+// APL TOURNAMENT PLATFORM — SCHEDULE.JS
+// Uses existing db export from ../firebase.js
+// Does not delete existing matches or registrations.
+// ======================================================
+
+import { db } from "../firebase.js";
 
 import {
   collection,
@@ -25,15 +30,29 @@ let selectedTournamentId = "";
 let isLoading = false;
 let isGenerating = false;
 
+// ------------------------------------------------------
+// MESSAGES
+// ------------------------------------------------------
+
 function showMessage(message, type = "info") {
   if (!messageBox) return;
 
   messageBox.textContent = message;
   messageBox.style.display = "block";
+
   messageBox.style.color =
     type === "error" ? "#b91c1c" :
-    type === "success" ? "#166534" : "#334155";
+    type === "success" ? "#166534" :
+    "#334155";
 }
+
+function safeText(element, value) {
+  if (element) element.textContent = value ?? "";
+}
+
+// ------------------------------------------------------
+// TOURNAMENT ID
+// ------------------------------------------------------
 
 function getSavedTournamentId() {
   const params = new URLSearchParams(window.location.search);
@@ -56,11 +75,15 @@ function saveTournamentId(id) {
   sessionStorage.setItem("tournamentId", id);
 
   const url = new URL(window.location.href);
-  url.searchParams.set("tournamentId", id);
-  url.searchParams.delete("id");
+  url.searchParams.set("id", id);
+  url.searchParams.delete("tournamentId");
 
   window.history.replaceState({}, "", url);
 }
+
+// ------------------------------------------------------
+// HELPERS
+// ------------------------------------------------------
 
 function getTournamentName(data, fallback = "Tournament") {
   return (
@@ -74,7 +97,6 @@ function getTournamentName(data, fallback = "Tournament") {
 
 function getTeamName(team) {
   if (typeof team === "string") return team.trim();
-
   if (!team || typeof team !== "object") return "";
 
   return (
@@ -111,13 +133,14 @@ function getMatchTeamNames(match) {
     "";
 
   return {
-    teamA: typeof teamA === "object" ? getTeamName(teamA) : String(teamA),
-    teamB: typeof teamB === "object" ? getTeamName(teamB) : String(teamB)
-  };
-}
+    teamA: typeof teamA === "object"
+      ? getTeamName(teamA)
+      : String(teamA),
 
-function safeText(element, value) {
-  if (element) element.textContent = value ?? "";
+    teamB: typeof teamB === "object"
+      ? getTeamName(teamB)
+      : String(teamB)
+  };
 }
 
 function setLink(id, url) {
@@ -128,7 +151,7 @@ function setLink(id, url) {
 function setupLinks(tournamentId) {
   if (!tournamentId) return;
 
-  const query = `?tournamentId=${encodeURIComponent(tournamentId)}`;
+  const query = `?id=${encodeURIComponent(tournamentId)}`;
 
   setLink("tournamentLink", `tournament.html${query}`);
   setLink("resultsLink", `results.html${query}`);
@@ -136,16 +159,23 @@ function setupLinks(tournamentId) {
   setLink("liveLink", `live-score.html${query}`);
 }
 
+// ------------------------------------------------------
+// LOAD TOURNAMENT DROPDOWN
+// IMPORTANT: use db, not tournamentDb.
+// ------------------------------------------------------
+
 async function loadTournamentDropdown() {
   if (!tournamentSelect) {
-    throw new Error("Tournament dropdown #tournamentSelect नहीं मिला।");
+    throw new Error(
+      "HTML में #tournamentSelect dropdown नहीं मिला।"
+    );
   }
 
   tournamentSelect.innerHTML =
     '<option value="">Loading tournaments...</option>';
 
   const snapshot = await getDocs(
-    collection(tournamentDb, "tournaments")
+    collection(db, "tournaments")
   );
 
   const tournaments = snapshot.docs.map((item) => ({
@@ -164,17 +194,22 @@ async function loadTournamentDropdown() {
 
   for (const tournament of tournaments) {
     const option = document.createElement("option");
+
     option.value = tournament.id;
     option.textContent = getTournamentName(
       tournament.data,
       tournament.id
     );
+
     tournamentSelect.appendChild(option);
   }
 
   const savedId = getSavedTournamentId();
 
-  if (savedId && tournaments.some((item) => item.id === savedId)) {
+  if (
+    savedId &&
+    tournaments.some((item) => item.id === savedId)
+  ) {
     tournamentSelect.value = savedId;
   } else if (tournaments.length > 0) {
     tournamentSelect.value = tournaments[0].id;
@@ -188,6 +223,10 @@ async function loadTournamentDropdown() {
 
   return tournaments.length;
 }
+
+// ------------------------------------------------------
+// LOAD SELECTED TOURNAMENT
+// ------------------------------------------------------
 
 async function loadSchedule() {
   const tournamentId =
@@ -203,7 +242,7 @@ async function loadSchedule() {
       matchList.textContent = "पहले एक tournament चुनें।";
     }
 
-    showMessage("कोई tournament उपलब्ध नहीं है।", "info");
+    showMessage("कोई tournament उपलब्ध नहीं है।");
     return;
   }
 
@@ -211,7 +250,7 @@ async function loadSchedule() {
   setupLinks(tournamentId);
 
   const tournamentRef = doc(
-    tournamentDb,
+    db,
     "tournaments",
     tournamentId
   );
@@ -220,7 +259,7 @@ async function loadSchedule() {
 
   if (!tournamentSnapshot.exists()) {
     throw new Error(
-      "चुना गया tournament Firebase में नहीं मिला।"
+      `Tournament नहीं मिला। ID: ${tournamentId}`
     );
   }
 
@@ -230,27 +269,42 @@ async function loadSchedule() {
     $("tournamentName"),
     getTournamentName(tournament, tournamentId)
   );
+
   safeText($("tournamentId"), tournamentId);
+
   safeText(
     $("venue"),
-    tournament.venue || tournament.ground || "Not specified"
+    tournament.venue ||
+    tournament.ground ||
+    tournament.venueName ||
+    "Not specified"
   );
 
   await loadMatches(tournamentId);
 }
 
-function createMatchCard(matchId, match) {
+// ------------------------------------------------------
+// MATCH CARD
+// ------------------------------------------------------
+
+function createMatchCard(matchId, match, tournamentId) {
   const card = document.createElement("div");
   card.className = "match-card";
 
   const teams = getMatchTeamNames(match);
-  const title = document.createElement("h3");
 
+  const title = document.createElement("h3");
   title.textContent =
     `${teams.teamA || "Team A"} vs ${teams.teamB || "Team B"}`;
 
   const details = document.createElement("p");
-  const date = match.date || match.matchDate || "Date not set";
+
+  const date =
+    match.date ||
+    match.matchDate ||
+    match.matchDateTime ||
+    "Date not set";
+
   const time = match.time || match.matchTime || "";
   const status = match.status || "Upcoming";
 
@@ -266,13 +320,13 @@ function createMatchCard(matchId, match) {
   const scoreLink = document.createElement("a");
   scoreLink.textContent = "🏏 Scorecard";
   scoreLink.href =
-    `scorecard.html?tournamentId=${encodeURIComponent(selectedTournamentId)}` +
+    `scorecard.html?tournamentId=${encodeURIComponent(tournamentId)}` +
     `&matchId=${encodeURIComponent(matchId)}`;
 
   const liveLink = document.createElement("a");
   liveLink.textContent = "📺 Live Score";
   liveLink.href =
-    `live-score.html?tournamentId=${encodeURIComponent(selectedTournamentId)}` +
+    `live-score.html?id=${encodeURIComponent(tournamentId)}` +
     `&matchId=${encodeURIComponent(matchId)}`;
 
   actions.append(scoreLink, liveLink);
@@ -281,14 +335,21 @@ function createMatchCard(matchId, match) {
   return card;
 }
 
+// ------------------------------------------------------
+// LOAD EXISTING MATCHES
+// ------------------------------------------------------
+
 async function loadMatches(tournamentId) {
-  if (!matchList) return;
+  if (!matchList) {
+    throw new Error("HTML में #matchList नहीं मिला।");
+  }
 
   matchList.replaceChildren();
+  matchList.textContent = "Loading matches...";
 
   const snapshot = await getDocs(
     collection(
-      tournamentDb,
+      db,
       "tournaments",
       tournamentId,
       "matches"
@@ -297,7 +358,8 @@ async function loadMatches(tournamentId) {
 
   if (snapshot.empty) {
     matchList.textContent =
-      "अभी इस tournament में कोई match नहीं है। Teams की जानकारी जाँचकर Generate Matches दबाएँ।";
+      "इस tournament में अभी कोई match नहीं है। " +
+      "पहले teams की जानकारी जाँचें।";
     return;
   }
 
@@ -307,40 +369,53 @@ async function loadMatches(tournamentId) {
   }));
 
   matches.sort((a, b) => {
-    const dateA = String(a.data.date || a.data.matchDate || "");
-    const dateB = String(b.data.date || b.data.matchDate || "");
+    const dateA = String(
+      a.data.date || a.data.matchDate || ""
+    );
+
+    const dateB = String(
+      b.data.date || b.data.matchDate || ""
+    );
+
     return dateA.localeCompare(dateB);
   });
 
+  matchList.replaceChildren();
+
   for (const item of matches) {
-    matchList.appendChild(createMatchCard(item.id, item.data));
+    matchList.appendChild(
+      createMatchCard(item.id, item.data, tournamentId)
+    );
   }
 
-  showMessage(`${matches.length} existing match(es) loaded.`, "success");
+  showMessage(
+    `${matches.length} existing match(es) loaded.`,
+    "success"
+  );
 }
 
-/*
- * Teams are read from the tournament document's "teams" array,
- * or from tournaments/{tournamentId}/teams.
- *
- * This deliberately does not guess the registration schema or
- * create matches from unrelated players.
- */
-async function loadTournamentTeams(tournamentId, tournamentData) {
+// ------------------------------------------------------
+// LOAD TEAMS FOR GENERATING FIXTURES
+// This checks the tournament document and its teams
+// subcollection. It does not modify registration data.
+// ------------------------------------------------------
+
+async function loadTournamentTeams(
+  tournamentId,
+  tournamentData
+) {
   let teams = [];
 
   if (Array.isArray(tournamentData.teams)) {
     teams = tournamentData.teams
-      .map((team) => ({
-        name: getTeamName(team)
-      }))
+      .map((team) => ({ name: getTeamName(team) }))
       .filter((team) => team.name);
   }
 
   if (teams.length < 2) {
     const teamSnapshot = await getDocs(
       collection(
-        tournamentDb,
+        db,
         "tournaments",
         tournamentId,
         "teams"
@@ -348,16 +423,17 @@ async function loadTournamentTeams(tournamentId, tournamentData) {
     );
 
     teams = teamSnapshot.docs
-      .map((item) => ({
-        id: item.id,
-        name: getTeamName({
-          ...item.data(),
-          teamName:
-            item.data().teamName ||
-            item.data().name ||
-            item.id
-        })
-      }))
+      .map((item) => {
+        const data = item.data();
+
+        return {
+          id: item.id,
+          name: getTeamName({
+            ...data,
+            teamName: data.teamName || data.name || item.id
+          })
+        };
+      })
       .filter((team) => team.name);
   }
 
@@ -365,6 +441,7 @@ async function loadTournamentTeams(tournamentId, tournamentData) {
 
   for (const team of teams) {
     const key = normalizeName(team.name);
+
     if (key && !unique.has(key)) {
       unique.set(key, team);
     }
@@ -374,11 +451,16 @@ async function loadTournamentTeams(tournamentId, tournamentData) {
 }
 
 function makePairKey(teamA, teamB) {
-  const a = normalizeName(teamA);
-  const b = normalizeName(teamB);
-
-  return [a, b].sort().join("::");
+  return [
+    normalizeName(teamA),
+    normalizeName(teamB)
+  ].sort().join("::");
 }
+
+// ------------------------------------------------------
+// GENERATE ONLY MISSING TEAM PAIRINGS
+// Existing matches are not deleted or overwritten.
+// ------------------------------------------------------
 
 async function generateMatches() {
   if (isGenerating) return;
@@ -391,6 +473,13 @@ async function generateMatches() {
     return;
   }
 
+  const confirmed = window.confirm(
+    "क्या आप इस tournament के missing team fixtures बनाना चाहते हैं? " +
+    "पुराने matches delete नहीं होंगे।"
+  );
+
+  if (!confirmed) return;
+
   isGenerating = true;
 
   if (generateButton) {
@@ -400,7 +489,7 @@ async function generateMatches() {
 
   try {
     const tournamentRef = doc(
-      tournamentDb,
+      db,
       "tournaments",
       tournamentId
     );
@@ -411,22 +500,22 @@ async function generateMatches() {
       throw new Error("Tournament नहीं मिला।");
     }
 
-    const tournamentData = tournamentSnapshot.data();
     const teams = await loadTournamentTeams(
       tournamentId,
-      tournamentData
+      tournamentSnapshot.data()
     );
 
     if (teams.length < 2) {
       showMessage(
-        "Matches नहीं बनाए गए। इस tournament में कम-से-कम 2 teams चाहिए। Teams tournament document के 'teams' array या tournaments/{tournamentId}/teams collection में उपलब्ध होनी चाहिए।",
+        "कम-से-कम 2 teams नहीं मिलीं। पहले tournament की teams जाँचें। " +
+        "इस code में registration collection से teams अपने-आप नहीं जोड़ी जातीं।",
         "error"
       );
       return;
     }
 
     const matchesRef = collection(
-      tournamentDb,
+      db,
       "tournaments",
       tournamentId,
       "matches"
@@ -436,8 +525,7 @@ async function generateMatches() {
     const existingPairs = new Set();
 
     for (const item of existingSnapshot.docs) {
-      const data = item.data();
-      const names = getMatchTeamNames(data);
+      const names = getMatchTeamNames(item.data());
 
       if (names.teamA && names.teamB) {
         existingPairs.add(
@@ -474,9 +562,10 @@ async function generateMatches() {
 
     if (newMatches.length === 0) {
       showMessage(
-        "सभी team combinations के matches पहले से मौजूद हैं। कोई duplicate match नहीं बनाया गया।",
+        "कोई नया fixture नहीं बना। सभी team pairings पहले से मौजूद हैं।",
         "success"
       );
+
       await loadMatches(tournamentId);
       return;
     }
@@ -494,6 +583,7 @@ async function generateMatches() {
 
   } catch (error) {
     console.error("Generate matches error:", error);
+
     showMessage(
       `Matches generate नहीं हुए: ${error.message || "Unknown error"}`,
       "error"
@@ -508,6 +598,10 @@ async function generateMatches() {
   }
 }
 
+// ------------------------------------------------------
+// REFRESH
+// ------------------------------------------------------
+
 async function refreshSchedule() {
   if (isLoading) return;
 
@@ -519,15 +613,20 @@ async function refreshSchedule() {
   }
 
   try {
-    await loadTournamentDropdown();
+    const count = await loadTournamentDropdown();
 
     if (selectedTournamentId) {
       await loadSchedule();
+      showMessage("Schedule refresh हो गया।", "success");
+    } else if (count === 0) {
+      showMessage(
+        "कोई tournament नहीं मिला। Firebase में tournaments collection जाँचें।",
+        "error"
+      );
     }
-
-    showMessage("Schedule refresh हो गया।", "success");
   } catch (error) {
     console.error("Refresh schedule error:", error);
+
     showMessage(
       `Refresh नहीं हो पाया: ${error.message || "Unknown error"}`,
       "error"
@@ -542,10 +641,13 @@ async function refreshSchedule() {
   }
 }
 
+// ------------------------------------------------------
+// EVENT LISTENERS
+// ------------------------------------------------------
+
 if (tournamentSelect) {
   tournamentSelect.addEventListener("change", async () => {
     const id = tournamentSelect.value;
-
     if (!id) return;
 
     saveTournamentId(id);
@@ -554,9 +656,15 @@ if (tournamentSelect) {
       await loadSchedule();
     } catch (error) {
       console.error("Tournament selection error:", error);
-      showMessage(error.message || "Tournament load नहीं हुआ।", "error");
+
+      showMessage(
+        `Tournament load नहीं हुआ: ${error.message || "Unknown error"}`,
+        "error"
+      );
     }
   });
+} else {
+  console.error("Tournament dropdown #tournamentSelect नहीं मिला।");
 }
 
 if (generateButton) {
@@ -571,25 +679,39 @@ if (refreshButton) {
   console.error("Refresh button #refreshScheduleBtn नहीं मिला।");
 }
 
+// ------------------------------------------------------
+// INITIALIZE
+// ------------------------------------------------------
+
 async function init() {
   try {
     showMessage("Schedule load हो रहा है...");
 
-    await loadTournamentDropdown();
+    const count = await loadTournamentDropdown();
 
     if (selectedTournamentId) {
       await loadSchedule();
-    } else {
+    } else if (count === 0) {
       showMessage(
-        "कोई tournament नहीं मिला। पहले Tournament Platform में tournament बनाएँ।"
+        "Firebase में कोई tournament नहीं मिला। " +
+        "Firebase project और tournaments collection जाँचें।",
+        "error"
       );
+    } else {
+      showMessage("कृपया tournament चुनें।");
     }
   } catch (error) {
     console.error("Schedule initialization error:", error);
+
     showMessage(
       `Schedule load नहीं हुआ: ${error.message || "Unknown error"}`,
       "error"
     );
+
+    if (matchList) {
+      matchList.textContent =
+        "Matches लोड नहीं हो पाए। ऊपर दिया गया error देखें।";
+    }
   }
 }
 
