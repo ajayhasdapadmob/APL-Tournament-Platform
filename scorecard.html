@@ -1,704 +1,184 @@
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>APL Live Scoring</title>
-
-<link
-    rel="stylesheet"
-    href="./css/style.css"
->
-
+<link rel="stylesheet" href="./css/style.css">
 <style>
-
-body {
-    margin: 0;
-    background: #f1f5f9;
-    color: #0f172a;
-    font-family: Arial, sans-serif;
-}
-
-.score-page {
-    max-width: 900px;
-    margin: auto;
-    padding: 12px 10px 100px;
-}
-
-/* HEADER */
-
-.score-top {
-    background: #0f172a;
-    color: white;
-    padding: 17px;
-    border-radius: 16px;
-    margin-bottom: 12px;
-}
-
-.score-top h1 {
-    margin: 0;
-    font-size: 21px;
-}
-
-.score-top p {
-    margin: 5px 0 0;
-    color: #cbd5e1;
-    font-size: 12px;
-}
-
-/* MATCH */
-
-.match-info {
-    background: white;
-    padding: 16px;
-    border-radius: 15px;
-    margin-bottom: 12px;
-    box-shadow: 0 3px 12px rgba(0,0,0,.08);
-}
-
-.match-info h2 {
-    margin: 0 0 7px;
-    font-size: 18px;
-}
-
-.match-id {
-    color: #64748b;
-    font-size: 11px;
-    word-break: break-all;
-}
-
-/* SCOREBOARD */
-
-.scoreboard {
-    background: #1e3a8a;
-    color: white;
-    padding: 22px 15px;
-    border-radius: 18px;
-    text-align: center;
-    margin-bottom: 12px;
-}
-
-.batting-team {
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.main-score {
-    font-size: 46px;
-    font-weight: 900;
-    margin: 6px 0;
-}
-
-.overs {
-    color: #dbeafe;
-}
-
-.crr {
-    font-size: 12px;
-    margin-top: 7px;
-}
-
-.live-status {
-    display: inline-block;
-    margin-top: 10px;
-    padding: 6px 12px;
-    border-radius: 20px;
-    background: #dc2626;
-    color: white;
-    font-size: 11px;
-    font-weight: bold;
-}
-
-/* CARDS */
-
-.card,
-.scoring-card {
-    background: white;
-    padding: 15px;
-    border-radius: 15px;
-    margin-bottom: 12px;
-    box-shadow: 0 3px 12px rgba(0,0,0,.07);
-}
-
-.card-title {
-    font-size: 15px;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-/* BATTERS */
-
-.player-row {
-    display: grid;
-    grid-template-columns: 1fr 55px 55px 55px;
-    gap: 5px;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid #e2e8f0;
-    font-size: 13px;
-}
-
-.player-row:last-child {
-    border-bottom: none;
-}
-
-.player-row span {
-    text-align: center;
-    font-weight: bold;
-}
-
-/* BOWLER */
-
-.bowler-row {
-    display: grid;
-    grid-template-columns: 1fr 60px 60px 60px;
-    gap: 5px;
-}
-
-.bowler-row span {
-    text-align: center;
-}
-
-/* CURRENT OVER */
-
-.ball-row {
-    display: flex;
-    gap: 7px;
-    flex-wrap: wrap;
-}
-
-.ball {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: #e2e8f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-}
-
-/* RUN BUTTONS */
-
-.run-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-}
-
-.run-btn {
-    border: none;
-    padding: 16px 5px;
-    border-radius: 12px;
-    background: #2563eb;
-    color: white;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.extra-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-top: 10px;
-}
-
-.extra-btn {
-    border: none;
-    padding: 13px;
-    border-radius: 10px;
-    background: #f59e0b;
-    color: white;
-    font-weight: bold;
-}
-
-.wicket-btn {
-    width: 100%;
-    margin-top: 10px;
-    padding: 14px;
-    border: none;
-    border-radius: 11px;
-    background: #dc2626;
-    color: white;
-    font-size: 15px;
-    font-weight: bold;
-}
-
-/* ACTIONS */
-
-.action-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-}
-
-.action-btn {
-    padding: 13px;
-    border: none;
-    border-radius: 10px;
-    background: #0f172a;
-    color: white;
-    font-weight: bold;
-}
-
-.end-btn {
-    background: #16a34a;
-}
-
-/* MESSAGE */
-
-#message {
-    display: none;
-    padding: 12px;
-    border-radius: 10px;
-    margin-bottom: 12px;
-    text-align: center;
-    font-size: 13px;
-}
-
-.message-success {
-    display: block !important;
-    background: #dcfce7;
-    color: #166534;
-}
-
-.message-error {
-    display: block !important;
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-/* NAVIGATION */
-
-.navigation {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 15px;
-}
-
-.navigation a {
-    flex: 1;
-    min-width: 120px;
-    text-align: center;
-    text-decoration: none;
-    padding: 12px;
-    border-radius: 10px;
-    background: white;
-    color: #1d4ed8;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-/* MOBILE */
-
-@media(max-width:430px) {
-
-    .main-score {
-        font-size: 40px;
-    }
-
-    .player-row {
-        grid-template-columns: 1fr 42px 42px 42px;
-    }
-
-    .bowler-row {
-        grid-template-columns: 1fr 45px 45px 45px;
-    }
-
-}
-
+*{box-sizing:border-box}
+body{margin:0;background:#f1f5f9;color:#0f172a;font-family:Arial,sans-serif}
+.score-top{background:#0f172a;color:white;padding:18px}
+.score-top h1{margin:0;font-size:22px}
+.score-top p{margin:6px 0 0;color:#cbd5e1}
+.score-page{max-width:950px;margin:auto;padding:12px 10px 60px}
+.card,.match-info,.scoring-card{background:white;padding:15px;border-radius:14px;margin-bottom:12px;box-shadow:0 3px 12px #0000000c}
+.match-info h2{margin:0 0 7px;font-size:18px}
+.small{color:#64748b;font-size:12px;overflow-wrap:anywhere}
+.scoreboard{background:#1e3a8a;color:white;padding:22px 15px;border-radius:17px;text-align:center;margin-bottom:12px}
+.batting-team{font-size:18px;font-weight:bold}
+.main-score{font-size:44px;font-weight:900;margin:8px 0}
+.overs{color:#dbeafe}
+.card-title{font-size:16px;font-weight:bold;margin-bottom:12px}
+label{display:block;font-size:13px;font-weight:bold;margin:12px 0 5px}
+select,input{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:white;color:#0f172a}
+.player-row{display:grid;grid-template-columns:minmax(100px,1fr) repeat(3,48px);gap:5px;align-items:center;padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:13px}
+.player-row span{text-align:center}
+.bowler-row{display:grid;grid-template-columns:minmax(100px,1fr) repeat(3,55px);gap:5px;align-items:center}
+.bowler-row span{text-align:center}
+.run-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+button{cursor:pointer}
+.run-btn,.extra-btn,.action-btn,.wicket-btn{border:0;padding:13px 6px;border-radius:10px;color:white;font-weight:bold}
+.run-btn{background:#2563eb;font-size:18px}
+.extra-grid,.action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.extra-btn{background:#d97706}
+.wicket-btn{width:100%;margin-top:10px;background:#dc2626;font-size:15px}
+.action-btn{background:#0f172a}
+.end-btn{background:#15803d}
+.next-btn{background:#2563eb}
+.ball-row{display:flex;gap:7px;flex-wrap:wrap}
+.ball{min-width:36px;height:36px;padding:0 7px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-weight:bold}
+.data-list{padding:0;margin:0;list-style:none}
+.data-list li{padding:9px 0;border-bottom:1px solid #e2e8f0;font-size:13px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}
+th,td{text-align:left;padding:9px;border-bottom:1px solid #e2e8f0}
+th{background:#f8fafc}
+#message{display:none;padding:12px;border-radius:10px;margin:10px 0;font-size:13px}
+#message[data-type="success"]{display:block;background:#dcfce7;color:#166534}
+#message[data-type="error"]{display:block;background:#fee2e2;color:#991b1b}
+#message[data-type="warning"]{display:block;background:#fef3c7;color:#92400e}
+.navigation{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+.navigation a{flex:1;min-width:110px;text-align:center;text-decoration:none;padding:12px;border-radius:10px;background:white;color:#1d4ed8;font-size:12px;font-weight:bold}
+.live-status{display:inline-block;background:#dc2626;color:white;padding:6px 12px;border-radius:20px;margin-top:10px;font-size:11px;font-weight:bold}
+@media(max-width:430px){.main-score{font-size:38px}.player-row{grid-template-columns:minmax(90px,1fr) repeat(3,38px)}.bowler-row{grid-template-columns:minmax(90px,1fr) repeat(3,42px)}}
 </style>
-
 </head>
-
-
 <body>
-
-
 <header class="score-top">
-
-    <h1>
-        🏏 APL Live Scoring
-    </h1>
-
-    <p>
-        Cricheroes-style Match Scoring
-    </p>
-
+<h1>🏏 APL Live Scoring</h1>
+<p>Ball-by-ball scoring · Batting · Bowling · Fall of Wickets</p>
 </header>
 
-
 <main class="score-page">
-
-
-<section
-    id="matchInfo"
-    class="match-info"
->
-
-    <h2>
-        ⏳ Loading Match...
-    </h2>
-
-    <div
-        id="matchId"
-        class="match-id"
-    >
-        -
-    </div>
-
+<section id="matchInfo" class="match-info">
+<h2>Loading Match...</h2>
+<div id="matchId" class="small">-</div>
+<div id="inningsNumber" class="small">Innings 1</div>
 </section>
-
 
 <section class="scoreboard">
-
-    <div
-        id="battingTeam"
-        class="batting-team"
-    >
-        Team A
-    </div>
-
-    <div
-        id="score"
-        class="main-score"
-    >
-        0/0
-    </div>
-
-    <div
-        id="overs"
-        class="overs"
-    >
-        0.0 Overs
-    </div>
-
-    <div
-        id="crr"
-        class="crr"
-    >
-        CRR: 0.00
-    </div>
-
-    <div class="live-status">
-        🔴 LIVE
-    </div>
-
+<div id="battingTeam" class="batting-team">Team A</div>
+<div id="score" class="main-score">0/0</div>
+<div id="overs" class="overs">0.0 Overs</div>
+<div id="crr">CRR: 0.00</div>
+<div id="targetInfo"></div>
+<div id="matchStatus"></div>
+<div class="live-status">🔴 LIVE SCORE</div>
 </section>
-
 
 <section class="card">
-
-    <div class="card-title">
-        🏏 Batters
-    </div>
-
-    <div class="player-row">
-
-        <strong>Batter</strong>
-
-        <span>R</span>
-        <span>B</span>
-        <span>SR</span>
-
-    </div>
-
-
-    <div class="player-row">
-
-        <strong>
-            ⭐ Striker
-        </strong>
-
-        <span id="strikerRuns">0</span>
-
-        <span id="strikerBalls">0</span>
-
-        <span id="strikerSR">0.00</span>
-
-    </div>
-
-
-    <div class="player-row">
-
-        <strong>
-            Non-Striker
-        </strong>
-
-        <span id="nonStrikerRuns">0</span>
-
-        <span id="nonStrikerBalls">0</span>
-
-        <span id="nonStrikerSR">0.00</span>
-
-    </div>
-
+<div class="card-title">👥 Select Registered Players</div>
+<label for="strikerSelect">⭐ Striker</label>
+<select id="strikerSelect"><option value="">Loading players...</option></select>
+<label for="nonStrikerSelect">Non-Striker</label>
+<select id="nonStrikerSelect"><option value="">Loading players...</option></select>
+<label for="bowlerSelect">🎯 Current Bowler</label>
+<select id="bowlerSelect"><option value="">Loading players...</option></select>
+<p id="playerMessage" class="small">Registered team players load ho rahe hain.</p>
 </section>
-
 
 <section class="card">
-
-    <div class="card-title">
-        🎯 Bowler
-    </div>
-
-    <div class="bowler-row">
-
-        <strong id="bowlerName">
-            Bowler
-        </strong>
-
-        <span id="bowlerOvers">
-            0
-        </span>
-
-        <span id="bowlerRuns">
-            0
-        </span>
-
-        <span id="bowlerWickets">
-            0
-        </span>
-
-    </div>
-
+<div class="card-title">🏏 Batters</div>
+<div class="player-row"><strong>Batter</strong><span>R</span><span>B</span><span>SR</span></div>
+<div class="player-row"><strong id="strikerName">Striker</strong><span id="strikerRuns">0</span><span id="strikerBalls">0</span><span id="strikerSR">0.00</span></div>
+<div class="player-row"><strong id="nonStrikerName">Non-Striker</strong><span id="nonStrikerRuns">0</span><span id="nonStrikerBalls">0</span><span id="nonStrikerSR">0.00</span></div>
+<div class="small">Team fours: <b id="totalFours">0</b> · Sixes: <b id="totalSixes">0</b></div>
 </section>
-
 
 <section class="card">
-
-    <div class="card-title">
-        📊 Current Over
-    </div>
-
-    <div
-        id="currentOver"
-        class="ball-row"
-    >
-
-        <div class="ball">
-            -
-        </div>
-
-    </div>
-
+<div class="card-title">🎯 Bowling</div>
+<div class="bowler-row"><strong>Bowler</strong><span>Overs</span><span>Runs</span><span>Wkts</span></div>
+<div class="bowler-row"><strong id="bowlerName">Select bowler</strong><span id="bowlerOvers">0.0</span><span id="bowlerRuns">0</span><span id="bowlerWickets">0</span></div>
+<div class="small">Economy: <b id="bowlerEconomy">0.00</b> · Wides: <b id="wides">0</b> · No-balls: <b id="noBalls">0</b></div>
 </section>
-
-
-<section class="scoring-card">
-
-    <div class="card-title">
-        ➕ Add Score
-    </div>
-
-
-    <div class="run-grid">
-
-        <button
-            class="run-btn"
-            data-runs="0"
-        >
-            0
-        </button>
-
-        <button
-            class="run-btn"
-            data-runs="1"
-        >
-            1
-        </button>
-
-        <button
-            class="run-btn"
-            data-runs="2"
-        >
-            2
-        </button>
-
-        <button
-            class="run-btn"
-            data-runs="3"
-        >
-            3
-        </button>
-
-        <button
-            class="run-btn"
-            data-runs="4"
-        >
-            4
-        </button>
-
-        <button
-            class="run-btn"
-            data-runs="5"
-        >
-            5
-        </button>
-
-        <button
-            class="run-btn"
-            data-runs="6"
-        >
-            6
-        </button>
-
-        <button
-            class="run-btn"
-            data-runs="7"
-        >
-            7
-        </button>
-
-    </div>
-
-
-    <div class="extra-grid">
-
-        <button
-            id="wideBtn"
-            class="extra-btn"
-        >
-            Wide +1
-        </button>
-
-        <button
-            id="noBallBtn"
-            class="extra-btn"
-        >
-            No Ball +1
-        </button>
-
-        <button
-            id="byeBtn"
-            class="extra-btn"
-        >
-            Bye +1
-        </button>
-
-        <button
-            id="legByeBtn"
-            class="extra-btn"
-        >
-            Leg Bye +1
-        </button>
-
-    </div>
-
-
-    <button
-        id="wicketBtn"
-        class="wicket-btn"
-    >
-        ❌ WICKET
-    </button>
-
-</section>
-
 
 <section class="card">
+<div class="card-title">📊 Current Over</div>
+<div id="currentOver" class="ball-row"><span class="ball">-</span></div>
+</section>
 
-    <div class="card-title">
-        ⚙️ Match Actions
-    </div>
+<section class="card">
+<div class="card-title">🕒 Yet to Bat</div>
+<ul id="yetToBatList" class="data-list"><li>Registered players will appear here.</li></ul>
+</section>
 
-    <div class="action-grid">
+<section class="card">
+<div class="card-title">💥 Fall of Wickets</div>
+<ul id="fallOfWicketsList" class="data-list"><li>No wickets yet.</li></ul>
+</section>
 
-    <button
-        id="undoBtn"
-        class="action-btn"
-    >
-        ↩ Undo
-    </button>
-
-    <button
-        id="swapBtn"
-        class="action-btn"
-    >
-        🔄 Swap Batter
-    </button>
-
-    <button
-        id="saveBtn"
-        class="action-btn"
-    >
-        💾 Save Score
-    </button>
-
-    <button
-        id="endMatchBtn"
-        class="action-btn end-btn"
-    >
-        🏆 End Match
-    </button>
-
-<button
-    id="startSecondInningsBtn"
-    class="action-btn"
->
-    🔄 Start 2nd Innings
-</button>
-
-    <button
-    id="nextMatchBtn"
-    class="action-btn next-btn"
-    style="
-        grid-column:1 / -1;
-        background:#2563eb;
-        font-size:15px;
-    "
->
-    <span id="nextMatchIcon">🔄</span>
-    Next Match
-</button>
-
+<section class="card">
+<div class="card-title">📋 Batting Scorecard</div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Batter</th><th>Dismissal</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th></tr></thead>
+<tbody id="battingTableBody"></tbody>
+</table>
 </div>
-
 </section>
 
+<section class="card">
+<div class="card-title">🎯 Bowling Scorecard</div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Bowler</th><th>O</th><th>M</th><th>R</th><th>W</th><th>Wd</th><th>NB</th><th>Eco</th></tr></thead>
+<tbody id="bowlingTableBody"></tbody>
+</table>
+</div>
+</section>
 
-<div id="message"></div>
+<section class="card">
+<div class="card-title">➕ Add Ball-by-Ball Score</div>
+<div class="run-grid">
+<button class="run-btn" data-runs="0">0</button>
+<button class="run-btn" data-runs="1">1</button>
+<button class="run-btn" data-runs="2">2</button>
+<button class="run-btn" data-runs="3">3</button>
+<button class="run-btn" data-runs="4">4</button>
+<button class="run-btn" data-runs="5">5</button>
+<button class="run-btn" data-runs="6">6</button>
+</div>
+<div class="extra-grid">
+<button id="wideBtn" class="extra-btn">Wide +1</button>
+<button id="noBallBtn" class="extra-btn">No Ball +1</button>
+<button id="byeBtn" class="extra-btn">Bye +1</button>
+<button id="legByeBtn" class="extra-btn">Leg Bye +1</button>
+</div>
+<button id="wicketBtn" class="wicket-btn">❌ WICKET</button>
+</section>
 
+<section class="card">
+<div class="card-title">⚙️ Match Actions</div>
+<div class="action-grid">
+<button id="undoBtn" class="action-btn">↩ Undo</button>
+<button id="swapBtn" class="action-btn">🔄 Swap Batter</button>
+<button id="saveBtn" class="action-btn">💾 Save Score</button>
+<button id="endMatchBtn" class="action-btn end-btn">🏆 End Innings / Match</button>
+<button id="startSecondInningsBtn" class="action-btn">🔄 Start 2nd Innings</button>
+<button id="nextMatchBtn" class="action-btn next-btn" style="grid-column:1/-1">📅 Next Match / Schedule</button>
+</div>
+</section>
 
+<div id="message" role="status"></div>
 <nav class="navigation">
-
-    <a id="tournamentLink" href="#">
-        🏆 Tournament
-    </a>
-
-    <a id="scheduleLink" href="#">
-        📅 Schedule
-    </a>
-
-    <a id="resultsLink" href="#">
-        🏆 Results
-    </a>
-
-    <a id="pointsLink" href="#">
-        📊 Points
-    </a>
-
+<a id="tournamentLink" href="#">🏆 Tournament</a>
+<a id="scheduleLink" href="#">📅 Schedule</a>
+<a id="resultsLink" href="#">🏆 Results</a>
+<a id="pointsLink" href="#">📊 Points</a>
 </nav>
-
-
 </main>
-
-
-<script
-    type="module"
-    src="./scorecard.js?v=10"
-></script>
-
-
+<script type="module" src="./scorecard.js?v=11"></script>
 </body>
-
 </html>
