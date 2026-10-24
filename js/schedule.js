@@ -1,7 +1,5 @@
-
 import {
-  db,
-  tournamentDb
+  db
 } from "../firebase.js";
 
 import {
