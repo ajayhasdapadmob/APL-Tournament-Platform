@@ -514,4 +514,22 @@ async function init() {
   }
 }
 
+async function generateApplT10Schedule(tournamentId) {
+  try {
+    if (!tournamentId) {
+      alert("Please select a tournament first.");
+      return;
+    }
+
+    await generateApplT10Knockout(tournamentId);
+
+    alert("APPL T10 Knockout fixtures generated successfully!");
+
+    window.location.reload();
+  } catch (error) {
+    console.error("APPL T10 schedule error:", error);
+    alert(error.message || "Could not generate APPL T10 fixtures.");
+  }
+}
+
 init();
