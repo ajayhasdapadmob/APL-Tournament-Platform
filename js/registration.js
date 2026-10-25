@@ -118,6 +118,7 @@ const params =
 let tournamentId =
     params.get("id");
 
+let currentTournament = null;
 
 /* Second: selectedTournamentId */
 
@@ -255,6 +256,7 @@ async function loadTournament() {
         const tournament =
             tournamentSnap.data();
 
+       currentTournament = tournament;
 
         console.log(
             "🏆 Tournament Data:",
@@ -368,6 +370,74 @@ form.addEventListener(
 
         event.preventDefault();
 
+       // =========================
+// REGISTRATION DEADLINE CHECK
+// =========================
+
+if (!currentTournament) {
+    showMessage(
+        "❌ Tournament details are not loaded. Please refresh and try again.",
+        "error"
+    );
+    return;
+}
+
+const tournamentType =
+    String(currentTournament.tournamentType || "APL League")
+        .trim()
+        .toUpperCase();
+
+if (tournamentType === "APPL T10") {
+    const openAt = currentTournament.registrationOpenAt;
+    const closeAt = currentTournament.registrationCloseAt;
+
+    // Firestore Timestamp and Date values are both supported.
+    const openTime = openAt && typeof openAt.toDate === "function"
+        ? openAt.toDate().getTime()
+        : openAt instanceof Date
+            ? openAt.getTime()
+            : NaN;
+
+    const closeTime = closeAt && typeof closeAt.toDate === "function"
+        ? closeAt.toDate().getTime()
+        : closeAt instanceof Date
+            ? closeAt.getTime()
+            : NaN;
+
+    const now = Date.now();
+
+    if (!Number.isFinite(openTime) || !Number.isFinite(closeTime)) {
+        showMessage(
+            "❌ Registration dates are missing or invalid. Please contact the tournament organizer.",
+            "error"
+        );
+        return;
+    }
+
+    if (currentTournament.registrationLocked === true) {
+        showMessage(
+            "🔒 Registration is closed for this tournament.",
+            "error"
+        );
+        return;
+    }
+
+    if (now < openTime) {
+        showMessage(
+            "⏳ Registration has not opened yet.",
+            "error"
+        );
+        return;
+    }
+
+    if (now >= closeTime) {
+        showMessage(
+            "🔒 Registration closing time has passed. Team registration is closed.",
+            "error"
+        );
+        return;
+    }
+}
 
         console.log(
             "🏏 REGISTER TEAM CLICKED"
