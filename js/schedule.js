@@ -1,6 +1,8 @@
 
 import { db } from "../firebase.js";
 
+import { generateApplT10Knockout } from "./appl-t10-knockout.js";
+
 import {
   collection,
   doc,
