@@ -198,74 +198,323 @@
       </div>
     </section>
 
-    <!-- New section: legacy APL registrations, read-only -->
-    <section class="panel" id="legacyRegistrationsSection">
-      <h2>📋 APL League Registrations</h2>
+    
+<!-- APL League Registrations: Read-only section -->
+<section class="panel apl-legacy-panel" id="legacyRegistrationsSection">
+  <style>
+    #legacyRegistrationsSection {
+      border-top: 5px solid #087f3c;
+      border-radius: 14px;
+      overflow: hidden;
+    }
 
-      <p class="muted">
-        Ye registrations purane APL Cricket League Firebase database se
-        read ki jayengi. Is section se purana registration data edit ya delete
-        nahi hoga.
+    #legacyRegistrationsSection .legacy-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    #legacyRegistrationsSection .legacy-title {
+      color: #087f3c;
+      margin: 0 0 8px;
+    }
+
+    #legacyRegistrationsSection .legacy-subtitle {
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    #legacyRegistrationsSection .legacy-refresh {
+      background: #087f3c;
+      color: #fff;
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    #legacyRegistrationsSection .legacy-refresh:hover {
+      background: #066530;
+    }
+
+    #legacyRegistrationsSection .legacy-refresh:disabled {
+      opacity: .65;
+      cursor: wait;
+    }
+
+    #legacyRegistrationsSection .legacy-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    #legacyRegistrationsSection .legacy-summary-card {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 11px;
+      padding: 15px;
+    }
+
+    #legacyRegistrationsSection .legacy-summary-label {
+      color: #166534;
+      font-size: 13px;
+    }
+
+    #legacyRegistrationsSection .legacy-summary-value {
+      display: block;
+      color: #14532d;
+      font-size: 26px;
+      margin-top: 7px;
+    }
+
+    #legacyRegistrationsSection .legacy-filters {
+      display: grid;
+      grid-template-columns: minmax(180px, 2fr) minmax(150px, 1fr);
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    #legacyRegistrationsSection .legacy-filters input,
+    #legacyRegistrationsSection .legacy-filters select {
+      width: 100%;
+      max-width: none;
+      min-width: 0;
+      background: #fff;
+    }
+
+    #legacyRegistrationsSection .legacy-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    #legacyRegistrationsSection .legacy-card {
+      border: 1px solid #dbe7df;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    #legacyRegistrationsSection .legacy-card-top {
+      padding: 16px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    #legacyRegistrationsSection .legacy-team-name {
+      margin: 0 0 7px;
+      color: #14532d;
+      font-size: 19px;
+      overflow-wrap: anywhere;
+    }
+
+    #legacyRegistrationsSection .legacy-caption {
+      margin: 5px 0;
+      color: #64748b;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    #legacyRegistrationsSection .legacy-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    #legacyRegistrationsSection .legacy-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 30px;
+      padding: 5px 10px;
+      background: #ecfdf5;
+      color: #166534;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    #legacyRegistrationsSection .legacy-badge.unpaid,
+    #legacyRegistrationsSection .legacy-badge.pending {
+      background: #fff7ed;
+      color: #9a3412;
+    }
+
+    #legacyRegistrationsSection .legacy-badge.rejected,
+    #legacyRegistrationsSection .legacy-badge.cancelled {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    #legacyRegistrationsSection .legacy-card-bottom {
+      border-top: 1px solid #e2e8f0;
+      background: #f8fafc;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    #legacyRegistrationsSection .legacy-view-players {
+      background: #fff;
+      color: #087f3c;
+      border: 1px solid #087f3c;
+      border-radius: 8px;
+      padding: 9px 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    #legacyRegistrationsSection .legacy-view-players:hover {
+      background: #f0fdf4;
+    }
+
+    #legacyRegistrationsSection .legacy-players {
+      padding: 14px 16px;
+      border-top: 1px solid #e2e8f0;
+      background: #f0fdf4;
+    }
+
+    #legacyRegistrationsSection .legacy-player-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    #legacyRegistrationsSection .legacy-player {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px;
+      border: 1px solid #dbe7df;
+      background: #fff;
+      border-radius: 8px;
+      overflow-wrap: anywhere;
+    }
+
+    #legacyRegistrationsSection .legacy-player-number {
+      display: inline-flex;
+      flex: 0 0 25px;
+      width: 25px;
+      height: 25px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #dcfce7;
+      color: #166534;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    #legacyRegistrationsSection .legacy-empty {
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+      padding: 22px 14px;
+      text-align: center;
+      color: #64748b;
+      background: #f8fafc;
+    }
+
+    #legacyRegistrationsSection .legacy-message {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 14px;
+      color: #475569;
+    }
+
+    @media (max-width: 600px) {
+      #legacyRegistrationsSection .legacy-filters {
+        grid-template-columns: 1fr;
+      }
+
+      #legacyRegistrationsSection .legacy-heading {
+        align-items: stretch;
+      }
+
+      #legacyRegistrationsSection .legacy-refresh {
+        width: 100%;
+      }
+
+      #legacyRegistrationsSection .legacy-card-top {
+        padding: 13px;
+      }
+    }
+  </style>
+
+  <div class="legacy-heading">
+    <div>
+      <h2 class="legacy-title">📋 APL League Registrations</h2>
+      <p class="legacy-subtitle">
+        APL Cricket League se registered teams aur players.
+        Yeh section read-only hai; yahan se legacy records edit ya delete nahi honge.
       </p>
+    </div>
 
-      <div class="registration-grid">
-        <input
-          id="legacySearch"
-          type="search"
-          placeholder="Search team, captain, mobile or Registration ID"
-          aria-label="Search APL League registrations"
-        >
+    <button id="refreshLegacyBtn" class="legacy-refresh" type="button">
+      ↻ Refresh Registrations
+    </button>
+  </div>
 
-        <select id="legacyStatusFilter" aria-label="Filter registrations by status">
-          <option value="">All statuses</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-          <option value="paid">Paid</option>
-          <option value="unpaid">Unpaid</option>
-          <option value="on hold">On Hold</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-      </div>
+  <div class="legacy-summary">
+    <div class="legacy-summary-card">
+      <span class="legacy-summary-label">Total Registrations</span>
+      <strong class="legacy-summary-value" id="legacyTotal">0</strong>
+    </div>
+    <div class="legacy-summary-card">
+      <span class="legacy-summary-label">Approved</span>
+      <strong class="legacy-summary-value" id="legacyApproved">0</strong>
+    </div>
+    <div class="legacy-summary-card">
+      <span class="legacy-summary-label">Pending</span>
+      <strong class="legacy-summary-value" id="legacyPending">0</strong>
+    </div>
+    <div class="legacy-summary-card">
+      <span class="legacy-summary-label">Paid</span>
+      <strong class="legacy-summary-value" id="legacyPaid">0</strong>
+    </div>
+    <div class="legacy-summary-card">
+      <span class="legacy-summary-label">Rejected</span>
+      <strong class="legacy-summary-value" id="legacyRejected">0</strong>
+    </div>
+  </div>
 
-      <div class="actions">
-        <button id="refreshLegacyBtn" class="primary" type="button">
-          Refresh Registrations
-        </button>
-      </div>
+  <div class="legacy-filters">
+    <input
+      id="legacySearch"
+      type="search"
+      placeholder="🔍 Search team, captain, mobile or Registration ID"
+      aria-label="Search APL League registrations"
+    >
 
-      <p id="legacyMessage" role="status" aria-live="polite">
-        Registrations abhi load nahi hui hain.
-      </p>
+    <select id="legacyStatusFilter" aria-label="Filter registrations">
+      <option value="">All statuses</option>
+      <option value="pending">Pending</option>
+      <option value="approved">Approved</option>
+      <option value="rejected">Rejected</option>
+      <option value="paid">Paid</option>
+      <option value="unpaid">Unpaid</option>
+      <option value="on hold">On Hold</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+  </div>
 
-      <div class="stats">
-        <div class="stat">
-          APL Registrations
-          <strong id="legacyTotal">0</strong>
-        </div>
-        <div class="stat">
-          Pending
-          <strong id="legacyPending">0</strong>
-        </div>
-        <div class="stat">
-          Approved
-          <strong id="legacyApproved">0</strong>
-        </div>
-        <div class="stat">
-          Paid
-          <strong id="legacyPaid">0</strong>
-        </div>
-        
-        <div class="stat">
-          Rejected
-          <strong id="legacyRejected">0</strong>
-        </div> 
-      </div>
+  <p id="legacyMessage" class="legacy-message" role="status" aria-live="polite">
+    Registrations abhi load nahi hui hain.
+  </p>
 
-      <div id="legacyRegistrationList" class="empty">
-        Loading APL League registrations...
-      </div>
-    </section>
+  <div id="legacyRegistrationList" class="legacy-list">
+    <div class="legacy-empty">Loading APL League registrations...</div>
+  </div>
+</section>
 
   </main>
 
