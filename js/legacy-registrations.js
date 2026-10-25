@@ -1,33 +1,28 @@
 
 import { legacyDb } from "../firebase.js";
+
 import {
   collection,
   getDocs
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-const COLLECTIONS_TO_CHECK = [
-  "registrations",
-  "teamRegistrations",
-  "aplRegistrations",
-  "playerRegistrations",
-  "teams",
-  "players"
-];
+const REGISTRATIONS_COLLECTION = "registrations";
+const PLAYERS_COLLECTION = "players";
 
-function getValue(data, keys, fallback = "") {
-  for (const key of keys) {
-    const value = data?.[key];
-
-    if (value !== undefined && value !== null && value !== "") {
-      if (typeof value === "object") {
-        if (value.name) return String(value.name);
-        continue;
-      }
-
-      return String(value);
-    }
+function textValue(value) {
+  if (value === undefined || value === null) return "";
+  if (typeof value === "object") {
+    if (value.name) return String(value.name).trim();
+    return "";
   }
+  return String(value).trim();
+}
 
+function getValue(data, keys, fallback = "—") {
+  for (const key of keys) {
+    const value = textValue(data?.[key]);
+    if (value) return value;
+  }
   return fallback;
 }
 
@@ -41,21 +36,83 @@ function escapeHtml(value) {
   })[char]);
 }
 
+function normalizeTeamId(value) {
+  return textValue(value);
+}
+
+function isPlaceholderName(name) {
+  const normalized = textValue(name).toLowerCase();
+
+  if (!normalized || normalized === "w") return true;
+
+  // Ignore single-character placeholder entries such as A, Q, D.
+  if (normalized.length === 1) return true;
+
+  return [
+    "n/a",
+    "na",
+    "null",
+    "undefined",
+    "none",
+    "not available"
+  ].includes(normalized);
+}
+
+function extractPlayerNames(data) {
+  const names = [];
+
+  // Captain may also be included in the player document.
+  const captain = textValue(data?.captainName);
+
+  if (!isPlaceholderName(captain)) {
+    names.push(captain);
+  }
+
+  // Existing legacy player documents use fields such as player2 ... player15.
+  for (let number = 2; number <= 15; number++) {
+    const name = textValue(data?.[`player${number}`]);
+
+    if (!isPlaceholderName(name)) {
+      names.push(name);
+    }
+  }
+
+  // Deduplicate names without changing their displayed spelling.
+  const unique = new Map();
+
+  for (const name of names) {
+    const key = name.toLowerCase();
+    if (!unique.has(key)) unique.set(key, name);
+  }
+
+  return [...unique.values()];
+}
+
 function findRegistrationHeading() {
   const elements = document.querySelectorAll("h1,h2,h3,h4,h5,strong");
-  return [...elements].find(el =>
-    el.textContent.trim().toLowerCase().includes("apl league registrations")
+
+  return [...elements].find(element =>
+    element.textContent
+      .trim()
+      .toLowerCase()
+      .includes("apl league registrations")
   );
 }
 
 function createPanel() {
   let panel = document.getElementById("legacyRegistrationsFixPanel");
+
   if (panel) return panel;
 
   panel = document.createElement("div");
   panel.id = "legacyRegistrationsFixPanel";
-  panel.style.cssText =
-    "margin:16px 0;padding:16px;border:1px solid #ccc;border-radius:10px;overflow-x:auto;";
+  panel.style.cssText = [
+    "margin:16px 0",
+    "padding:16px",
+    "border:1px solid #ccc",
+    "border-radius:10px",
+    "overflow-x:auto"
+  ].join(";");
 
   const heading = findRegistrationHeading();
 
@@ -78,86 +135,107 @@ function renderMessage(message, isError = false) {
   `;
 }
 
-function renderRegistrations(records, errors) {
+function renderRegistrations(registrations, playersByTeamId, errors) {
   const panel = createPanel();
 
-  if (records.length === 0) {
-    panel.innerHTML = `
-      <h3>APL League Registrations</h3>
-      <p>No records found in the checked collections.</p>
-      <p><b>Important:</b> Iska matlab registration delete hona nahi hai.
-      Ho sakta hai actual collection ka naam alag ho.</p>
-      ${
-        errors.length
-          ? `<details><summary>Read errors dekhein</summary>
-             <ul>${errors.map(e => `<li>${escapeHtml(e)}</li>`).join("")}</ul>
-             </details>`
-          : ""
-      }
-      <button id="refreshLegacyRegistrations">Refresh Registrations</button>
-    `;
+  const rows = registrations.map((record, index) => {
+    const data = record.data;
+    const teamId = normalizeTeamId(data.teamId);
 
-    document.getElementById("refreshLegacyRegistrations")
-      ?.addEventListener("click", loadLegacyRegistrations);
-
-    return;
-  }
-
-  const rows = records.map((record, index) => {
-    const d = record.data;
-
-    const team = getValue(d, [
-      "teamName", "team", "name", "clubName", "registeredTeam",
-      "team_name"
+    const teamName = getValue(data, [
+      "teamName",
+      "team_name",
+      "team",
+      "clubName",
+      "registeredTeam"
     ], "Team name not found");
 
-    const contact = getValue(d, [
-      "contactPerson", "captainName", "ownerName", "playerName",
-      "fullName", "name"
-    ], "—");
+    const captain = getValue(data, [
+      "captainName",
+      "contactPerson",
+      "ownerName"
+    ]);
 
-    const phone = getValue(d, [
-      "phone", "mobile", "mobileNumber", "phoneNumber",
-      "contact", "whatsapp"
-    ], "—");
-
-    const status = getValue(d, [
-      "status", "registrationStatus", "paymentStatus"
+    const status = getValue(data, [
+      "status",
+      "registrationStatus"
     ], "Not specified");
+
+    const paymentStatus = getValue(data, [
+      "paymentStatus"
+    ], "Not specified");
+
+    const players = teamId
+      ? playersByTeamId.get(teamId) || []
+      : [];
+
+    const playerText = players.length
+      ? players.join(", ")
+      : "Player list not found for this teamId";
 
     return `
       <tr>
         <td>${index + 1}</td>
-        <td>${escapeHtml(team)}</td>
-        <td>${escapeHtml(contact)}</td>
-        <td>${escapeHtml(phone)}</td>
+        <td>${escapeHtml(teamName)}</td>
+        <td>${escapeHtml(captain)}</td>
         <td>${escapeHtml(status)}</td>
-        <td>${escapeHtml(record.collection)}</td>
-        <td>${escapeHtml(record.id)}</td>
+        <td>${escapeHtml(paymentStatus)}</td>
+        <td style="min-width:220px;white-space:normal">
+          ${escapeHtml(playerText)}
+        </td>
+        <td>${escapeHtml(teamId || "—")}</td>
+        <td>${escapeHtml(getValue(data, ["registrationId"], record.id))}</td>
       </tr>
     `;
   }).join("");
 
   panel.innerHTML = `
     <h3>APL League Registrations</h3>
-    <p>Read-only view · ${records.length} record(s) found</p>
-    <table style="width:100%;border-collapse:collapse;min-width:700px">
+
+    <p>
+      Read-only view · ${registrations.length} registration(s) found
+    </p>
+
+    <p>
+      Player names are matched using teamId from the legacy players
+      collection. This page does not edit or delete legacy records.
+    </p>
+
+    <table style="width:100%;border-collapse:collapse;min-width:1000px">
       <thead>
         <tr>
-          <th>#</th><th>Team</th><th>Contact / Player</th>
-          <th>Phone</th><th>Status</th><th>Collection</th><th>Record ID</th>
+          <th>#</th>
+          <th>Team</th>
+          <th>Captain</th>
+          <th>Registration Status</th>
+          <th>Payment Status</th>
+          <th>Registered Players</th>
+          <th>Team ID</th>
+          <th>Registration ID</th>
         </tr>
       </thead>
-      <tbody>${rows}</tbody>
+      <tbody>
+        ${rows || `
+          <tr>
+            <td colspan="8">No registrations found.</td>
+          </tr>
+        `}
+      </tbody>
     </table>
+
     ${
       errors.length
-        ? `<details style="margin-top:12px">
-             <summary>Collections read errors</summary>
-             <ul>${errors.map(e => `<li>${escapeHtml(e)}</li>`).join("")}</ul>
-           </details>`
+        ? `
+          <details style="margin-top:12px">
+            <summary>Read errors</summary>
+            <ul>
+              ${errors.map(error => `<li>${escapeHtml(error)}</li>`).join("")}
+            </ul>
+          </details>
+        `
         : ""
     }
+
     <button id="refreshLegacyRegistrations" style="margin-top:12px">
       Refresh Registrations
     </button>
@@ -168,50 +246,87 @@ function renderRegistrations(records, errors) {
 }
 
 async function loadLegacyRegistrations() {
-  renderMessage("Purane APL Firebase se registrations load ho rahe hain...");
+  renderMessage("Purane APL Firebase se registrations aur players load ho rahe hain...");
 
-  const records = [];
   const errors = [];
-  const seen = new Set();
 
-  for (const collectionName of COLLECTIONS_TO_CHECK) {
-    try {
-      const snapshot = await getDocs(
-        collection(legacyDb, collectionName)
-      );
+  let registrations = [];
+  let playersSnapshot;
 
-      snapshot.forEach(docSnap => {
-        const uniqueKey = `${collectionName}/${docSnap.id}`;
+  try {
+    const snapshot = await getDocs(
+      collection(legacyDb, REGISTRATIONS_COLLECTION)
+    );
 
-        if (seen.has(uniqueKey)) return;
-        seen.add(uniqueKey);
+    registrations = snapshot.docs.map(document => ({
+      id: document.id,
+      data: document.data()
+    }));
+  } catch (error) {
+    console.error("Legacy registrations read failed:", error);
 
-        records.push({
-          collection: collectionName,
-          id: docSnap.id,
-          data: docSnap.data()
-        });
-      });
-    } catch (error) {
-      console.error(
-        `Legacy collection "${collectionName}" read failed:`,
-        error
-      );
-
-      errors.push(
-        `${collectionName}: ${error.code || error.message || "Read failed"}`
-      );
-    }
+    renderMessage(
+      `Registrations load nahi hue: ${error.code || error.message || "Unknown error"}`,
+      true
+    );
+    return;
   }
 
-  console.log("Legacy registration collections checked:", COLLECTIONS_TO_CHECK);
-  console.log("Legacy records found:", records.length);
+  try {
+    playersSnapshot = await getDocs(
+      collection(legacyDb, PLAYERS_COLLECTION)
+    );
+  } catch (error) {
+    console.error("Legacy players read failed:", error);
 
-  renderRegistrations(records, errors);
+    errors.push(
+      `players: ${error.code || error.message || "Read failed"}`
+    );
+  }
+
+  const playersByTeamId = new Map();
+
+  if (playersSnapshot) {
+    playersSnapshot.forEach(document => {
+      const data = document.data();
+      const teamId = normalizeTeamId(data.teamId);
+
+      if (!teamId) return;
+
+      const names = extractPlayerNames(data);
+
+      if (!playersByTeamId.has(teamId)) {
+        playersByTeamId.set(teamId, new Map());
+      }
+
+      const teamPlayers = playersByTeamId.get(teamId);
+
+      for (const name of names) {
+        const key = name.toLowerCase();
+
+        if (!teamPlayers.has(key)) {
+          teamPlayers.set(key, name);
+        }
+      }
+    });
+  }
+
+  // Convert the joined player maps to arrays for display.
+  const normalizedPlayers = new Map();
+
+  for (const [teamId, namesMap] of playersByTeamId) {
+    normalizedPlayers.set(teamId, [...namesMap.values()]);
+  }
+
+  console.log("Legacy registrations loaded:", registrations.length);
+  console.log("Legacy player teams matched:", normalizedPlayers.size);
+
+  renderRegistrations(registrations, normalizedPlayers, errors);
 }
 
 loadLegacyRegistrations().catch(error => {
   console.error("APL legacy registrations failed:", error);
+
   renderMessage(
     `Registration load error: ${error.code || error.message || "Unknown error"}`,
     true
