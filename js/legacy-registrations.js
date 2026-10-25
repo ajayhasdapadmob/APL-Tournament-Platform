@@ -1,5 +1,5 @@
 
-import { legacyDb } from "./firebase.js";
+import { legacyDb } from "../firebase.js";
 import {
   collection,
   getDocs
