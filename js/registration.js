@@ -82,24 +82,33 @@ if (!form) {
 }
 
 
+
 /* =========================
-   MESSAGE
+   SAFE MESSAGE DISPLAY
 ========================= */
 
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
 function showMessage(text, type = "") {
+    if (!message) {
+        console.error("Registration message element not found");
+        return;
+    }
 
     message.innerHTML = text;
-
     message.className = "";
 
     if (type) {
-
-        message.classList.add(
-            type + "-message"
-        );
-
+        message.classList.add(type + "-message");
     }
-
 }
 
 
@@ -243,7 +252,7 @@ async function loadTournament() {
                 ❌ Tournament Not Found
                 <br><br>
                 ID:
-                <b>${tournamentId}</b>
+               <b>${escapeHTML(tournamentId)}</b>
                 `,
                 "error"
             );
@@ -343,7 +352,7 @@ async function loadTournament() {
             `
             ❌ Tournament Load Failed
             <br><br>
-            ${error.message}
+            ${escapeHTML(error.message)}
             `,
             "error"
         );
@@ -690,27 +699,28 @@ if (tournamentType === "APPL T10") {
             );
 
 
-            /* =========================
-               SUCCESS
-            ========================= */
+            
+/* =========================
+   SUCCESS
+========================= */
 
-            showMessage(
-                `
-                ✅ Team Registration Successful!
-                <br><br>
-                🏏 <b>Team:</b>
-                ${teamName}
-                <br>
-                👤 <b>Captain:</b>
-                ${captainName}
-                <br>
-                🆔 <b>Team ID:</b>
-                ${teamRef.id}
-                <br><br>
-                🟢 Registration saved successfully.
-                `,
-                "success"
-            );
+showMessage(
+    `
+    ✅ Team Registration Successful!
+    <br><br>
+    🏏 <b>Team:</b>
+    ${escapeHTML(teamName)}
+    <br>
+    👤 <b>Captain:</b>
+    ${escapeHTML(captainName)}
+    <br>
+    🆔 <b>Team ID:</b>
+    ${escapeHTML(teamRef.id)}
+    <br><br>
+    🟢 Registration saved successfully.
+    `,
+    "success"
+);
 
 
             /* =========================
@@ -760,7 +770,7 @@ if (tournamentType === "APPL T10") {
                 ❌ Registration Failed
                 <br><br>
                 <b>Error:</b>
-                ${error.message}
+               ${escapeHTML(error.message)}
                 `,
                 "error"
             );
