@@ -177,6 +177,9 @@ if (form) {
                     )
                     .value;
 
+const tournamentType =
+    document.getElementById("tournamentType")?.value || "APL League";
+
 
             const contact =
                 document
@@ -337,6 +340,9 @@ if (form) {
 
                     format:
                         format,
+
+                    tournamentType:
+                        tournamentType,
 
                     contact:
                         contact,
