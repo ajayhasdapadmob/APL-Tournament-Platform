@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#087f3c">
   <title>APL Tournament Admin</title>
 
   <style>
@@ -132,76 +133,7 @@
 
     .table-wrap { overflow-x: auto; }
 
-    @media(max-width: 600px) {
-      body { padding: 10px; }
-      .header, .panel { padding: 15px; }
-      .actions button { flex: 1 1 40%; }
-    }
-  </style>
-</head>
-
-<body>
-  <main class="container">
-
-    <section class="header">
-      <h1>🏏 APL Tournament Admin</h1>
-      <p>Manage tournaments, teams and APL League registrations.</p>
-
-      <div class="nav">
-        <a href="index.html">Dashboard</a>
-        <a href="my-tournaments.html">My Tournaments</a>
-        <a href="recycle-bin.html">🗑️ Recycle Bin</a>
-      </div>
-    </section>
-
-    <!-- Existing tournament management -->
-    <section class="panel">
-      <h2>Select Tournament</h2>
-
-      <select id="tournamentSelect">
-        <option value="">Loading tournaments...</option>
-      </select>
-
-      <div class="warning panel" style="margin-top:18px; margin-bottom:0;">
-        <h3>🗑️ Tournament Actions</h3>
-        <p class="muted">
-          Tournament ko Recycle Bin mein bhejne par uska main record mark hoga.
-          Teams aur matches ki subcollections ko delete nahi kiya jayega.
-        </p>
-
-        <button id="recycleTournamentBtn" class="danger" type="button">
-          Move Tournament to Recycle Bin
-        </button>
-      </div>
-
-      <p id="message" role="status"></p>
-    </section>
-
-    <!-- Existing team statistics -->
-    <section class="stats">
-      <div class="stat">Total Teams<strong id="totalTeams">0</strong></div>
-      <div class="stat">Pending<strong id="pendingTeams">0</strong></div>
-      <div class="stat">Approved<strong id="approvedTeams">0</strong></div>
-      <div class="stat">Rejected<strong id="rejectedTeams">0</strong></div>
-      <div class="stat">Paid<strong id="paidTeams">0</strong></div>
-      <div class="stat">On Hold<strong id="holdTeams">0</strong></div>
-      <div class="stat">Cancelled<strong id="cancelledTeams">0</strong></div>
-    </section>
-
-    <section class="panel">
-      <h2>Registered Teams</h2>
-      <p class="muted">
-        Ye selected Tournament Platform ke teams hain.
-      </p>
-      <div id="teamList" class="empty">
-        Select a tournament to view teams.
-      </div>
-    </section>
-
-    
-<!-- APL League Registrations: Read-only section -->
-<section class="panel apl-legacy-panel" id="legacyRegistrationsSection">
-  <style>
+    /* APL registrations design only */
     #legacyRegistrationsSection {
       border-top: 5px solid #087f3c;
       border-radius: 14px;
@@ -212,13 +144,13 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 14px;
       flex-wrap: wrap;
     }
 
     #legacyRegistrationsSection .legacy-title {
       color: #087f3c;
-      margin: 0 0 8px;
+      margin-bottom: 8px;
     }
 
     #legacyRegistrationsSection .legacy-subtitle {
@@ -229,21 +161,16 @@
 
     #legacyRegistrationsSection .legacy-refresh {
       background: #087f3c;
-      color: #fff;
+      color: white;
       border: 0;
       border-radius: 8px;
-      padding: 11px 16px;
+      padding: 12px 16px;
       font-weight: 700;
-      cursor: pointer;
+      white-space: nowrap;
     }
 
     #legacyRegistrationsSection .legacy-refresh:hover {
       background: #066530;
-    }
-
-    #legacyRegistrationsSection .legacy-refresh:disabled {
-      opacity: .65;
-      cursor: wait;
     }
 
     #legacyRegistrationsSection .legacy-summary {
@@ -284,7 +211,6 @@
       width: 100%;
       max-width: none;
       min-width: 0;
-      background: #fff;
     }
 
     #legacyRegistrationsSection .legacy-list {
@@ -296,7 +222,9 @@
       border: 1px solid #dbe7df;
       border-radius: 12px;
       overflow: hidden;
-      background: #fff;
+      background: white;
+      margin: 0;
+      padding: 0;
     }
 
     #legacyRegistrationsSection .legacy-card-top {
@@ -341,7 +269,8 @@
     }
 
     #legacyRegistrationsSection .legacy-badge.unpaid,
-    #legacyRegistrationsSection .legacy-badge.pending {
+    #legacyRegistrationsSection .legacy-badge.pending,
+    #legacyRegistrationsSection .legacy-badge.on-hold {
       background: #fff7ed;
       color: #9a3412;
     }
@@ -364,13 +293,12 @@
     }
 
     #legacyRegistrationsSection .legacy-view-players {
-      background: #fff;
+      background: white;
       color: #087f3c;
       border: 1px solid #087f3c;
       border-radius: 8px;
       padding: 9px 13px;
       font-weight: 700;
-      cursor: pointer;
     }
 
     #legacyRegistrationsSection .legacy-view-players:hover {
@@ -396,7 +324,7 @@
       gap: 8px;
       padding: 9px;
       border: 1px solid #dbe7df;
-      background: #fff;
+      background: white;
       border-radius: 8px;
       overflow-wrap: anywhere;
     }
@@ -431,10 +359,10 @@
       color: #475569;
     }
 
-    @media (max-width: 600px) {
-      #legacyRegistrationsSection .legacy-filters {
-        grid-template-columns: 1fr;
-      }
+    @media(max-width: 600px) {
+      body { padding: 10px; }
+      .header, .panel { padding: 15px; }
+      .actions button { flex: 1 1 40%; }
 
       #legacyRegistrationsSection .legacy-heading {
         align-items: stretch;
@@ -444,80 +372,149 @@
         width: 100%;
       }
 
+      #legacyRegistrationsSection .legacy-filters {
+        grid-template-columns: 1fr;
+      }
+
       #legacyRegistrationsSection .legacy-card-top {
         padding: 13px;
       }
     }
   </style>
+</head>
 
-  <div class="legacy-heading">
-    <div>
-      <h2 class="legacy-title">📋 APL League Registrations</h2>
-      <p class="legacy-subtitle">
-        APL Cricket League se registered teams aur players.
-        Yeh section read-only hai; yahan se legacy records edit ya delete nahi honge.
+<body>
+  <main class="container">
+
+    <section class="header">
+      <h1>🏏 APL Tournament Admin</h1>
+      <p>Manage tournaments, teams and APL League registrations.</p>
+
+      <div class="nav">
+        <a href="index.html">Dashboard</a>
+        <a href="my-tournaments.html">My Tournaments</a>
+        <a href="recycle-bin.html">🗑️ Recycle Bin</a>
+      </div>
+    </section>
+
+    <!-- Existing tournament management: unchanged -->
+    <section class="panel">
+      <h2>Select Tournament</h2>
+
+      <select id="tournamentSelect">
+        <option value="">Loading tournaments...</option>
+      </select>
+
+      <div class="warning panel" style="margin-top:18px; margin-bottom:0;">
+        <h3>🗑️ Tournament Actions</h3>
+        <p class="muted">
+          Tournament ko Recycle Bin mein bhejne par uska main record mark hoga.
+          Teams aur matches ki subcollections ko delete nahi kiya jayega.
+        </p>
+
+        <button id="recycleTournamentBtn" class="danger" type="button">
+          Move Tournament to Recycle Bin
+        </button>
+      </div>
+
+      <p id="message" role="status"></p>
+    </section>
+
+    <!-- Existing team statistics: unchanged -->
+    <section class="stats">
+      <div class="stat">Total Teams<strong id="totalTeams">0</strong></div>
+      <div class="stat">Pending<strong id="pendingTeams">0</strong></div>
+      <div class="stat">Approved<strong id="approvedTeams">0</strong></div>
+      <div class="stat">Rejected<strong id="rejectedTeams">0</strong></div>
+      <div class="stat">Paid<strong id="paidTeams">0</strong></div>
+      <div class="stat">On Hold<strong id="holdTeams">0</strong></div>
+      <div class="stat">Cancelled<strong id="cancelledTeams">0</strong></div>
+    </section>
+
+    <!-- Existing Registered Teams: unchanged -->
+    <section class="panel">
+      <h2>Registered Teams</h2>
+      <p class="muted">
+        Ye selected Tournament Platform ke teams hain.
       </p>
-    </div>
+      <div id="teamList" class="empty">
+        Select a tournament to view teams.
+      </div>
+    </section>
 
-    <button id="refreshLegacyBtn" class="legacy-refresh" type="button">
-      ↻ Refresh Registrations
-    </button>
-  </div>
+    <!-- Updated APL League Registrations section only -->
+    <section class="panel" id="legacyRegistrationsSection">
 
-  <div class="legacy-summary">
-    <div class="legacy-summary-card">
-      <span class="legacy-summary-label">Total Registrations</span>
-      <strong class="legacy-summary-value" id="legacyTotal">0</strong>
-    </div>
-    <div class="legacy-summary-card">
-      <span class="legacy-summary-label">Approved</span>
-      <strong class="legacy-summary-value" id="legacyApproved">0</strong>
-    </div>
-    <div class="legacy-summary-card">
-      <span class="legacy-summary-label">Pending</span>
-      <strong class="legacy-summary-value" id="legacyPending">0</strong>
-    </div>
-    <div class="legacy-summary-card">
-      <span class="legacy-summary-label">Paid</span>
-      <strong class="legacy-summary-value" id="legacyPaid">0</strong>
-    </div>
-    <div class="legacy-summary-card">
-      <span class="legacy-summary-label">Rejected</span>
-      <strong class="legacy-summary-value" id="legacyRejected">0</strong>
-    </div>
-  </div>
+      <div class="legacy-heading">
+        <div>
+          <h2 class="legacy-title">📋 APL League Registrations</h2>
+          <p class="legacy-subtitle">
+            APL Cricket League se registered teams aur players.
+            Yeh section read-only hai; yahan se legacy records edit ya delete nahi honge.
+          </p>
+        </div>
 
-  <div class="legacy-filters">
-    <input
-      id="legacySearch"
-      type="search"
-      placeholder="🔍 Search team, captain, mobile or Registration ID"
-      aria-label="Search APL League registrations"
-    >
+        <button id="refreshLegacyBtn" class="legacy-refresh" type="button">
+          ↻ Refresh Registrations
+        </button>
+      </div>
 
-    <select id="legacyStatusFilter" aria-label="Filter registrations">
-      <option value="">All statuses</option>
-      <option value="pending">Pending</option>
-      <option value="approved">Approved</option>
-      <option value="rejected">Rejected</option>
-      <option value="paid">Paid</option>
-      <option value="unpaid">Unpaid</option>
-      <option value="on hold">On Hold</option>
-      <option value="cancelled">Cancelled</option>
-    </select>
-  </div>
+      <div class="legacy-summary">
+        <div class="legacy-summary-card">
+          <span class="legacy-summary-label">Total Registrations</span>
+          <strong class="legacy-summary-value" id="legacyTotal">0</strong>
+        </div>
+        <div class="legacy-summary-card">
+          <span class="legacy-summary-label">Approved</span>
+          <strong class="legacy-summary-value" id="legacyApproved">0</strong>
+        </div>
+        <div class="legacy-summary-card">
+          <span class="legacy-summary-label">Pending</span>
+          <strong class="legacy-summary-value" id="legacyPending">0</strong>
+        </div>
+        <div class="legacy-summary-card">
+          <span class="legacy-summary-label">Paid</span>
+          <strong class="legacy-summary-value" id="legacyPaid">0</strong>
+        </div>
+        <div class="legacy-summary-card">
+          <span class="legacy-summary-label">Rejected</span>
+          <strong class="legacy-summary-value" id="legacyRejected">0</strong>
+        </div>
+      </div>
 
-  <p id="legacyMessage" class="legacy-message" role="status" aria-live="polite">
-    Registrations abhi load nahi hui hain.
-  </p>
+      <div class="legacy-filters">
+        <input
+          id="legacySearch"
+          type="search"
+          placeholder="🔍 Search team, captain, mobile or Registration ID"
+          aria-label="Search APL League registrations"
+        >
 
-  <div id="legacyRegistrationList" class="legacy-list">
-    <div class="legacy-empty">Loading APL League registrations...</div>
-  </div>
-</section>
+        <select id="legacyStatusFilter" aria-label="Filter registrations">
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="paid">Paid</option>
+          <option value="unpaid">Unpaid</option>
+          <option value="on hold">On Hold</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+
+      <p id="legacyMessage" class="legacy-message" role="status" aria-live="polite">
+        Registrations abhi load nahi hui hain.
+      </p>
+
+      <div id="legacyRegistrationList" class="legacy-list">
+        <div class="legacy-empty">Loading APL League registrations...</div>
+      </div>
+
+    </section>
 
   </main>
 
+  <!-- Keep existing script paths unchanged -->
   <script type="module" src="js/admin.js"></script>
   <script type="module" src="./js/legacy-registrations.js"></script>
 </body>
