@@ -151,16 +151,38 @@ async function loadTeams(tournamentId) {
       cancelled: 0
     };
 
-    teams.forEach(team => {
-      const status = String(team.status || "Pending").toLowerCase();
+    
 
-      if (status === "approved") counts.approved++;
-      else if (status === "rejected") counts.rejected++;
-      else if (status === "paid") counts.paid++;
-      else if (status === "on hold" || status === "hold") counts.hold++;
-      else if (status === "cancelled" || status === "canceled") counts.cancelled++;
-      else counts.pending++;
-    });
+teams.forEach(team => {
+  const status = String(team.status || "Pending")
+    .trim()
+    .toLowerCase();
+
+  const rawPaymentStatus = String(team.paymentStatus || "")
+    .trim()
+    .toLowerCase();
+
+  if (status === "approved") {
+    counts.approved++;
+  } else if (status === "rejected") {
+    counts.rejected++;
+  } else if (status === "on hold" || status === "hold") {
+    counts.hold++;
+  } else if (status === "cancelled" || status === "canceled") {
+    counts.cancelled++;
+  } else {
+    counts.pending++;
+  }
+
+  const isPaid = rawPaymentStatus
+    ? rawPaymentStatus === "paid"
+    : status === "paid";
+
+  if (isPaid) {
+    counts.paid++;
+  }
+});
+
 
     setCount("totalTeams", counts.total);
     setCount("pendingTeams", counts.pending);
@@ -193,39 +215,88 @@ function createTeamCard(tournamentId, team) {
   card.className = "team-card";
 
   const heading = document.createElement("h3");
-  heading.textContent = team.teamName || team.name || team.clubName || "Unnamed Team";
+  heading.textContent =
+    team.teamName || team.name || team.clubName || "Unnamed Team";
 
-  const details = document.createElement("p");
+
+const details = document.createElement("p");
+
+function getEffectivePaymentStatus() {
+  const paymentStatus = String(team.paymentStatus || "")
+    .trim()
+    .toLowerCase();
+
+  if (paymentStatus) {
+    return paymentStatus === "paid" ? "Paid" : "Unpaid";
+  }
+
+  return String(team.status || "").trim().toLowerCase() === "paid"
+    ? "Paid"
+    : "Unpaid";
+}
+
+function updateDetails() {
+  const rawStatus = String(team.status || "Pending").trim();
+  const isLegacyPaid = rawStatus.toLowerCase() === "paid";
+
   details.textContent =
-    `Status: ${team.status || "Pending"}` +
+    `Status: ${isLegacyPaid ? "Pending approval (legacy Paid record)" : rawStatus}` +
+    ` | Payment: ${getEffectivePaymentStatus()}` +
     (team.captain ? ` | Captain: ${team.captain}` : "") +
     (team.phone ? ` | Phone: ${team.phone}` : "");
+}
+
+updateDetails();
+
 
   const actions = document.createElement("div");
   actions.className = "actions";
 
-  ["Pending", "Approved", "Rejected", "Paid", "On Hold", "Cancelled"]
-    .forEach(status => {
+  // Team approval status — payment is handled separately.
+  ["Pending", "Approved", "Rejected", "On Hold", "Cancelled"]
+    .forEach((status) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "status-btn";
       button.textContent = status;
 
-      if (String(team.status || "Pending").toLowerCase() === status.toLowerCase()) {
+      if (
+        String(team.status || "Pending").toLowerCase() ===
+        status.toLowerCase()
+      ) {
         button.classList.add("active");
       }
 
       button.addEventListener("click", async () => {
         button.disabled = true;
+
         try {
-          await updateDoc(
-            doc(db, "tournaments", tournamentId, "teams", team.id),
-            { status }
-          );
+          
+const oldStatus = String(team.status || "")
+  .trim()
+  .toLowerCase();
+
+const existingPaymentStatus = String(team.paymentStatus || "")
+  .trim();
+
+const changes = { status };
+
+if (oldStatus === "paid" && !existingPaymentStatus) {
+  changes.paymentStatus = "Paid";
+}
+
+await updateDoc(
+  doc(db, "tournaments", tournamentId, "teams", team.id),
+  changes
+);
+
           showMessage(`Team status updated: ${status}`);
           await loadTeams(tournamentId);
         } catch (error) {
-          showMessage("Status update nahi hua: " + error.message, true);
+          showMessage(
+            "Status update nahi hua: " + error.message,
+            true
+          );
         } finally {
           button.disabled = false;
         }
@@ -234,13 +305,69 @@ function createTeamCard(tournamentId, team) {
       actions.appendChild(button);
     });
 
+  // Payment status — does not overwrite team approval status.
+  
+const paymentButton = document.createElement("button");
+paymentButton.type = "button";
+paymentButton.className = "status-btn";
+
+function updatePaymentButton() {
+  const paid = getEffectivePaymentStatus() === "Paid";
+
+  paymentButton.textContent = paid ? "Mark Unpaid" : "Mark Paid";
+
+  if (paid) paymentButton.classList.add("active");
+  else paymentButton.classList.remove("active");
+}
+
+updatePaymentButton();
+
+paymentButton.addEventListener("click", async () => {
+  const currentlyPaid = getEffectivePaymentStatus() === "Paid";
+  const nextPaymentStatus = currentlyPaid ? "Unpaid" : "Paid";
+
+  if (
+    nextPaymentStatus === "Paid" &&
+    !confirm(`Kya "${heading.textContent}" ka payment verify ho gaya hai?`)
+  ) {
+    return;
+  }
+
+  paymentButton.disabled = true;
+
+  try {
+    await updateDoc(
+      doc(db, "tournaments", tournamentId, "teams", team.id),
+      { paymentStatus: nextPaymentStatus }
+    );
+
+    showMessage(`Payment status updated: ${nextPaymentStatus}`);
+    await loadTeams(tournamentId);
+  } catch (error) {
+    showMessage(
+      "Payment status update nahi hua: " + error.message,
+      true
+    );
+  } finally {
+    paymentButton.disabled = false;
+  }
+});
+
+actions.appendChild(paymentButton);
+
+
+  // Keep the existing delete-team feature.
   const deleteButton = document.createElement("button");
   deleteButton.type = "button";
   deleteButton.className = "danger";
   deleteButton.textContent = "Delete Team";
 
   deleteButton.addEventListener("click", async () => {
-    if (!confirm(`Team "${heading.textContent}" ko permanently delete karna hai?`)) {
+    if (
+      !confirm(
+        `Team "${heading.textContent}" ko permanently delete karna hai?`
+      )
+    ) {
       return;
     }
 
@@ -251,11 +378,17 @@ function createTeamCard(tournamentId, team) {
         "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js"
       );
 
-      await deleteDoc(doc(db, "tournaments", tournamentId, "teams", team.id));
+      await deleteDoc(
+        doc(db, "tournaments", tournamentId, "teams", team.id)
+      );
+
       showMessage("Team deleted.");
       await loadTeams(tournamentId);
     } catch (error) {
-      showMessage("Team delete nahi hui: " + error.message, true);
+      showMessage(
+        "Team delete nahi hui: " + error.message,
+        true
+      );
     } finally {
       deleteButton.disabled = false;
     }
@@ -263,9 +396,10 @@ function createTeamCard(tournamentId, team) {
 
   actions.appendChild(deleteButton);
   card.append(heading, details, actions);
+
   return card;
 }
-
+ 
 tournamentSelect.addEventListener("change", async () => {
   const id = tournamentSelect.value;
 
