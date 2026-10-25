@@ -176,10 +176,26 @@ if (form) {
                         "format"
                     )
                     .value;
+            const registrationOpenAt =
+    document.getElementById("registrationOpenAt").value;
+
+const registrationCloseAt =
+    document.getElementById("registrationCloseAt").value;
 
 const tournamentType =
     document.getElementById("tournamentType")?.value || "APL League";
 
+if (tournamentType === "APPL T10") {
+    if (!registrationOpenAt || !registrationCloseAt) {
+        alert("Please select registration opening and closing date/time.");
+        return;
+    }
+
+    if (new Date(registrationCloseAt) <= new Date(registrationOpenAt)) {
+        alert("Registration closing date/time must be after opening date/time.");
+        return;
+    }
+}
 
             const contact =
                 document
@@ -340,7 +356,15 @@ const tournamentType =
 
                     format:
                         format,
+                    registrationOpenAt: registrationOpenAt
+    ? new Date(registrationOpenAt)
+    : null,
 
+registrationCloseAt: registrationCloseAt
+    ? new Date(registrationCloseAt)
+    : null,
+
+registrationLocked: false,
                     tournamentType:
                         tournamentType,
 
