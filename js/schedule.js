@@ -343,6 +343,18 @@ async function generateMatches() {
 
   const tournamentId = tournamentSelect?.value;
 
+const selectedTournament = activeTournaments.find(
+  item => item.id === tournamentId
+);
+
+if (
+  selectedTournament &&
+  String(selectedTournament.tournamentType || "").trim().toUpperCase() === "APPL T10"
+) {
+  await generateApplT10Schedule(tournamentId);
+  return;
+}
+
   if (!tournamentId) {
     showMessage("Pehle active tournament select karein.", true);
     return;
