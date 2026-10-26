@@ -170,12 +170,12 @@ if (form) {
                 );
 
 
-            const format =
-                document
-                    .getElementById(
-                        "format"
-                    )
-                    .value;
+            let format =
+    document
+        .getElementById(
+            "format"
+        )
+        .value;
             const registrationOpenAt =
     document.getElementById("registrationOpenAt").value;
 
@@ -183,8 +183,13 @@ const registrationCloseAt =
     document.getElementById("registrationCloseAt").value;
 
 const tournamentType =
-    document.getElementById("tournamentType")?.value || "APL League";
+    document.getElementById("tournamentType")?.value || "APL Leag
 
+            // APPL T10 ke liye Knockout format fix rahega.
+// APL League ka existing format nahi badlega.
+if (tournamentType === "APPL T10") {
+    format = "Knockout";
+}
 if (tournamentType === "APPL T10") {
     if (!registrationOpenAt || !registrationCloseAt) {
         alert("Please select registration opening and closing date/time.");
