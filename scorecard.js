@@ -1,6 +1,6 @@
 
 import { db, legacyDb } from "./firebase.js";
-
+import { advanceApplT10Winner } from "./js/appl-t10-advancement.js";
 import {
   collection,
   getDocs,
@@ -47,9 +47,8 @@ const state = {
 
 const PLAYER_FIELDS = [
   "captainName",
-  ...Array.from({ length: 14 }, (_, i) => `player${i + 2}`)
+  ...Array.from({ length: 15 }, (_, i) => `player${i + 1}`)
 ];
-
 function clean(value) {
   return String(value ?? "").trim();
 }
@@ -1061,25 +1060,32 @@ function buildScorePayload() {
   const first = innings[0] || null;
   const second = innings[1] || null;
 
-  let winner = state.match.winner || "";
-  let result = state.match.result || "";
-  let status = "Live";
+ let winner = state.match.winner || "";
+let winnerTeamId = state.match.winnerTeamId || "";
+let winnerTeamName = state.match.winnerTeamName || "";
+let result = state.match.result || "";
+let status = "Live";
 
   if (first?.completed && second?.completed) {
-    status = "Completed";
+  status = "Completed";
 
-    if (first.runs > second.runs) {
-      winner = first.battingTeamName;
-      result = `${winner} won by ${first.runs - second.runs} runs`;
-    } else if (second.runs > first.runs) {
-      winner = second.battingTeamName;
-      result = `${winner} won by ${10 - second.wickets} wickets`;
-    } else {
-      winner = "";
-      result = "Scores tied";
-    }
+  if (first.runs > second.runs) {
+    winner = first.battingTeamName;
+    winnerTeamId = first.battingTeamId || "";
+    winnerTeamName = first.battingTeamName || winner;
+    result = `${winner} won by ${first.runs - second.runs} runs`;
+  } else if (second.runs > first.runs) {
+    winner = second.battingTeamName;
+    winnerTeamId = second.battingTeamId || "";
+    winnerTeamName = second.battingTeamName || winner;
+    result = `${winner} won by ${10 - second.wickets} wickets`;
+  } else {
+    winner = "";
+    winnerTeamId = "";
+    winnerTeamName = "";
+    result = "Scores tied";
   }
-
+}
   const teamAScore = innings.find((item) =>
     (teamA.id && norm(item.battingTeamId) === norm(teamA.id)) ||
     (teamA.name && norm(item.battingTeamName) === norm(teamA.name))
@@ -1097,6 +1103,8 @@ function buildScorePayload() {
     scoreA: teamAScore ? `${teamAScore.runs}/${teamAScore.wickets}` : (state.match.scoreA || "0/0"),
     scoreB: teamBScore ? `${teamBScore.runs}/${teamBScore.wickets}` : (state.match.scoreB || "0/0"),
     winner,
+    winnerTeamId,
+    winnerTeamName,
     result,
     status,
     updatedAt: serverTimestamp()
@@ -1120,12 +1128,50 @@ async function saveScore(showMessage = true) {
     const payload = buildScorePayload();
     await updateDoc(matchRef, payload);
 
-    state.match = {
-      ...state.match,
-      ...payload
-    };
+state.match = {
+  ...state.match,
+  ...payload
+};
 
-    if (showMessage) setMessage("Score successfully saved.");
+if (
+  payload.status === "Completed" &&
+  payload.winnerTeamId &&
+  payload.winnerTeamName
+) {
+  try {
+    const advancement = await advanceApplT10Winner({
+      tournamentId,
+      matchId,
+      winnerTeamId: payload.winnerTeamId,
+      winnerTeamName: payload.winnerTeamName
+    });
+
+    if (advancement.championDeclared) {
+      setMessage(
+        `🏆 Champion: ${advancement.championTeamName}`
+      );
+    } else if (advancement.advanced) {
+      setMessage(
+        `Winner ${advancement.winnerTeamName} next round mein pahunch gaya.`
+      );
+    } else if (advancement.skipped) {
+      setMessage("Score saved. Knockout advancement apply nahi hua.");
+    }
+  } catch (error) {
+    console.error("APPL T10 advancement failed:", error);
+    setMessage(
+      "Score save ho gaya, lekin next round update nahi hua. Admin se match aur next-round slot check karwayein.",
+      true
+    );
+  }
+} else if (payload.status === "Completed" && !payload.winnerTeamId) {
+  setMessage(
+    "Scores tied hain. Advancement se pehle winner manually decide karein.",
+    true
+  );
+} else if (showMessage) {
+  setMessage("Score successfully saved.");
+}
   } catch (error) {
     console.error("Save score failed:", error);
     setMessage(
