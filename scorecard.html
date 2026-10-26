@@ -94,7 +94,10 @@ th{background:#f8fafc}
 <div class="player-row"><strong>Batter</strong><span>R</span><span>B</span><span>SR</span></div>
 <div class="player-row"><strong id="strikerName">Striker</strong><span id="strikerRuns">0</span><span id="strikerBalls">0</span><span id="strikerSR">0.00</span></div>
 <div class="player-row"><strong id="nonStrikerName">Non-Striker</strong><span id="nonStrikerRuns">0</span><span id="nonStrikerBalls">0</span><span id="nonStrikerSR">0.00</span></div>
-<div class="small">Team fours: <b id="totalFours">0</b> · Sixes: <b id="totalSixes">0</b></div>
+<div class="small">
+  Team fours: <b id="teamFours">0</b>
+  · Sixes: <b id="totalSixes">0</b>
+</div>
 </section>
 
 <section class="card">
@@ -157,6 +160,17 @@ th{background:#f8fafc}
 <button id="legByeBtn" class="extra-btn">Leg Bye +1</button>
 </div>
 <button id="wicketBtn" class="wicket-btn">❌ WICKET</button>
+  <label for="dismissalType">Wicket Type</label>
+<select id="dismissalType">
+  <option value="Bowled">Bowled</option>
+  <option value="Caught">Caught</option>
+  <option value="LBW">LBW</option>
+  <option value="Stumped">Stumped</option>
+  <option value="Run Out">Run Out</option>
+  <option value="Hit Wicket">Hit Wicket</option>
+  <option value="Caught and Bowled">Caught and Bowled</option>
+  <option value="Retired Out">Retired Out</option>
+</select>
 </section>
 
 <section class="card">
