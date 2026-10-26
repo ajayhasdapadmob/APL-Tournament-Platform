@@ -1,65 +1,208 @@
 
 import {
-  initializeApp,
-  getApps,
-  getApp
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-
-import {
-  getAuth
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-
-import {
-  getFirestore,
-  enableNetwork
+  doc,
+  getDoc,
+  runTransaction,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-import {
-  getStorage
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js";
+import { db } from "../firebase.js";
 
-// APL TOURNAMENT PLATFORM — existing scoring database
-const tournamentConfig = {
-  apiKey: "AIzaSyCEkiHDayUu5NF9g5EOsQL-Dwyg6XYz57k",
-  authDomain: "apl-tournament-platform.firebaseapp.com",
-  projectId: "apl-tournament-platform",
-  storageBucket: "apl-tournament-platform.firebasestorage.app",
-  messagingSenderId: "915381266456",
-  appId: "1:915381266456:web:947236a5a210fa11bfbb6d",
-  measurementId: "G-J3YWBRWVN0"
-};
+function normalize(value) {
+  return String(value ?? "").trim().toLowerCase();
+}
 
-// APL CRICKET LEAGUE — existing registrations and players
-const legacyConfig = {
-  apiKey: "AIzaSyC5sHNe2gV3vJYA1F2-JQsNbZrU5DTLcPw",
-  authDomain: "ajay-premier-league-apl.firebaseapp.com",
-  projectId: "ajay-premier-league-apl",
-  storageBucket: "ajay-premier-league-apl.firebasestorage.app",
-  messagingSenderId: "514698419085",
-  appId: "1:514698419085:web:30264cdf0ee9629706bbc4",
-  measurementId: "G-8VMTN4PPQZ"
-};
+function getTeamId(match, side) {
+  return side === "A"
+    ? match.teamAId || match.team1Id || ""
+    : match.teamBId || match.team2Id || "";
+}
 
-// Keep existing Tournament Platform exports unchanged.
-const tournamentApp =
-  getApps().some(app => app.name === "aplTournamentPlatform")
-    ? getApp("aplTournamentPlatform")
-    : initializeApp(tournamentConfig, "aplTournamentPlatform");
+function getTeamName(match, side) {
+  return side === "A"
+    ? match.teamAName || match.teamA || match.team1Name || match.team1 || ""
+    : match.teamBName || match.teamB || match.team2Name || match.team2 || "";
+}
 
-export const auth = getAuth(tournamentApp);
-export const db = getFirestore(tournamentApp);
-export const storage = getStorage(tournamentApp);
+export async function advanceApplT10Winner({
+  tournamentId,
+  matchId,
+  winnerTeamId,
+  winnerTeamName
+}) {
+  if (!tournamentId || !matchId || !winnerTeamId) {
+    throw new Error("Tournament, match, and winner team are required.");
+  }
 
-// Separate read source for APL League.
-const legacyApp =
-  getApps().some(app => app.name === "aplLeaguePlayers")
-    ? getApp("aplLeaguePlayers")
-    : initializeApp(legacyConfig, "aplLeaguePlayers");
+  const tournamentRef = doc(db, "tournaments", tournamentId);
+  const matchRef = doc(
+    db, "tournaments", tournamentId, "matches", matchId
+  );
 
-export const legacyDb = getFirestore(legacyApp);
+  return runTransaction(db, async (transaction) => {
+    const tournamentSnap = await transaction.get(tournamentRef);
 
-enableNetwork(db).catch(console.error);
-enableNetwork(legacyDb).catch(console.error);
+    if (!tournamentSnap.exists()) {
+      throw new Error("Tournament not found.");
+    }
 
-console.log("Tournament Firebase:", tournamentConfig.projectId);
-console.log("APL League players source:", legacyConfig.projectId);
+    const tournament = tournamentSnap.data();
+
+    if (normalize(tournament.tournamentType) !== "appl t10") {
+      return { skipped: true, reason: "Not an APPL T10 tournament." };
+    }
+
+    const matchSnap = await transaction.get(matchRef);
+
+    if (!matchSnap.exists()) {
+      throw new Error("Match not found.");
+    }
+
+    const match = matchSnap.data();
+
+    if (normalize(match.status) !== "completed") {
+      throw new Error("Match is not completed.");
+    }
+
+    const teamAId = getTeamId(match, "A");
+    const teamBId = getTeamId(match, "B");
+
+    if (!teamAId || !teamBId) {
+      throw new Error("Both match teams must be set.");
+    }
+
+    if (teamAId === teamBId) {
+      throw new Error("Both match slots contain the same team.");
+    }
+
+    // Never advance a tied match.
+    const scoreA = Number(match.scoreA ?? match.teamAScore ?? NaN);
+    const scoreB = Number(match.scoreB ?? match.teamBScore ?? NaN);
+
+    if (Number.isFinite(scoreA) && Number.isFinite(scoreB) &&
+        scoreA === scoreB) {
+      throw new Error("Scores are tied. Confirm a tiebreak result first.");
+    }
+
+    if (winnerTeamId !== teamAId && winnerTeamId !== teamBId) {
+      throw new Error("Winner is not one of this match's teams.");
+    }
+
+    // If scores are available, reject a winner that contradicts them.
+    if (Number.isFinite(scoreA) && Number.isFinite(scoreB)) {
+      const scoreWinnerId = scoreA > scoreB ? teamAId : teamBId;
+      if (scoreWinnerId !== winnerTeamId) {
+        throw new Error("Winner does not match the saved scores.");
+      }
+    }
+
+    if (match.advancementProcessed === true) {
+      return { alreadyProcessed: true };
+    }
+
+    const winnerName =
+      winnerTeamName ||
+      (winnerTeamId === teamAId
+        ? getTeamName(match, "A")
+        : getTeamName(match, "B"));
+
+    if (!winnerName) {
+      throw new Error("Winner team name is missing.");
+    }
+
+    const nextMatchId = match.nextMatchId || "";
+    const nextSlot = normalize(match.nextSlot || "");
+
+    if (nextMatchId) {
+      if (nextMatchId === matchId) {
+        throw new Error("A match cannot advance into itself.");
+      }
+
+      if (!["a", "b", "teama", "teamb"].includes(nextSlot)) {
+        throw new Error("Next match slot must be A or B.");
+      }
+
+      const nextRef = doc(
+        db, "tournaments", tournamentId, "matches", nextMatchId
+      );
+      const nextSnap = await transaction.get(nextRef);
+
+      if (!nextSnap.exists()) {
+        throw new Error("Next-round match not found.");
+      }
+
+      const nextMatch = nextSnap.data();
+
+      if (normalize(nextMatch.status) === "completed") {
+        throw new Error("Cannot change a completed next-round match.");
+      }
+
+      const isA = nextSlot === "a" || nextSlot === "teama";
+      const existingId = getTeamId(nextMatch, isA ? "A" : "B");
+
+      if (existingId && existingId !== winnerTeamId) {
+        throw new Error("Next-round slot already contains another team.");
+      }
+
+      const slotUpdate = isA
+        ? {
+            teamAId: winnerTeamId,
+            teamAName: winnerName,
+            teamA: winnerName
+          }
+        : {
+            teamBId: winnerTeamId,
+            teamBName: winnerName,
+            teamB: winnerName
+          };
+
+      transaction.update(nextRef, {
+        ...slotUpdate,
+        updatedAt: serverTimestamp()
+      });
+
+      transaction.update(matchRef, {
+        winnerTeamId,
+        winnerTeamName: winnerName,
+        advancementProcessed: true,
+        advancementProcessedAt: serverTimestamp()
+      });
+
+      return {
+        advanced: true,
+        nextMatchId,
+        winnerTeamId,
+        winnerTeamName: winnerName
+      };
+    }
+
+    const round = normalize(match.round || match.roundName || "");
+
+    if (!round.includes("final")) {
+      throw new Error(
+        "No next match is configured and this match is not marked Final."
+      );
+    }
+
+    transaction.update(matchRef, {
+      winnerTeamId,
+      winnerTeamName: winnerName,
+      advancementProcessed: true,
+      advancementProcessedAt: serverTimestamp()
+    });
+
+    transaction.update(tournamentRef, {
+      championTeamId: winnerTeamId,
+      championTeamName: winnerName,
+      championDeclared: true,
+      championDeclaredAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    return {
+      championDeclared: true,
+      championTeamId: winnerTeamId,
+      championTeamName: winnerName
+    };
+  });
+}
