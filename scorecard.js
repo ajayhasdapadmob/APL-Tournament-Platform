@@ -669,6 +669,34 @@ function swapStrike(inn) {
   inn.nonStrikerId = old;
 }
 
+function checkInningsCompletion(inn) {
+  if (!inn || inn.completed) return;
+
+  const maxOvers = Number(
+    state.match?.overs || state.match?.totalOvers || 10
+  );
+
+  // All out or overs completed
+  if (
+    inn.wickets >= 10 ||
+    (maxOvers > 0 && inn.legalBalls >= maxOvers * 6)
+  ) {
+    inn.completed = true;
+    return;
+  }
+
+  // Second innings: target achieved
+  const first = state.innings[0];
+
+  if (
+    state.inningsIndex === 1 &&
+    first &&
+    inn.runs > first.runs
+  ) {
+    inn.completed = true;
+  }
+}
+
 function recordBall(runs = 0, type = "normal") {
   const inn = currentInnings();
   if (!inn || inn.completed) return;
@@ -781,13 +809,9 @@ function recordBall(runs = 0, type = "normal") {
 
   inn.deliveries.push(delivery);
 
-  const maxOvers = Number(state.match.overs || state.match.totalOvers || 0);
-  if (
-    (maxOvers > 0 && inn.legalBalls >= maxOvers * 6) ||
-    inn.wickets >= 10
-  ) {
-    inn.completed = true;
-  }
+  
+checkInningsCompletion(inn);
+
 
   render();
   queueSave();
@@ -845,7 +869,8 @@ function recordWicket() {
   });
 
   inn.strikerId = "";
-  if (inn.wickets >= 10) inn.completed = true;
+ 
+checkInningsCompletion(inn);
 
   if (inn.legalBalls > 0 && inn.legalBalls % 6 === 0) {
     swapStrike(inn);
