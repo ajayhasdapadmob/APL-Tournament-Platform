@@ -379,74 +379,89 @@ form.addEventListener(
 
         event.preventDefault();
 
-       // =========================
-// REGISTRATION DEADLINE CHECK
-// =========================
+      
+        // =========================
+        // REGISTRATION DEADLINE CHECK
+        // APL League + APPL T10
+        // =========================
 
-if (!currentTournament) {
-    showMessage(
-        "❌ Tournament details are not loaded. Please refresh and try again.",
-        "error"
-    );
-    return;
-}
+        if (!currentTournament) {
+            showMessage(
+                "❌ Tournament details are not loaded. Please refresh and try again.",
+                "error"
+            );
+            return;
+        }
 
-const tournamentType =
-    String(currentTournament.tournamentType || "APL League")
-        .trim()
-        .toUpperCase();
+        const tournamentType = String(
+            currentTournament.tournamentType || "APL League"
+        ).trim().toUpperCase();
 
-if (tournamentType === "APPL T10") {
-    const openAt = currentTournament.registrationOpenAt;
-    const closeAt = currentTournament.registrationCloseAt;
+        const openAt = currentTournament.registrationOpenAt;
+        const closeAt = currentTournament.registrationCloseAt;
 
-    // Firestore Timestamp and Date values are both supported.
-    const openTime = openAt && typeof openAt.toDate === "function"
-        ? openAt.toDate().getTime()
-        : openAt instanceof Date
-            ? openAt.getTime()
-            : NaN;
+        function getRegistrationTime(value) {
+            if (value && typeof value.toDate === "function") {
+                return value.toDate().getTime();
+            }
 
-    const closeTime = closeAt && typeof closeAt.toDate === "function"
-        ? closeAt.toDate().getTime()
-        : closeAt instanceof Date
-            ? closeAt.getTime()
-            : NaN;
+            if (value instanceof Date) {
+                return value.getTime();
+            }
 
-    const now = Date.now();
+            return NaN;
+        }
 
-    if (!Number.isFinite(openTime) || !Number.isFinite(closeTime)) {
-        showMessage(
-            "❌ Registration dates are missing or invalid. Please contact the tournament organizer.",
-            "error"
-        );
-        return;
-    }
+        const openTime = getRegistrationTime(openAt);
+        const closeTime = getRegistrationTime(closeAt);
+        const now = Date.now();
 
-    if (currentTournament.registrationLocked === true) {
-        showMessage(
-            "🔒 Registration is closed for this tournament.",
-            "error"
-        );
-        return;
-    }
+        // APPL T10 requires valid registration dates.
+        // Older APL League tournaments without dates are allowed
+        // to preserve existing legacy registrations.
+        const hasDates =
+            Number.isFinite(openTime) &&
+            Number.isFinite(closeTime);
 
-    if (now < openTime) {
-        showMessage(
-            "⏳ Registration has not opened yet.",
-            "error"
-        );
-        return;
-    }
+        if (!hasDates && tournamentType === "APPL T10") {
+            showMessage(
+                "❌ APPL T10 registration dates are missing or invalid. Please contact the organizer.",
+                "error"
+            );
+            return;
+        }
 
-    if (now >= closeTime) {
-        showMessage(
-            "🔒 Registration closing time has passed. Team registration is closed.",
-            "error"
-        );
-        return;
-    }
-}
+        if (currentTournament.registrationLocked === true) {
+            showMessage(
+                "🔒 Registration is closed for this tournament.",
+                "error"
+            );
+            return;
+        }
+
+        if (hasDates && closeTime <= openTime) {
+            showMessage(
+                "❌ Registration closing time must be later than opening time.",
+                "error"
+            );
+            return;
+        }
+
+        if (hasDates && now < openTime) {
+            showMessage(
+                "⏳ Registration has not opened yet.",
+                "error"
+            );
+            return;
+        }
+
+        if (hasDates && now >= closeTime) {
+            showMessage(
+                "🔒 Registration deadline has passed. Team registration is closed.",
+                "error"
+            );
+            return;
+        }
 
         console.log(
             "🏏 REGISTER TEAM CLICKED"
