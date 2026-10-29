@@ -1,15 +1,14 @@
-
+```javascript
 import {
   doc,
-  getDoc,
-  updateDoc,
+  runTransaction,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 import { db } from "../firebase.js";
 
 function normalize(value) {
-  return String(value ?? "").trim().toLowerCase();
+  return String(value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 function getTeamId(match, side) {
@@ -24,12 +23,11 @@ function getTeamName(match, side) {
     : match.teamBName || match.teamB || match.team2Name || match.team2 || "";
 }
 
-/**
- * Call this only after a completed APPL T10 match has a confirmed winner.
- *
- * winnerTeamId: Firestore team document ID
- * winnerTeamName: display name of the winning team
- */
+function isSupportedTournamentType(value) {
+  const type = normalize(value);
+  return type === "apl t10" || type === "appl t10";
+}
+
 export async function advanceApplT10Winner({
   tournamentId,
   matchId,
@@ -41,19 +39,6 @@ export async function advanceApplT10Winner({
   }
 
   const tournamentRef = doc(db, "tournaments", tournamentId);
-  const tournamentSnap = await getDoc(tournamentRef);
-
-  if (!tournamentSnap.exists()) {
-    throw new Error("Tournament not found.");
-  }
-
-  const tournament = tournamentSnap.data();
-
-  // Never apply APPL T10 progression to the legacy APL League.
-  if (normalize(tournament.tournamentType) !== "appl t10") {
-    return { skipped: true, reason: "Not an APPL T10 tournament." };
-  }
-
   const matchRef = doc(
     db,
     "tournaments",
@@ -62,132 +47,180 @@ export async function advanceApplT10Winner({
     matchId
   );
 
-  const matchSnap = await getDoc(matchRef);
+  return runTransaction(db, async (transaction) => {
+    const tournamentSnap = await transaction.get(tournamentRef);
 
-  if (!matchSnap.exists()) {
-    throw new Error("Match not found.");
-  }
+    if (!tournamentSnap.exists()) {
+      throw new Error("Tournament not found.");
+    }
 
-  const match = matchSnap.data();
+    const tournament = tournamentSnap.data();
 
-  if (normalize(match.status) !== "completed") {
-    throw new Error("Complete the match before advancing its winner.");
-  }
+    if (!isSupportedTournamentType(tournament.tournamentType)) {
+      return {
+        skipped: true,
+        reason: "Not an APL T10/APPL T10 tournament."
+      };
+    }
 
-  const teamAId = getTeamId(match, "A");
-  const teamBId = getTeamId(match, "B");
+    const matchSnap = await transaction.get(matchRef);
 
-  if (winnerTeamId !== teamAId && winnerTeamId !== teamBId) {
-    throw new Error("The selected winner is not one of this match's teams.");
-  }
+    if (!matchSnap.exists()) {
+      throw new Error("Match not found.");
+    }
 
-  // A saved winner makes this operation idempotent.
-  if (match.advancementProcessed === true) {
-    return { alreadyProcessed: true };
-  }
+    const match = matchSnap.data();
 
-  const winnerName =
-    winnerTeamName ||
-    (winnerTeamId === teamAId
-      ? getTeamName(match, "A")
-      : getTeamName(match, "B"));
+    if (normalize(match.status) !== "completed") {
+      throw new Error("Match is not completed.");
+    }
 
-  const nextMatchId = match.nextMatchId || "";
-  const nextSlot = normalize(match.nextSlot || "");
+    const teamAId = getTeamId(match, "A");
+    const teamBId = getTeamId(match, "B");
 
-  if (nextMatchId) {
-    if (!["a", "b", "teama", "teamb"].includes(nextSlot)) {
+    if (!teamAId || !teamBId) {
+      throw new Error("Both match teams must be set.");
+    }
+
+    if (teamAId === teamBId) {
+      throw new Error("Both match slots contain the same team.");
+    }
+
+    const scoreA = Number(match.scoreA ?? match.teamAScore ?? NaN);
+    const scoreB = Number(match.scoreB ?? match.teamBScore ?? NaN);
+
+    if (
+      Number.isFinite(scoreA) &&
+      Number.isFinite(scoreB) &&
+      scoreA === scoreB
+    ) {
+      throw new Error("Scores are tied. Confirm a tiebreak result first.");
+    }
+
+    if (winnerTeamId !== teamAId && winnerTeamId !== teamBId) {
+      throw new Error("Winner is not one of this match's teams.");
+    }
+
+    if (Number.isFinite(scoreA) && Number.isFinite(scoreB)) {
+      const scoreWinnerId = scoreA > scoreB ? teamAId : teamBId;
+
+      if (scoreWinnerId !== winnerTeamId) {
+        throw new Error("Winner does not match the saved scores.");
+      }
+    }
+
+    if (match.advancementProcessed === true) {
+      return { alreadyProcessed: true };
+    }
+
+    const winnerName =
+      winnerTeamName ||
+      (winnerTeamId === teamAId
+        ? getTeamName(match, "A")
+        : getTeamName(match, "B"));
+
+    if (!winnerName) {
+      throw new Error("Winner team name is missing.");
+    }
+
+    const nextMatchId = match.nextMatchId || "";
+    const nextSlot = normalize(match.nextSlot || "");
+
+    if (nextMatchId) {
+      if (nextMatchId === matchId) {
+        throw new Error("A match cannot advance into itself.");
+      }
+
+      if (!["a", "b", "teama", "teamb"].includes(nextSlot)) {
+        throw new Error("Next match slot must be A or B.");
+      }
+
+      const nextRef = doc(
+        db,
+        "tournaments",
+        tournamentId,
+        "matches",
+        nextMatchId
+      );
+
+      const nextSnap = await transaction.get(nextRef);
+
+      if (!nextSnap.exists()) {
+        throw new Error("Next-round match not found.");
+      }
+
+      const nextMatch = nextSnap.data();
+
+      if (normalize(nextMatch.status) === "completed") {
+        throw new Error("Cannot change a completed next-round match.");
+      }
+
+      const isA = nextSlot === "a" || nextSlot === "teama";
+      const existingId = getTeamId(nextMatch, isA ? "A" : "B");
+
+      if (existingId && existingId !== winnerTeamId) {
+        throw new Error("Next-round slot already contains another team.");
+      }
+
+      const slotUpdate = isA
+        ? {
+            teamAId: winnerTeamId,
+            teamAName: winnerName,
+            teamA: winnerName
+          }
+        : {
+            teamBId: winnerTeamId,
+            teamBName: winnerName,
+            teamB: winnerName
+          };
+
+      transaction.update(nextRef, {
+        ...slotUpdate,
+        updatedAt: serverTimestamp()
+      });
+
+      transaction.update(matchRef, {
+        winnerTeamId,
+        winnerTeamName: winnerName,
+        advancementProcessed: true,
+        advancementProcessedAt: serverTimestamp()
+      });
+
+      return {
+        advanced: true,
+        nextMatchId,
+        winnerTeamId,
+        winnerTeamName: winnerName
+      };
+    }
+
+    const round = normalize(match.round || match.roundName || "");
+
+    if (!round.includes("final")) {
       throw new Error(
-        "Next match exists, but nextSlot is missing or invalid."
+        "No next match is configured and this match is not marked Final."
       );
     }
 
-    const nextRef = doc(
-      db,
-      "tournaments",
-      tournamentId,
-      "matches",
-      nextMatchId
-    );
-
-    const nextSnap = await getDoc(nextRef);
-
-    if (!nextSnap.exists()) {
-      throw new Error("The next-round match does not exist.");
-    }
-
-    const nextMatch = nextSnap.data();
-    const isA = nextSlot === "a" || nextSlot === "teama";
-
-    const existingId = isA
-      ? getTeamId(nextMatch, "A")
-      : getTeamId(nextMatch, "B");
-
-    if (existingId && existingId !== winnerTeamId) {
-      throw new Error(
-        "The next-round slot already contains a different team."
-      );
-    }
-
-    const slotUpdate = isA
-      ? {
-          teamAId: winnerTeamId,
-          teamAName: winnerName,
-          teamA: winnerName
-        }
-      : {
-          teamBId: winnerTeamId,
-          teamBName: winnerName,
-          teamB: winnerName
-        };
-
-    await updateDoc(nextRef, {
-      ...slotUpdate,
-      updatedAt: serverTimestamp()
-    });
-
-    await updateDoc(matchRef, {
+    transaction.update(matchRef, {
       winnerTeamId,
       winnerTeamName: winnerName,
       advancementProcessed: true,
       advancementProcessedAt: serverTimestamp()
     });
 
+    transaction.update(tournamentRef, {
+      championTeamId: winnerTeamId,
+      championTeamName: winnerName,
+      championDeclared: true,
+      championDeclaredAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
     return {
-      advanced: true,
-      nextMatchId,
-      winnerTeamId,
-      winnerTeamName: winnerName
+      championDeclared: true,
+      championTeamId: winnerTeamId,
+      championTeamName: winnerName
     };
-  }
-
-  // No nextMatchId means this must be the final match to declare champion.
-  const round = normalize(match.round || match.roundName || "");
-
-  if (!round.includes("final")) {
-    throw new Error(
-      "This match has no next match and is not marked as Final. Champion was not declared."
-    );
-  }
-
-  await updateDoc(matchRef, {
-    winnerTeamId,
-    winnerTeamName: winnerName,
-    advancementProcessed: true,
-    advancementProcessedAt: serverTimestamp()
   });
-
-  await updateDoc(tournamentRef, {
-    championTeamId: winnerTeamId,
-    championTeamName: winnerName,
-    championDeclared: true,
-    championDeclaredAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  });
-
-  return {
-    championDeclared: true,
-    championTeamId: winnerTeamId,
-    championTeamName: winnerName
-  };
 }
